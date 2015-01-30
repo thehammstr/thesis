@@ -1,0 +1,65 @@
+\ProvidesPackage{suthesis-nnlee}[2010/11/24]
+
+% 2012/02/14 - Added nomenclature section in \afterpreface so it comes after the lists of tables and figures but retains roman page numbering
+
+% Improve compatibility with hyperref by adding \phantomsection and inverting the contents line and chapter title
+\def\prefacesection#1{%
+        \phantomsection
+        \addcontentsline{toc}{chapter}{#1}
+        \chapter*{#1}}
+
+\def\afterpreface{\newpage
+        \phantomsection
+        \addcontentsline{toc}{chapter}{Contents}
+        \tableofcontents
+        \iftablespage
+        				\clearpage
+				        \phantomsection
+				        \addcontentsline{toc}{chapter}{List of Tables}
+                \listoftables
+        \fi
+        \iffigurespage
+        				\clearpage
+				        \phantomsection
+				        \addcontentsline{toc}{chapter}{List of Figures}
+                \listoffigures
+        \fi
+        \clearpage
+        \phantomsection
+				\addcontentsline{toc}{chapter}{Nomenclature}
+				\printnomenclature
+
+        \cleardoublepage
+        \pagenumbering{arabic}
+        \pagestyle{headings}}
+
+% Redefine signature page to include line for Committee on Graduate Studies
+\def\signaturepage{%
+        \signature{(\@principaladviser)\quad Principal \advis@r}
+        \vfill
+% if second principal advisor
+        \if*\@coprincipaladviser \else
+        \signature{(\@coprincipaladviser)\quad Principal \advis@r}
+        \vfill\fi
+        \if*\@firstreader \else 
+        \signature{(\@firstreader)}
+        \vfill\fi
+        \if*\@secondreader \else 
+        \signature{(\@secondreader)}
+        \vfill\fi
+% if thirdreader then do \signature\@thirdreader \vfill
+        \if*\@thirdreader \else 
+        \signature{(\@thirdreader)}
+        \vfill\fi
+% if fourthreader then do \signature\@fourthreader \vfill
+        \if*\@fourthreader \else 
+        \signature{(\@fourthreader)}
+        \vfill\fi
+        \begin{flushright}
+        \begin{minipage}{5in}
+        Approved for the University Committee on Graduate Studies.\par
+        \vspace{.5in}
+%        \hbox to 4in{\hfil\shortstack{\vrule width 3in height 0.4pt}}
+				\hbox to 5in{\hfil\begin{tabular}{@{}l@{}}\vrule width 3in height 0.4pt depth 0pt\\ \end{tabular}}
+        \end{minipage}
+        \end{flushright}}

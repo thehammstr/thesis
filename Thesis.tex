@@ -1,0 +1,42 @@
+\documentclass[12pt]{report}
+\include{packages}
+
+% Chapter selection option
+%\includeonly{chIntroduction}
+% or
+% \typein{Now put in includeonly}
+
+\dept{\\Aeronautics and Astronautics}
+\title{Making Maps of Icebergs}
+\author{Marcus Hammond}
+\date{June 2015}
+\principaladvisor{Stephen Rock}
+\firstreader{Curly}
+\secondreader{Larry}
+\thirdreader{Mo}
+\submitdate{Someday}
+\setlength{\signaturespace}{.2in}
+\copyrightyear{2015}
+
+\begin{document}
+
+%\thesiscopyrightfalse
+%\copyrightfalse
+%\figurespagefalse
+%\tablespagefalse
+ 
+\beforepreface
+\include{text/prAbstract}
+%\include{text/prAcknowledgements}
+\afterpreface
+\include{text/chIntroduction}
+\appendix
+\include{text/apExperimentData}
+         
+\bibliographystyle{agu08}
+\renewcommand\bibname{References}
+\phantomsection
+\addcontentsline{toc}{chapter}{References}
+%\bibliography{/Users/nnlee/Documents/Research/Bibliography/Bibliography}
+
+\end{document}
