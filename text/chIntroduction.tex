@@ -1,18 +1,29 @@
-% !TEX root = ../thesis.tex
+% !TEX root = ../Thesis.tex
 
 \chapter{Introduction}
 \label{ch.Introduction}
-This thesis talks about creating 3-Dimensional shape reconstructions of the submerged portion of icebergs using autonomous underwater vehicles.
+The work presented in this thesis enables the creation of full 3-D shape reconstructions of the submerged portion of free-drifting icebergs using autonomous underwater vehicles (AUVs). These highly-accurate iceberg profiles or maps are useful in a number of scientific and industrial applications. They are normally acquired through the use of ship-based sonar or Remotely-Operated Vehicles (ROVs). AUVs are increasingly being used as well, though current methods often make strong assumptions about the iceberg's motion, require the AUV to be constantly fed position updates from a ``tender" ship, or can only map incomplete portions of the iceberg at a time.
 
-\section{Background}
-...
-\subsection{Why Study Icebergs}
+The creation of accurate maps using a robotic vehicle is equivalent to accurately determining the robot's trajectory through the space being mapped. The robot makes observations based on its own local reference frame. The robot's position and orientation relative to the object being mapped must be determined in order to project those observations and create a self-consistent map. An accurate map and accurate trajectory estimation should be thought of as synonymous.
+
+The primary challenge in the creation of maps of free-drifting icebergs is that the iceberg translates and rotates as the vehicle tries to map it. This motion makes the iceberg a non-inertial reference frame, which complicates trajectory estimation greatly. The sensing available to AUVs has a very limited field of view, making it difficult to observe the iceberg's motion directly, so other methods must be used to correct for it. 
+
+The strategy employed in this thesis is to cast the iceberg mapping problem as a simultaneous localization and mapping (SLAM) problem. These methods of mapping use information within the environment being mapped to aid in trajectory estimation, hence the robot simultaneously creates a map and localizes itself within that map. The robot can gain information about its accumulated navigational error by revisiting portions of the terrain it has already traversed and using observed offsets to estimate and correct for those errors. One major challenge with performing SLAM in underwater environments is automatic detection of these so-called ``loop closure events."
+
+This dissertation: (a) provides a method for generating a self-consistent map of the \emph{entire} submerged portion of a free-drifting iceberg; (b) formulates the mapping problem in such a way that the vehicle's inertial position need not be known, eliminating the need for external position fixes. This formulation also shows the equivalence between mapping in non-inertial environments and mapping with imperfect inertial sensors. (c) presents a novel method for autonomous detection of loop closure events, drawing from well-researched robust image features from the computer vision literature; (d) shows mapping results from simulation using shape data from a real iceberg, collected from ship-based sonar, as well as results from AUV field data of an underwater canyon with corrupted compass data. 
+
+
+
+\section{Motivation}
 
 \subsection{Mapping in underwater environments}
 \subsection{Challenges with mapping icebergs}
 
+AUVs offer several advantages over ship-based These shape reconstructions, or iceberg terrain maps, are useful in a number of scientific and industrial applications, as will be discussed in the following 
 
 \section{Previous work}
+
+
 \subsection{Iceberg Shape \& Sighting Database?}
 \subsection{Peter's thesis work}
 
