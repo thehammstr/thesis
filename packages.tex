@@ -1,0 +1,39 @@
+% !TEX root = ./thesis.tex
+
+\usepackage{suthesis-2e,suthesis-nnlee}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage[square]{natbib}
+\usepackage{nomencl}
+\usepackage{color}
+%\usepackage{txfonts} % for $\muup$
+\usepackage[colorlinks]{hyperref}
+\usepackage{helvet}
+\usepackage{sectsty}
+\allsectionsfont{\sffamily}
+\usepackage{multirow} % For tables with cells spanning multiple rows
+\usepackage{rotating} % For sideways text
+\usepackage{url} % Helps with underscores in DOIs for references
+
+\definecolor{cardinal}{rgb}{0.6,0,0}
+\definecolor{sess-blue}{rgb}{0,0,0.6}
+\definecolor{dark-green}{rgb}{0.16,0.4,0.29}
+\definecolor{dark-purple}{rgb}{0.21,0.02,0.18}
+
+\hypersetup{
+    colorlinks, 
+    linkcolor={black},
+    citecolor={black},
+    urlcolor={black},
+    filecolor={black},
+    bookmarksnumbered={true},
+    breaklinks={true},
+    %pdfpagemode={UseNone}, % Do not display bookmark panel
+    pdftitle={Meteoroid impact characterization through RF measurements},
+    pdfauthor={Nicolas Lee},
+    pdfsubject={Ph.D. Dissertation}
+}
+\makenomenclature
+\setlength{\nomitemsep}{-\parsep}
+
+\graphicspath{{graphics/}}

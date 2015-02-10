@@ -2,32 +2,134 @@
 
 \chapter{Introduction}
 \label{ch.Introduction}
-The work presented in this thesis enables the creation of full 3-D shape reconstructions of the submerged portion of free-drifting icebergs using autonomous underwater vehicles (AUVs). These highly-accurate iceberg profiles or maps are useful in a number of scientific and industrial applications. They are normally acquired through the use of ship-based sonar or Remotely-Operated Vehicles (ROVs). AUVs are increasingly being used as well, though current methods often make strong assumptions about the iceberg's motion, require the AUV to be constantly fed position updates from a ``tender" ship, or can only map incomplete portions of the iceberg at a time.
+The work presented in this thesis enables the creation of full 3-D shape reconstructions of the submerged portion of free-drifting icebergs using autonomous underwater vehicles (AUVs). Accurate iceberg profiles or maps are useful in a number of scientific and industrial applications. They are normally acquired through the use of ship-based sonar or Remotely-Operated Vehicles (ROVs). However, AUVs are increasingly being used for this task, though current methods often make strong assumptions about the iceberg's motion, require the AUV to be constantly fed position updates from a ``tender" ship, or can only map incomplete portions of the iceberg at a time. \cite{}
 
-The creation of accurate maps using a robotic vehicle is equivalent to accurately determining the robot's trajectory through the space being mapped. The robot makes observations based on its own local reference frame. The robot's position and orientation relative to the object being mapped must be determined in order to project those observations and create a self-consistent map. An accurate map and accurate trajectory estimation should be thought of as synonymous.
+The creation of accurate maps using a robotic vehicle is equivalent to accurately determining the robot's trajectory through the space being mapped. Because the robot records its observations in its own local reference frame, the robot's position and orientation relative to the object being mapped must be determined in order to project those observations and create a self-consistent map of the world. Therefore, an accurate map and accurate trajectory estimation should be thought of as synonymous.
 
 The primary challenge in the creation of maps of free-drifting icebergs is that the iceberg translates and rotates as the vehicle tries to map it. This motion makes the iceberg a non-inertial reference frame, which complicates trajectory estimation greatly. The sensing available to AUVs has a very limited field of view, making it difficult to observe the iceberg's motion directly, so other methods must be used to correct for it. 
 
-The strategy employed in this thesis is to cast the iceberg mapping problem as a simultaneous localization and mapping (SLAM) problem. These methods of mapping use information within the environment being mapped to aid in trajectory estimation, hence the robot simultaneously creates a map and localizes itself within that map. The robot can gain information about its accumulated navigational error by revisiting portions of the terrain it has already traversed and using observed offsets to estimate and correct for those errors. One major challenge with performing SLAM in underwater environments is automatic detection of these so-called ``loop closure events."
+The strategy employed in this dissertation is to cast the iceberg mapping problem as a simultaneous localization and mapping (SLAM) problem. These methods of mapping use information within the environment being mapped to aid in trajectory estimation, hence the robot simultaneously creates a map and localizes itself within that map. The robot can gain information about its accumulated navigational error by revisiting portions of the terrain it has already traversed and using observed offsets to estimate and correct for those errors. One major challenge with performing SLAM in underwater environments is automatic detection of these so-called ``loop closure events."
 
-This dissertation: (a) provides a method for generating a self-consistent map of the \emph{entire} submerged portion of a free-drifting iceberg; (b) formulates the mapping problem in such a way that the vehicle's inertial position need not be known, eliminating the need for external position fixes. This formulation also shows the equivalence between mapping in non-inertial environments and mapping with imperfect inertial sensors. (c) presents a novel method for autonomous detection of loop closure events, drawing from well-researched robust image features from the computer vision literature; (d) shows mapping results from simulation using shape data from a real iceberg, collected from ship-based sonar, as well as results from AUV field data of an underwater canyon with corrupted compass data. 
+This dissertation: (a) provides a method for generating a self-consistent map of the \emph{entire} submerged portion of a free-drifting iceberg; (b) formulates the mapping problem in such a way that the vehicle's inertial position need not be known, eliminating the need for external position fixes. This formulation also shows the equivalence between mapping in non-inertial environments and mapping with imperfect inertial sensors. (c) presents a method for autonomous detection of loop closure events, drawing from well-developed work in the computer vision community; (d) shows mapping results from simulation using shape data from a real iceberg, collected from ship-based sonar, as well as results from AUV field data of an underwater canyon with corrupted compass data. 
 
 
 
 \section{Motivation}
 
+\subsection{Iceberg shape reconstruction}
+
+Accurate iceberg shape reconstructions have a number of uses, depending on the time scale of interest: immediate, days to weeks, and months to years. 
+
+Oil companies routinely hire contractors to do ship-based reconstructions of icebergs that pose a risk to their infrastructure. They use these reconstructions in high-fidelity collision simulations to asses the likelihood of damage in the even of impact with a drilling rig or pipeline. Of particular importance in the latter case is knowing the depth and shape of the iceberg keel, as a keel dragging across the seafloor can cause catastrophic damage to pipelines. This is known as ``iceberg scour," and motivates the need for mapping the full depth of the iceberg.
+
+Scientists who study iceberg ecology can also gain immediate benefit from iceberg reconstructions. Having a map of the iceberg allows them to ``geo-reference" their data in the frame of reference of the iceberg, providing a clearer picture of the biology and chemistry of the environment with much higher spatial resolution than offered by ship-based study or Lagrangian sediment traps.
+
+In the days and weeks after their creation, iceberg reconstructions can be used to improve temporal resolution of data. Having geo-referenced data removes spatio-temporal ambiguity in data collected on different surveys, enabling an ``apples to apples" comparison over time. Additionally, iceberg maps can aid in return-to-site missions, where specific points of interest identified in an initial survey can be revisited. Armed with the map, the robot can perform terrain-relative navigation (TRN) to return to the site, even if the iceberg has drifted and rotated a considerable amount. This would grant scientists the opportunity to field tailored sensor suites, potentially giving a much clearer picture of what is happening in important areas.
+
+Finally, on time scales of months to years, performing shape reconstruction on the same iceberg allows the calculate of melt rates and melt patterns, which are important indicators of climate change [valid statement?].
+
+\subsection{Advantages and Disadvantages of AUVs}
+
+AUVs are an attractive alternative to ship-based methods of iceberg study. Typically, a ship will take an array of measurements at a number of points around an iceberg, or deploy Lagrangian sediment traps. These traps are put in the water ``down range" of the iceberg, and use a buoyancy engine to descend below the keel. They then nominally drift below the iceberg, collecting any sediment that falls from it for later study. While it can provide a good cross-section of the under-iceberg environment, it has low spatial resolution, cannot be steered, and sometimes, due to shifting winds and currents, it misses the iceberg completely. Additionally ships must maintain a large standoff distance when studying icebergs due to calving danger or the presence of brash ice, and may not be able to see the entire depth of the iceberg. Using a tethered ROV can allow closer approaches, but they maneuver slowly, and require the ship to constantly tend them when it might be used for other scientific purposes.
+
+AUVs address all of these concerns. They easily operate under brash ice, and can approach closely without putting lives at risk. They provide high spatial resolution and can access the entire depth of the iceberg. 
+
+
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=0.7\textwidth]{../graphics/SimImage1.png} % requires the graphicx package
+   \caption{The AUV has a multibeam sonar mounted on its left side. As it follows the contour of the iceberg reactively, it sweeps out a swath of sonar ranges. By spiraling downward over the course of the mapping run, the entire depth of the iceberg can be profiled.}
+   \label{fig:simImage1}
+\end{figure}
+
+
+There are drawbacks, however: AUVs are limited in the size and power of the sensors they can carry, and can only collect limited volumes of water for later study, when compared to ships. Because of this, AUVs will likely augment greatly, rather than completely replace ship-based measurement in the study of icebergs. Working in tandem, the two methods of study will provide a much clearer picture of the free-drifting iceberg environment.
+
 \subsection{Mapping in underwater environments}
+
+In order to resolve its body-fixed sensor readings into the reference frame of the world (or iceberg), the position and attitude, or pose, of the robot must be determined. If the robot's pose is known at each time a measurement was made, an accurate map can be generated. If the robot's pose is inaccurate, the resulting map will have warping and inconsistencies, which will vary depending on the source of the pose error. If it is not possible to directly measure the robot's pose, the pose must be estimated from available sensing. 
+
+In aerial and terrestrial robotics, the Global Positioning System (GPS), combined with onboard measurements of attitude can provide pose information to meter-level accuracy in position and fractions of a degree in attitude. Differential GPS can improve upon this to provide centimeter-level positioning accuracy. If this is sufficient for the desired accuracy of the map, no further estimation is required. However, in practice, GPS is often augmented with environment-aided positioning techniques like scan matching to provide higher precision. \cite{XXX}
+
+GPS  signals do not penetrate sea water, so other methods of pose determination are required. These typically fall into three categories: infrastructure-aided localization, inertial navigation, and terrain-aided or environment-aided localization. 
+
+\subsubsection{Infrastructure-based localization}
+
+For infrastructure-based navigation, two methods are commonly used: Long-Baseline Interferometry (LBL) and Ultra-Short Baseline Interferometry (USBL). In LBL, an array of sonar beacons are deployed on the seafloor or other fixed structure, and surveyed for calibration. After that, the vehicle can use time-of-flight sonar signals to find its range to each, and calculate its position within the surveyed area. This is essentially the same principle of operation as GPS, but using sound waves instead of radio. In USBL, a ship-based transducer can calculate range and azimuth to the vehicle again based on sonar flight time, and using geometry and its own GPS-location, determine the robot's position. This method reduces in positional accuracy with increased distance from the ship. 
+
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.8\textwidth]{../graphics/LBL.png} % requires the graphicx package
+   \caption{Long-Baseline Interferometry can provides position fixes to the vehicle, limiting drift. \emph{Graphic courtesy of Peter Kimball}}
+   \label{fig:LBL}
+\end{figure}
+
+\subsubsection{Inertial navigation}
+
+Inertial navigation is the use of self-contained highly-precise acceleration and angular rate measurements, integrated over time, to provide an estimate of pose. Though magnetometers do not, strictly speaking, provide inertial measurements, they are often also used to aid in attitude determination. This mode of navigation is often referred to as ``dead reckoning."
+
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.8\textwidth]{../graphics/DeadReckoning.png} % requires the graphicx package
+   \caption{Inertial navigation, or dead reckoning, requires no external infrastructure but will drift over time without bound. \emph{Graphic courtesy of Peter Kimball}}
+   \label{fig:inertialNav}
+\end{figure}
+
+Any errors in the measurement or integration of these quantities will cause a drift in the estimated pose that will grow without bound over time. The growth rate of this drift can be decreased by either obtaining better measurements, or using measurements that will allow fewer integrations. For example, if a direct measurement of velocity can be obtained, only one integration must be performed to estimate position, generally yielding a slower drift rate than integrating accelerations twice. However, \emph{any} system that relies only on integrated measurements to provide an estimate of position \emph{will} drift over time, and the drift will be unbounded. 
+
+\subsubsection{Environment-aided localization}
+
+Terrain-aided localization refers broadly to the use of information within the environment to prevent unbounded localization error. This differs from infrastructure-based methods in that it is assumed that the environment is not actively cooperating with the vehicle. The vehicle must use ``information of opportunity" to aid in its localization. 
+
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.8\textwidth]{../graphics/TRN.png} % requires the graphicx package
+   \caption{The vehicle can extract information from the terrain. If it traverses the same area more than once it can use the information to calculate an offset and eliminate any inertial drift that occurred between traversals. \emph{Graphic courtesy of Peter Kimball}}
+   \label{fig:TRN}
+\end{figure}
+
+The type of environmental information used varies widely by application and available sensing, but the common thread is that if a vehicle can identify a landmark, feature, or area that it has traversed before, it can make a direct measurement of the magnitude and direction of drift it has accrued in the elapsed time, and account for that drift, bounding its magnitude in time. This has two parts: ``correspondence:" ior identifying these loop-closure events, and ``correlation:" estimating bias based on correspondence. 
+
+In practice, nearly every mapping application uses some degree of environment-aided methods to achieve precise, self-consistent maps. In underwater mapping, self-intersecting trajectories are typically designed into a mission, and submaps from the beginning and end of the run are correlated to eliminate inertial drift. This technique is often referred to as ``scan matching" in the terrestrial robotics community, and is often used even when GPS is available to refine position estimates and produce maps of high precision. A similar strategy is used when creating mosaic images, such as aerial maps or panorama photos.  Keypoints, or distinctive image features, are extracted from each image and compared to keypoints from other images. After matches are identified ( solving the correspondence problem) the images are distorted to produce an accurate map, free of seams at the borders between images. The sensor modality is very different from a ranging sensor like sonar, but the principle is identical.
+
 \subsection{Challenges with mapping icebergs}
 
-AUVs offer several advantages over ship-based These shape reconstructions, or iceberg terrain maps, are useful in a number of scientific and industrial applications, as will be discussed in the following 
+Mapping icebergs poses a set of unique challenges relative to other underwater mapping tasks. Specifically, they refuse to sit still to have their picture taken. Icebergs are free to translate in two directions, and rotate in heading. They are pushed at random by the wind  and currents, making it difficult to predict how they will move. (Additionally, they are prone to flip or ``turtle," pitching 180 degrees over very short time scales, though this dissertation does not address such dynamic corner cases of mapping.) 
 
-\section{Previous work}
+This motion has two major implications: first, it means that the iceberg constitutes a non-inertial reference frame. Unmodeled accelerations and rotations of the iceberg introduce large errors into the navigation solution, resulting in large apparent inertial drift rates and an inaccurate, inconsistent map. The sensors available to an AUV typically have too narrow a field of view to directly measure the iceberg's motion with any accuracy, so other steps must be taken to correct for it. This drives a need for environment-aided localization techniques, as described above. 
 
 
-\subsection{Iceberg Shape \& Sighting Database?}
-\subsection{Peter's thesis work}
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=\textwidth]{../graphics/RawNavSim.png} % requires the graphicx package
+   \caption{Iceberg translation and rotation causes large apparent navigational drift and unless corrected, results in map errors. The drift can be so severe that the correspondence problem cannot be solved using normal dead-reckoning methods.}
+   \label{fig:naiveMapping}
+\end{figure}
 
+This raises the second implication: while iceberg motion requires environment-aided localization to estimate the errors due to motion, it complicates the correspondence problem, a crucial part of these techniques. This is because the standard method for solving the correspondence problem in underwater mapping relies on having well-characterized inertial navigation errors. Equipped with a high quality inertial navigation unit, a vehicle can fly a full mapping run and return on a self-intersecting trajectory to usually within meters of its true position. When it builds its submaps, it is essentially guaranteed to be seeing the terrain it ``thinks" it is seeing. The correspondence problem is simply solved by accurate dead reckoning. This is important, as the methods typically used for the correlation step are sensitive to initialization, and can fall into local minima or become intractible if too large a search area is used. 
+
+In summary, the non-inertial iceberg reference frame will introduce large apparent errors in the vehicle's navigation, resulting in an inaccurate map. The vehicle can not typically directly measure the motion, driving a need for environment-aided techniques to estimate it. However, the motion also complicates the implementation of these techniques by making the data correspondence problem more difficult.
 
 \section{Contributions}
 
-\section{Thesis outline}
+This dissertation makes four main contributions
+
+First, it provides a method for generating a self-consistent map of the \emph{entire} submerged portion of a free-drifting iceberg using an AUV without the need for external monitoring or intervention. Previous methods had various limitations in the iceberg size, or amount of motion that they could tolerate, or had to be continuously sent positioning information from a surface vessel.
+
+To achieve this, it formulates the mapping problem in such a way that the vehicle's inertial position need not be known, eliminating the need for external position fixes. This reformulation also shows the equivalence between mapping in non-inertial environments and mapping with imperfect inertial sensors, a well-studied problem in the robotics community. Drawing this link is the second contribution. 
+
+Third, it presents several methods for autonomous detection of loop closure events. These methods use various means to reduce the size of the search space used to determing correspondence. In one method, application-specific information is leveraged to weed out false matches. In the other, features inspired by the computer vision community are extracted and comapred using random sample consensus (RANSAC) to reduce  false positive correspondences.
+
+Fourth, it presents successful mapping results, both from simulation and from field data. In the former, an iceberg model using shape data from a real iceberg is given simulated translational and rotational motion. The data is then fed to the SLAM algorithm and the error due to motion is eliminated. The field data consists of mapping an underwater canyon. This is shown for two cases: first on the raw inertial navigation data, which had developed a translational offset of \~5 meters over the course of the mapping run. Second, the compass data was corrupted to simulate the effects of a rotating iceberg, and the SLAM algorithm was allowed to recover from the large errors this incurred.
+
+\section{Reader's guide}
+
+\subsection*{Chapter 2: Related Work}
+
+\subsection*{Chapter 3: Iceberg Mapping as SLAM with poor inertial sensing}
+
+\subsection*{Chapter 4: Methods for automatic loop closure detection}
+
+\subsection*{Chapter 5: Simulated mapping results}
+
+\subsection*{Chapter 6: Mapping results}
