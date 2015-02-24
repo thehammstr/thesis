@@ -81,7 +81,7 @@ Any errors in the measurement or integration of these quantities will cause a dr
 
 \subsubsection{Environment-aided localization}
 
-Terrain-aided localization refers broadly to the use of information within the environment to prevent unbounded localization error. This differs from infrastructure-based methods in that it is assumed that the environment is not actively cooperating with the vehicle. The vehicle must use ``information of opportunity" to aid in its localization. 
+Environment-aided localization refers broadly to the use of information within the environment to prevent unbounded localization error. This differs from infrastructure-based methods in that it is assumed that the environment is not actively cooperating with the vehicle. The vehicle must use ``information of opportunity" to aid in its localization. 
 
 \begin{figure}[htbp]
    \centering
@@ -92,7 +92,9 @@ Terrain-aided localization refers broadly to the use of information within the e
 
 The type of environmental information used varies widely by application and available sensing, but the common thread is that if a vehicle can identify a landmark, feature, or area that it has traversed before, it can make a direct measurement of the magnitude and direction of drift it has accrued in the elapsed time, and account for that drift, bounding its magnitude in time. This has two parts: ``correspondence:" ior identifying these loop-closure events, and ``correlation:" estimating bias based on correspondence. 
 
-In practice, nearly every mapping application uses some degree of environment-aided methods to achieve precise, self-consistent maps. In underwater mapping, self-intersecting trajectories are typically designed into a mission, and submaps from the beginning and end of the run are correlated to eliminate inertial drift. This technique is often referred to as ``scan matching" in the terrestrial robotics community, and is often used even when GPS is available to refine position estimates and produce maps of high precision. A similar strategy is used when creating mosaic images, such as aerial maps or panorama photos.  Keypoints, or distinctive image features, are extracted from each image and compared to keypoints from other images. After matches are identified ( solving the correspondence problem) the images are distorted to produce an accurate map, free of seams at the borders between images. The sensor modality is very different from a ranging sensor like sonar, but the principle is identical.
+In practice, nearly every mapping application uses some degree of environment-aided methods to achieve precise, self-consistent maps. In underwater mapping, self-intersecting trajectories are typically designed into a mission, and submaps from the beginning and end of the run are correlated to eliminate inertial drift. This technique is often referred to as ``scan matching" in the terrestrial robotics community, and is often used even when GPS is available to refine position estimates and produce maps of high precision. A similar strategy is used when creating mosaic images, such as aerial maps or panorama photos.  Keypoints, or distinctive image features, are extracted from each image and compared to keypoints from other images. After matches are identified ( solving the correspondence problem) the images are distorted to produce a self-consistent map, free of seams at the borders between images. The sensor modality is very different from a ranging sensor like sonar, but the principle is identical. 
+
+Several types of environment-aided localization and mapping techniques will be described in Chapter \ref{ch.RelatedWork}.
 
 \subsection{Challenges with mapping icebergs}
 

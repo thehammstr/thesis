@@ -18,7 +18,7 @@ Kimball's method had the structure shown in Figure \ref{fig:NestedLoop}. The opt
         \right]
 \end{align}
 
-Although the inner loop is a linear operation, the number of parameters to be estimated grows linearly with the map size, and can result in slow performance for large icebergs. The method presented in this thesis eliminates the inner loop estimation entirely, resulting in an optimization were only the heading of the iceberg as a function of time need be estimated. The specifics of the manipulations used to eliminate this part of the optimization will be developed fully in the following sections. 
+Although the inner loop is a linear operation, the number of parameters to be estimated grows linearly with the map size, and can result in slow performance for large icebergs. The method presented in this thesis eliminates the inner loop estimation entirely, resulting in an optimization were only the heading of the iceberg as a function of time need be estimated. This can be seen graphically in Figure \ref{fig:NestedLoop2} The specifics of the manipulations used to eliminate this part of the optimization will be developed fully in the following sections. 
 
 \begin{figure}[htbp]
    \centering
@@ -48,7 +48,7 @@ The vehicle model used for this paper is similar to the Dorado-class AUV. This i
 
 This paper assumes that the AUV being used is equipped with a sideways-facing DVL such that all four beams are nominally incident on the side of the iceberg. With this configuration, the AUV maintains ``bottom lock" or ``iceberg lock" on the iceberg, giving it a measurement of its velocity in the iceberg's reference frame. The AUV is also assumed to have a multibeam sonar aligned with the scan plane perpendicular to the vehicle's nominal velocity, used for mapping. 
 
-It is assumed that the AUV can measure depth through the use of absolute pressure sensors. This reduces the estimation of translation to a 2D-problem in $x$ and $y$.
+It is assumed that the AUV can measure depth through the use of absolute pressure sensors. This reduces the estimation of translation to a 2D-problem.
 
 For each sonar sounding from both the multibeam and DVL, a range is returned. Since the each beam's orientation in the vehicle frame is known, each measurement can be represented as a vector expressed in the vehicle's frame of reference.
 
@@ -129,3 +129,29 @@ The starting point for the estimation problem is the so-called ``Loop Equation,"
 \end{figure}
 
 The loop equation gets its name from the fact that the two paths to get from $O$ to $S_i$ are equivalent, and define a ``loop."
+
+In Kimball's method, this equation is differentiated in the inertial frame
+
+\begin{equation} % requires amsmath; align for no eq. number
+   \frac{~^Id}{~dt}(\vec{r}^{~\nicefrac{V_{cm}}{O}} + \vec{r}^{~\nicefrac{S_i}{V_{cm}}} = ~ \vec{r}^{~\nicefrac{B_{cm}}{O}} + \vec{r}^{~\nicefrac{S_i}{B_{cm}}})\\
+   \end{equation}
+   
+   which, after some simplification yields 
+   
+       \begin{equation}
+    ~^{I}\vec{v}^{V_{cm}} ~+~ \frac{~^Vd}{~dt}(\vec{r}^{~\nicefrac{S_i}{V_{cm}}} ) ~+~ ^{I}\vec{\omega}^{V_{cm}}\times\vec{r}^{~\nicefrac{S_i}{V_{cm}}}  = 
+    ~^{I}\vec{v}^{B_{cm}} ~+~^{I}\vec{\omega}^{B}\times\vec{r}^{~\nicefrac{S_i}{B_{cm}}}. \\
+\end{equation}
+
+By the definition of $S_i$ as the point ensonified by the DVL,  $\vec{r}^{~\nicefrac{S_i}{V_{cm}}}$ can be rewritten as $r_{i,t}\hat{d}_{i} $, where $\hat{d}_{i} $ is the fixed (in vehicle frame) unit vector of the $i_{th}$ DVL beam and $r_{i,t} $ is the corresponding range measurement at time $t$.  
+
+Taking the dot product of this equation with $\hat{d}_{i} $ yields,
+
+    \begin{align}
+    \hat{d}_{i} \cdot~^{I}\vec{v}^{V_{cm}} ~+~ \dot{r}_{i,t}  ~+~ \underbrace{\hat{d}_{i} \cdot^{I}\vec{\omega}^{V_{cm}}\times{~r_{i,t}\hat{d}_{i}}}_{0}  &=
+     \label{eqn:expensive}
+    \hat{d}_{i} \cdot~^{I}\vec{v}^{B_{cm}} ~ + ~\hat{d}_{i} \cdot\left(^{I}\vec{\omega}^{B}\times\vec{r}^{~\nicefrac{S_i}{B_{cm}}}\right)  \\
+    \underbrace{\hat{d}_{i} \cdot~^{I}\vec{v}^{V_{cm}}}_{\text{Assumed known}} ~+~ \underbrace{\dot{r}_{i,t} }_{From DVL}  &=
+    \underbrace{\hat{d}_{i} \cdot~^{I}\vec{v}^{B_{cm}}}_{\text{Estimated}} ~ + ~\hat{d}_{i} \cdot\left(\underbrace{^{I}\vec{\omega}^{B}}_{\text{Estimated}}\times\underbrace{\vec{r}^{~\nicefrac{S_i}{B_{cm}}}}_{\text{Estimated}}\right)  
+         \label{eqn:expensive}
+\end{align}
