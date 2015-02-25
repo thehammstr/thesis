@@ -55,27 +55,39 @@ As discussed in the introduction, accurate robotic mapping of an environment rel
 
 A wide variety of SLAM techniques have been developed and applied to mapping tasks in countless environments with all types of vehicles. A detailed enumeration of these could fill many volumes, and is well beyond the scope of this document, but for a good summary, the reader is encouraged to refer to \cite{SLAMoverview}. While each method has its own nuances, these methods can broadly be categorized along a few axes, based on data representation and solution methods. 
 
-One distinguishing feature of a method is whether it runs online or offline. EKF SLAM uses a Gaussian representation to run online, while GraphSLAM is applied after all data has been collected to solve for trajectory and map in one large batch process. [\cite{},\cite{}]. Some methods, such as FastSLAM, can be applied both online and offline. \cite{FastSLAM}.
+One distinguishing feature of a method is whether it runs online or offline. EKF SLAM uses a Gaussian representation to run online, while GraphSLAM is applied after all data has been collected to solve for trajectory and map in one large batch process [\cite{},\cite{}]. Some methods, such as FastSLAM, can be applied both online and offline \cite{FastSLAM}.
 
-A second difference between SLAM methods involves how the method represents the map. Some methods use a ``feature based" approach, where the map is composed of discrete, identifiable units whose positions are estimated. \cite{?}. Other methods are non-feature based, using other means to represent the map. An example of this is occupancy grid mapping, where the environment is discretized, and each discrete region is assigned a ``probability of occupancy." In other words, how likely it is that a position contains something solid, based on observations over time. 
-
-A third type of SLAM does not explicitly represent the map at all, but uses information in the environment to impose relative pose constraints between parts of the robot's trajectory. These methods are often not classified as SLAM, since the map itself is not one of the optimization variables. However, since terrain observations are used to generate localization estimate,  the localization portion and mapping portion cannot be decoupled, and these methods can indeed be thought of as SLAM. In Chapter \ref{ch.GraphSLAM}.
+A second difference between SLAM methods involves how the method represents the map. Some methods use a ``feature based" approach, where the map is composed of discrete, identifiable units whose positions are estimated. \cite{?}. Other methods are non-feature based, using other means to represent the map. An example of this is occupancy grid mapping, where the environment is discretized, and each discrete region is assigned a ``probability of occupancy." In other words, how likely it is that a position contains something solid, based on observations over time.  A third type of SLAM does not explicitly represent the map at all, but uses information in the environment to impose relative pose constraints between parts of the robot's trajectory. These methods are often not classified as SLAM, since the map itself is not one of the optimization variables. However, since terrain observations are used to generate localization estimate,  the localization portion and mapping portion cannot be decoupled, and these methods can indeed be thought of as SLAM. 
 
 This dissertation uses the GraphSLAM algorithm \cite{} to provide an offline estimate of iceberg shape. This will be developed fully in Chapter \ref{ch.GraphSLAM}. A feature-based variant as well as a mapless or implicit-map variant will be given, and it will be shown that the two are equivalent under certain assumptions. 
 
 \subsection{SLAM in Underwater Environments}
 
-SLAM has been used in a number of underwater applications. 
+SLAM has been used in a number of underwater applications, using many different sensing modalities. Fairfield et. al. mapped naturally-occuring cenotes in Mexico using an efficient occupancy-based SLAM technique \cite{Fairfield...}. A number of efforts have aimed at performing SLAM in structured or manmade underwater environments like dams and marinas \cite{Ribas}. In shallow, highly textured environments like coral reefs, a number of image-based SLAM implementations have been successful [\cite{?}].
 
-- Other (feature-based, Clay Kunz, etc.)
+As mentioned above, most bathymetric mapping tasks, while not always referred to as SLAM, use terrain correspondence to estimate and correct navigation errors and can therefore be classified as SLAM implementations \cite{anything by Caress}. The AUVs are pre-programmed to fly self-intersecting trajectories, and have accurate enough inertial guidance as to guarantee sufficient overlap. Thus the correspondence problem is solved automatically. Submaps are extracted and correlated to estimate drift, and the trajectory is altered in such a way as to distribute the error as unobtrusively as possible, while driving the measured drift to zero.
 
-- Bathymetric mapping as a type of slam
-	- environment-aided navigation
-	- direct pose-to-pose constraints
-	- map consistency is only dealt with implicitly
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[scale=.4]{../graphics/placeKitten1.jpeg} % requires the graphicx package
+   \caption{Depiction of normal bathymetric mapping procedure}
+   \label{fig:BathyMapping}
+\end{figure}
+
 
 \section{Automatic Loop Closure Detection}
 
+SLAM methods rely on identifying loop closure events, often referred to as the \emph{correspondence problem.} Different SLAM implementations go about solving the correspondence problem in a variety of ways. The methods vary in the amount of human involvement required, as well as how coupled the loop closure detection is from the solution method. At one extreme is SLAM with known correspondence, either from hand-labeled data or by having a ``map" comprising highly distinguishable features, such a the coded transponder beacons used int \cite{xponderslam?}. At the other end of the spectrum is fully unsupervised SLAM, where raw data is fed to the algorithm, and loop closure is detected automatically. This class of solution is desirable from an automation standpoint, as hand-labeling data or verifying corresondences can be a tedious and cumbersome task. However, without supervision, more sophisticated error checking and outlier rejection is required during optimization, which can increase computational complexity greatly. The ability to perform automatic loop closure detection can also rely heavily on the type and quality of sensing available.
+
+SLAM with known correspondence or ``supervised SLAM,"   The algorithm does not care how the correspondence was obtained and does not perform error checking to detect false matches. Humans are very good at outlier rejection, so this class of SLAM solution often depends on hand-labeled correspondence, or at least human verification of automatic correspondence, to eliminate false matches before optimizing. Another way to guard against false correspondence is to use highly identifiable ``map features," such as cooperative transponders that report their identity, as in \cite{?} 
+
+semi-supervised examples
+
+unknown correspondence examples
+
+As discussed above, traditional underwater bathymetric mapping tasks rely on having accurate enough inertial navigation that the correspondence problem is simply not an issue. Similarly, outdoor robotic mapping missions typically use GPS to provide an initial estimate of position, which is close enough to the true position for accurate (but sometimes brittle) scan registration techniques [\cite{OriginalGraphSLAM?} \cite{stanley?} \cite{ICP}].
+
+Robots performing SLAM in indoor environments do not have access to GPS signals. Because of this, they must either have very accurate odometry (like bathymetry mapping vehicles) or be able to 
 
 
 \section{Summary}

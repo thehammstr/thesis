@@ -62,7 +62,7 @@ For infrastructure-based navigation, two methods are commonly used: Long-Baselin
 \begin{figure}[htbp]
    \centering
    \includegraphics[width=.8\textwidth]{../graphics/LBL.png} % requires the graphicx package
-   \caption{Long-Baseline Interferometry can provides position fixes to the vehicle, limiting drift. \emph{Graphic courtesy of Peter Kimball}}
+   \caption{Long-Baseline Interferometry provides position fixes to the vehicle, limiting drift. \emph{Graphic courtesy of Peter Kimball}}
    \label{fig:LBL}
 \end{figure}
 
@@ -112,7 +112,7 @@ This motion has two major implications: first, it means that the iceberg constit
 
 This raises the second implication: while iceberg motion requires environment-aided localization to estimate the errors due to motion, it complicates the correspondence problem, a crucial part of these techniques. This is because the standard method for solving the correspondence problem in underwater mapping relies on having well-characterized inertial navigation errors. Equipped with a high quality inertial navigation unit, a vehicle can fly a full mapping run and return on a self-intersecting trajectory to usually within meters of its true position. When it builds its submaps, it is essentially guaranteed to see the terrain it expects to see. The correspondence problem is simply solved by accurate dead reckoning. This is important, as the methods typically used for the correlation step are sensitive to initialization, and can fall into local minima or become intractible if too large a search area is used. 
 
-In summary, the non-inertial iceberg reference frame will introduce large apparent errors in the vehicle's navigation, resulting in an inaccurate map. The vehicle can not typically directly measure the motion, driving a need for environment-aided techniques to estimate it. However, the motion also complicates the implementation of these techniques by making the data correspondence problem more difficult.
+In summary, the non-inertial iceberg reference frame will introduce large apparent errors in the vehicle's navigation, resulting in an inaccurate map. The vehicle can not typically directly measure the motion, driving a need for environment-aided techniques to estimate it. However, the motion also complicates the implementation of these techniques by making the data correspondence problem more difficult. The 
 
 \section{Contributions}
 
