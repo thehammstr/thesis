@@ -3,10 +3,6 @@
 \chapter{Related Work}
 \label{ch.RelatedWork}
 
-\section{Robotic Operation in Polar Environments}
-
-Robots have been successfully fielded in challenging arctic environments for years
-
 \subsection{Iceberg Profiling}
 
 A number of methods exist for generating shape estimates of free-drifting icebergs. They can be broken down roughly by the type of data used to produce the method: aerial measurements, ship-based measurements including tethered vehicles, and untethered underwater vehicle (UUV) based measurements.
@@ -32,11 +28,11 @@ The ability to make simultaneous observations of the iceberg both above and belo
    \label{fig:LidarOdometry}
 \end{figure}
 
-\subsubsection{}
+\subsubsection{AUV-based Iceberg Profiling}
 
 Several efforts have investigated the use of AUVs for iceberg profiling. These have been motivated in large part by AUVs' low operational cost relative to ROVs and ship-based methods. Additionally, AUVs could enable some missions that would simply be infeasible for ROVs, such as mapping very large icebergs, or ice islands. 
 
-Zhou et. al. have investigated using Slocum Glider vehicles to profile icebergs between Greenland and Newfoundland and Labrador. \cite{Zhou2014}. Icebergs there are prevalent, and pose risk to offshore oil installations and shipping. Gliders show promise as a low-cost data collection platform to aid in iceberg management, but their low power and control authority constraints limit their achievable resolution. However cooperative efforts with autonomous surface vehicles show great potential for improving this [\cite{}]. Zhou's focus thus far has been developing a control strategy for the glider, given its motion constraints, that allows application to iceberg profiling. The work thus far has been limited to relatively small icebergs, and assumes that their motion can be adequately described purely with translation. These assumptions are likely valid for the sizes of iceberg the researchers are interested in, and the time scales involved in mapping them, but break down for much larger icebergs. Additionally, the vehicle dynamics, sensing, and power constraints make a difficult to perform a direct comparison between their methods and the one presented in this dissertation. 
+Zhou et. al. have investigated using Slocum Glider vehicles to profile icebergs between Greenland and Newfoundland and Labrador. \cite{Zhou2014}. Icebergs there are prevalent, and pose risk to offshore oil installations and shipping. Gliders show promise as a low-cost data collection platform to aid in iceberg management, but their low power and control authority constraints limit their achievable resolution. However cooperative efforts with autonomous surface vehicles show great potential for improving this [\cite{}]. The focus of this work has been developing a control strategy for the glider, given its motion constraints, that allows application to iceberg profiling. It assumes that the iceberg's motion can be adequately described purely with translation. This assumption is likely valid for the relatively small size of iceberg the researchers are interested in, and the time required to map them, but breaks down for much larger icebergs. Additionally, the vehicle dynamic, sensing, and power constraints make a difficult to perform a direct comparison between their methods and the one presented in this dissertation. 
 
  Kimball and Rock presented a method for creating high-resolution maps of free-drifting icebergs using AUVs in [\cite{Kimball2011}]. The work uses offline optimization to estimate the iceberg's translation and rotation during the course of the mapping run. It models these motion parameters using B-splines \cite{} to enforce smooth, physical motion. The optimization problem is broken up into linear and nonlinear portions and solved in an iterative least squares framework, as shown in Figure \ref{fig:NestedLoopRelatedWork}. The method was demonstrated on field data from an Antarctic iceberg collected by ship-based sonar, as well as bathymetric data recorded by an AUV. While it provided accurate, self-consistent map sections based on constant depth swaths of data, the algorithm suffered from scalability issues. Multiple swaths of data were required to build up a map of the entire iceberg, and errors in the motion model between the swaths could cause map artifacts or ``seams" that could make later use for robotic navigation difficult. Additionally, the method was computationally intensive, and required subsampling of data for the optimization to converge in a reasonable amount of time. Furthermore, the method relied on having an estimate of the vehicle's inertial position, which was supplied to it via ship-based USBL link. The need to tend the vehicle to provide these navigation fixes places an operational burden on the ship, when a more autonomous solution could free it to do other science. This dissertation uses Kimball's method as a foundation, and makes a number of improvements to address these issues. 
 
@@ -75,27 +71,61 @@ As mentioned above, most bathymetric mapping tasks, while not always referred to
 \end{figure}
 
 
-\section{Automatic Loop Closure Detection}
+\section{Data Correspondence and Correlation}
 
-SLAM methods rely on identifying loop closure events, often referred to as the \emph{correspondence problem.} Different SLAM implementations go about solving the correspondence problem in a variety of ways. The methods vary in the amount of human involvement required, as well as how coupled the loop closure detection is from the solution method. At one extreme is SLAM with known correspondence, either from hand-labeled data or by having a ``map" comprising highly distinguishable features, such a the coded transponder beacons used int \cite{xponderslam?}. At the other end of the spectrum is fully unsupervised SLAM, where raw data is fed to the algorithm, and loop closure is detected automatically. This class of solution is desirable from an automation standpoint, as hand-labeling data or verifying corresondences can be a tedious and cumbersome task. However, without supervision, more sophisticated error checking and outlier rejection is required during optimization, which can increase computational complexity greatly. The ability to perform automatic loop closure detection can also rely heavily on the type and quality of sensing available.
+!!!! SHOULD THIS BE A SUBSECTION OF SLAM? !!!!
 
-SLAM with known correspondence or ``supervised SLAM,"   The algorithm does not care how the correspondence was obtained and does not perform error checking to detect false matches. Humans are very good at outlier rejection, so this class of SLAM solution often depends on hand-labeled correspondence, or at least human verification of automatic correspondence, to eliminate false matches before optimizing. Another way to guard against false correspondence is to use highly identifiable ``map features," such as cooperative transponders that report their identity, as in \cite{?} 
+SLAM methods generally rely on identifying loop closure events, where an area is revisited after a long interlude. Multiple observations of recognizable features are then compared, and any discrepancy in their estimated location can be used to correct navigational error in the robot's trajectory. The first part of this process, often referred to as the \emph{correspondence} problem, involves determining that two or more measurements correspond to observations of the same feature or area in the environment. Data \emph{correlation} then aims to resolve any discrepancies between the multiple observations by modifying the trajectory estimate. Determining relative weights between odometry errors incurred by these modifications and observation discrepancies is highly application-specific, as are the methods used to solve the correspondence and correlation problems. These are separate but coupled tasks: if the method used for correlation is very robust to outliers, the correspondence problem need not be overly discriminative. However, if the correlation method is sensitive to initial conditions or false correspondences, the correspondence must to a better job of rejecting bad matches. 
 
-semi-supervised examples
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[scale=.4]{../graphics/placeKitten1.jpeg} % requires the graphicx package
+   \caption{Loop Closure Defined Pictorially}
+   \label{fig:LoopClosure}
+\end{figure}
 
-unknown correspondence examples
+\subsection{Scan matching}
 
-As discussed above, traditional underwater bathymetric mapping tasks rely on having accurate enough inertial navigation that the correspondence problem is simply not an issue. Similarly, outdoor robotic mapping missions typically use GPS to provide an initial estimate of position, which is close enough to the true position for accurate (but sometimes brittle) scan registration techniques [\cite{OriginalGraphSLAM?} \cite{stanley?} \cite{ICP}].
+- traditional bathy mapping, urban lidar mapping
+        - build submaps, look for rigid transformations 
+        - do not build descriptors that can be matched in an invariant ``descriptor space"
+	- good when decent initial estimate and dense range sensing are available
 
-Robots performing SLAM in indoor environments do not have access to GPS signals. Because of this, they must either have very accurate odometry (like bathymetry mapping vehicles) or be able to 
+\subsection{Robust 2D image Features}
+
+SIFT, SURF, ORB, Harris, yada yada yada
+building descriptors that can be matched reliably independent of location estimate
+
+Tricky: 3d features easier to understand after discussion of 2d image features, as they mostly grew out of CV features, but the data i'm dealing with is 3d, so might confuse reader as to how 2d point features matter in my context if they come first.
+
+
+\subsection{3D Point Cloud Features}
+
+Rusu papers, point cloud library work
+Fast Point Feature Histograms 
+Less mature generally than things like SIFT
+Well suited for manmade structured environments, but less work has been done to prove robustness in natural terrain
+    - good for future work: not sure these WON'T work for icebergs, but took stabs at it and they weren't super reliable ``out of the box
+
+
+%The methods vary in the amount of human involvement required, the quality of sensing ava as well as how coupled the loop closure detection is from the solution method. At one extreme is SLAM with known correspondence, either from hand-labeled data or by having a ``map" comprising highly distinguishable features, such a the coded transponder beacons used int \cite{xponderslam?}. At the other end of the spectrum is fully unsupervised SLAM, where raw data is fed to the algorithm, and loop closure is detected automatically. This class of solution is desirable from an automation standpoint, as hand-labeling data or verifying corresondences can be a tedious and cumbersome task. However, without supervision, more sophisticated error checking and outlier rejection is required during optimization, which can increase computational complexity greatly. The ability to perform automatic loop closure detection can also rely heavily on the type and quality of sensing available.
+%
+%SLAM with known correspondence or ``supervised SLAM,"   The algorithm does not care how the correspondence was obtained and does not perform error checking to detect false matches. Humans are very good at outlier rejection, so this class of SLAM solution often depends on hand-labeled correspondence, or at least human verification of automatic correspondence, to eliminate false matches before optimizing. Another way to guard against false correspondence is to use highly identifiable ``map features," such as cooperative transponders that report their identity, as in \cite{?} 
+%
+%semi-supervised examples
+%
+%unknown correspondence examples
+%
+%As discussed above, traditional underwater bathymetric mapping tasks rely on having accurate enough inertial navigation that the correspondence problem is simply not an issue. Similarly, outdoor robotic mapping missions typically use GPS to provide an initial estimate of position, which is close enough to the true position for accurate (but sometimes brittle) scan registration techniques [\cite{OriginalGraphSLAM?} \cite{stanley?} \cite{ICP}].
+%
+%Robots performing SLAM in indoor environments do not have access to GPS signals. Because of this, they must either have very accurate odometry (like bathymetry mapping vehicles) or be able to 
 
 
 \section{Summary}
 
-Robots have been successfully operating under and around ice in both the Arctic and Antarctic environments for many years, and are an invaluable tool for scientists studying these extreme environments
-
 A number of companies currently perform iceberg profiling using ship-based sonar, ROVs, and aerial and surface-based photogrammetry. These profiles are used to model wind and water drag to predict drift and also to aid in damage modeling and iceberg towing and management. 
 
-Several efforts have been made to use AUVs to profile the keel of icebergs. The work presented in this dissertation builds on one of these efforts. Its contributions address issues with speed, scalability, and operational constraints of the prior method. To make these improvements, the problem is reformulated to fit within the framework of well-developed SLAM techniques. Additionally, takes inspiration from robust image feature techniques developed computer vision community to help automate portions of the SLAM process that would otherwise require human intervention when making maps of icebergs.
+Several efforts have been made to use AUVs to profile the keel of icebergs. The work presented in this dissertation builds on one of these efforts. Its contributions address issues with speed, scalability, and operational constraints of the prior method. To make these improvements, the problem is reformulated to fit within the framework of well-developed SLAM techniques. 
 
+SLAM techniques require recognizing when an area has been traversed before. This correspondence problem can be solved by manually labels or autonomously. Generally the more information the robot is able to gather from the environment, the more this process can be automated. Much work has been done in the robotics and computer vision communiies to extract robust, identifiable features from range and image data. These features can be used by the robot to identify loop closure events.
 
