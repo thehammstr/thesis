@@ -112,10 +112,9 @@ Several types of environment-aided localization and mapping techniques will be d
 
 \subsection{Challenges with mapping icebergs}
 
-Mapping icebergs poses a set of unique challenges relative to other underwater mapping tasks. Specifically, they refuse to sit still to have their picture taken. Icebergs are free to translate in two directions, and rotate in heading. They are pushed at random by the wind  and currents, making it difficult to predict how they will move. (Additionally, they are prone to flip or ``turtle," pitching 180 degrees over very short time scales, though this dissertation does not address such dynamic corner cases of mapping.) 
+Mapping icebergs poses a set of unique challenges relative to other underwater mapping tasks. Specifically, they refuse to sit still. Icebergs are free to translate in two directions, and rotate in heading. They are pushed at random by the wind  and currents, making it difficult to predict how they will move. (Additionally, they are prone to flip or ``turtle," pitching 180 degrees over very short time scales, though this dissertation does not address such dynamic corner cases of mapping.) 
 
-This motion has two major implications: first, it means that the iceberg constitutes a non-inertial reference frame. Unmodeled accelerations and rotations of the iceberg introduce large errors into the navigation solution, resulting in large apparent inertial drift rates and an inaccurate, inconsistent map. The sensors available to an AUV typically have too narrow a field of view to directly measure the iceberg's motion with any accuracy, so other steps must be taken to correct for it. This drives a need for environment-aided localization techniques, as described above. 
-
+This motion has two major implications: first, it means that the iceberg constitutes a non-inertial reference frame. Unmodeled accelerations and rotations of the iceberg introduce large errors into the navigation solution, resulting in large apparent inertial drift rates and an inaccurate, inconsistent map. The sensors available to AUVs cannot account for this drift, or odometry error, driving the need to estimate the motion through other means. Second, the odometry error complicates greatly the task of data correspondence between traversals of the same area of the iceberg, a necessary step for using cues from the iceberg's geometry to estimate and account for its motion.
 
 \begin{figure}[htbp]
    \centering
@@ -124,7 +123,43 @@ This motion has two major implications: first, it means that the iceberg constit
    \label{fig:naiveMapping}
 \end{figure}
 
-This raises the second implication: while iceberg motion requires environment-aided localization to estimate the errors due to motion, it complicates the correspondence problem, a crucial part of these techniques. This is because the standard method for solving the correspondence problem in underwater mapping relies on having well-characterized inertial navigation errors. Equipped with a high quality inertial navigation unit, a vehicle can fly a full mapping run and return on a self-intersecting trajectory to usually within meters of its true position. When it builds its submaps, it is essentially guaranteed to see the terrain it expects to see. The correspondence problem is simply solved by accurate dead reckoning. This is important, as the methods typically used for the correlation step are sensitive to initialization, and can fall into local minima or become intractible if too large a search area is used. 
+If the AUV were operating above water, powerful 3D laser scanners would allow a direct measurement of rotation and translation between measurements reducing or eliminating the errors associated to iceberg motion. This is shown in figure \ref{fig:ScanMatch}. These types of scanners can map and perform odometry simultaneously, and are often used on terrestrial robots and Unmanned Surface Vehicles, but do not work underwater \cite{ref:Singapore}. The multibeam sonars available to an AUV only scan in two dimensions. For mapping the iceberg, the sonar is oriented with the beam oriented perpindicular to the direction of travel in order to sweep out the widest area, as shown in Figure \ref{fig:beamOrientation}.  In order to perform scan matching for odometry, the sonar would need to be oriented in the horizontal plane, as in Figure \ref{fig:ScanMatchMultibeam}. This drives a need for environment-aided localization techniques, as described above. 
+
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.8\textwidth]{../graphics/ScanMatch4a.png} % requires the graphicx package
+   \caption{Top view of the iceberg mapping problem. If the sensor field of view has significant extent in the direction of travel, scan matching can provide odometry}
+   \label{fig:ScanMatch1}
+   \end{figure}
+    \begin{figure}[h]
+   \centering
+   \includegraphics[width=.8\textwidth]{../graphics/ScanMatch4b.png} % requires the graphicx package
+   \caption{Odometry corrected by scan matching. This readily extends to the full 3d case using techniques like Iterative Closest Point.}
+   \label{fig:ScanMatch2}
+\end{figure}
+
+\begin{figure}[h]
+   \centering
+   \includegraphics[width=.8\textwidth]{../graphics/ScanMatch3.png} % requires the graphicx package
+   \caption{Simulated AUV scans taken at two times, roughly 20 meters apart. The multibeam mapping sonar sweeps out a wide area when oriented perpendicular to the direction of travel. This orientation does not allow scan matching for odometry, since the beam pattern does not overlap from scan to scan, as shown in Figure \ref{fig:NoMatch}}
+   \label{fig:beamOrientation}
+\end{figure}
+
+\begin{figure}[h]
+   \centering
+   \includegraphics[width=.8\textwidth]{../graphics/ScanMatch3a.png} % requires the graphicx package
+   \caption{This shows the same plot as Figure \ref{fig:ScanMatch1}, but with a vertically-oriented multibeam sonar, as used in mapping, as opposed to a horizontally-mounted multibeam or 3D rang scanner. This orientation does not allow scan matching for odometry, since the beam pattern does not overlap from scan to scan.}
+   \label{fig:NoMatch}
+\end{figure}
+
+\begin{figure}[h]
+   \centering
+   \includegraphics[width=.8\textwidth]{../graphics/ScanMatch1.png} % requires the graphicx package
+   \caption{A multibeam sonar could be used for odometry as in Figure \ref{fig:ScanMatch2} if mounted in the orientation shown, but only for trajectories at constant depth, and the field of view would be very narrow in the vertical direction. However, this configuration could only map a thin layer of the iceberg at a time, so it is unsuitable for the mapping mission.}
+   \label{fig:ScanMatchMultibeam}
+\end{figure}
+
+The iceberg-motion-induced odometry error and the inability to directly account for it due to sensor limitations leads to the second implication: while iceberg motion requires environment-aided localization to estimate the errors due to motion, it complicates the correspondence problem, a crucial part of these techniques. This is because the standard method for solving the correspondence problem in underwater mapping relies on having well-characterized inertial navigation errors. Equipped with a high quality inertial navigation unit, a vehicle can fly a full mapping run and return on a self-intersecting trajectory to usually within meters of its true position. When it builds its submaps, it is essentially guaranteed to see the terrain it expects to see. The correspondence problem is simply solved by accurate dead reckoning. This is important, as the methods typically used for the correlation step are sensitive to initialization, and can fall into local minima or become intractible if too large a search area is used. 
 
 In summary, the non-inertial iceberg reference frame will introduce large apparent errors in the vehicle's navigation, resulting in an inaccurate map. The vehicle can not typically directly measure the motion, driving a need for environment-aided techniques to estimate it. However, the motion also complicates the implementation of these techniques by making the data correspondence problem more difficult. The 
 
