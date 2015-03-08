@@ -2,3 +2,59 @@
 
 \chapter{Solving for Iceberg Shape using GraphSLAM}
 \label{ch.GraphSLAM}
+
+Chapter \ref{ch.IcebergGeometry} recast the problem of iceberg mapping in familiar terms. The vehicle's trajectory through the iceberg frame of reference can be dead-reckoned based on the DVL measurements, and the iceberg's rotation is can be modeled as a drifting rate gyro bias or low-precision compass, both of which have been dealt with extensively in the robotics community.
+
+However, the elimination of the inner loop optimization carries the implicit assumption that any error comes entirely from the iceberg's rotation. In reality, there will be other errors due to measurement and odometry noise that should be considered alongside the rotational error to produce a map of the highest quality possible. GraphSLAM provides a theoretical framework that allows the error associated with each quantity to be weighted according to its uncertainty relative to all other measurements. Additionally, the structure used by GraphSLAM to represent the mapping problem allows it be used to solve large mapping problems very efficiently. For an illustration of this, Montemerlo et. al. calculated a map of Stanford's Main Quad, including $10^5$ poses and $10^8$ measurements in roughly 30 seconds of computer time \cite{?}. As discussed in Chapter \ref{ch.RelatedWork}, many SLAM implementations exist, each with its advantages and disadvantages. In this instance, the ease of representing the iceberg mapping problem as a pose graph, the ability to solve large optimizations efficiently, and the fact that the calculations did not need to be performed online drove the selection of GraphSLAM as a solution method.
+
+\section{GraphSLAM overview}
+
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.7\textwidth]{../graphics/factor_graph.png} % requires the graphicx package
+   \caption{GraphSLAM models the mapping problem as a probabilistic graph.  The poses $x_i$ and $x_{i+1}$ are linked via odometry terms. Additionally, any two poses where the same landmark was observed are linked by measurement terms through that landmark. These links represent Gaussian conditional probabilities. \emph{PLACEHOLDER GRAPHIC}}
+   \label{fig:GraphSLAM}
+\end{figure}
+
+
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.7\textwidth]{../graphics/placeKitten1.jpeg} % requires the graphicx package
+   \caption{Internal representation of the GraphSLAM problem. Pose and map state beliefs are encoded in the information vector $\xi$ and the odometry and measurement links are encoded in the sparse, symmetric positive-semidefinite matrix, $\Omega$. The structure of the matrix allows efficient solution via the method of conjugate gradients. Additionally, the cumulative effect of multiple obeservations of landmarks can be marginalized out, resulting in a lossless reduction of the optimization, and further improving speed. \emph{PLACEHOLDER GRAPHIC}}
+   \label{fig:GraphSLAM}
+\end{figure}
+
+%\Omega = \left[\begin{array}{c c c c c | c c c c}
+%u_{1,1} & u_{1,2} &     0   & 0 & 0 &  z_{1,1} & \hdots & z_{1,i} & 0 \\
+%u_{1,2} & u_{2,2} & \ddots & 0 & 0 &  z_{2,1} & \hdots & z_{2,j} & 0 \\
+%0       & \ddots & \ddots &     \ddots  &   0    &    \ddots     &    \ddots   &    \ddots & 0    \\
+%0 & 0 & \ddots & u_{n-1,n-1} & u_{n,n-1} & 0 & \ddots & \ddots & \vdots \\
+%0 & 0 & 0 & u_{n,n-1} & u_{n,n} & 0 & \hdots & z_{n,m-1}  & z_{n,m}\\
+%\hline 
+%z_{1,1} & z_{2,1} & 0 & 0 & 0 & l_{1,1} & 0 & 0 & 0\\
+%\vdots & \vdots & 0 & 0 & z_{n,m-1} & 0 & \ddots & 0 & 0 \\
+%\vdots & \vdots & 0 & 0 & z_{n,m-1} & 0 & 0 & \ddots & 0 \\
+%\vdots & \vdots & 0 & 0 & z_{n,m} & 0 & 0 & 0 & l_{m,m} 
+%\end{array}\right]
+%, ~\xi = \left[\begin{array}{c}
+%p_1 \\
+%p_2 \\
+%\vdots \\
+%p_{n-1} \\
+%p_n \\
+%\hline
+%m_1 \\
+%m_2 \\
+%\vdots \\
+%m_m
+%\end{array}\right]
+
+\section{State and map representation}
+
+\subsection{Explicit map representation}
+
+\subsubsection{Known vs. unknown correspondence}
+
+\subsection{Implicit map representation}
+
+\section{Summary}

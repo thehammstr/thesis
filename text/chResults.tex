@@ -2,3 +2,39 @@
 
 \chapter{Mapping Results}
 \label{ch.Results}
+
+
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/SimData/RealIceberg1/SimImage1.png} % requires the graphicx package
+   \caption{Screen capture from the iceberg mapping simulation environment. The iceberg model was taken from a real iceberg, part of the CNRC iceberg shapes and sightings database. The yellow cylinder represents the multibeam sonar-equipped AUV. The red contour is the current multibeam scan, and the cyan portion represents past scans. Returns are recorded up to the water line. The simulation allows the iceberg to be set adrift with arbitrary motion, and allows the reconstruction to be compared to truth data.}
+   \label{fig:IcebergSim}
+\end{figure}
+
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/SimData/RealIceberg1/RawNav.png} % requires the graphicx package
+   \caption{The raw inertial navigation of the AUV during the simulated mapping run is shown by the pink contour. The iceberg's motion causes the large misalignments apparent in the projected multibeam measurements. The green line segments represent calculated loop closure events, provided in pre-processing using a semi-supervised scan matching method. In an accurate map, both ends of each segment should lie on the pink contour.}
+   \label{fig:RawNav}
+\end{figure}
+
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/SimData/RealIceberg1/WithDVL1.png} % requires the graphicx package
+   \caption{Incorporating iceberg-facing DVL readings corrects for iceberg translation effects, but cannot resolve changes in the iceberg's heading. This results in a ``corkscrew effect" error pattern, where the reprojected multibeam data appear to twist about the iceberg center.}
+   \label{fig:WithDVL1}
+\end{figure}
+
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/SimData/RealIceberg1/WithDVL2.png} % requires the graphicx package
+   \caption{Top view of the map after incorporating DVL data to highlight the corkscrew error that remains due to iceberg heading change}
+   \label{fig:WithDVL2}
+\end{figure}
+
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/SimData/RealIceberg1/FullSolution.png} % requires the graphicx package
+   \caption{After processing the data with GraphSLAM, the remaining alignment error is eliminated. In the process of aligning the point clouds, dead-reckoned DVL errors are estimated along with the errors related to iceberg heading. The output is the the map and trajectory that minimizes the odometry and alignment errors, weighted by the relative uncertainty of each. }
+   \label{fig:FullSimSol}
+\end{figure}
