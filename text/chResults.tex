@@ -3,11 +3,14 @@
 \chapter{Mapping Results}
 \label{ch.Results}
 
+I has pretty result graphs
+
+\section{Iceberg Simulation}
 
  \begin{figure}[htbp]
    \centering
    \includegraphics[width=.9\textwidth]{../graphics/ceresResults/SimData/RealIceberg1/SimImage1.png} % requires the graphicx package
-   \caption{Screen capture from the iceberg mapping simulation environment. The iceberg model was taken from a real iceberg, part of the CNRC iceberg shapes and sightings database. The yellow cylinder represents the multibeam sonar-equipped AUV. The red contour is the current multibeam scan, and the cyan portion represents past scans. Returns are recorded up to the water line. The simulation allows the iceberg to be set adrift with arbitrary motion, and allows the reconstruction to be compared to truth data.}
+   \caption{Screen capture from the iceberg mapping simulation environment. The model was built from data collected from a real iceberg, part of the CNRC iceberg shapes and sightings database. The yellow cylinder represents the multibeam sonar-equipped AUV. The red contour is the current multibeam scan, and the cyan portion represents past scans. Returns are recorded up to the water line. The simulation allows the iceberg to be set adrift with arbitrary motion, and allows the reconstruction to be compared to truth data.}
    \label{fig:IcebergSim}
 \end{figure}
 
@@ -37,4 +40,34 @@
    \includegraphics[width=.9\textwidth]{../graphics/ceresResults/SimData/RealIceberg1/FullSolution.png} % requires the graphicx package
    \caption{After processing the data with GraphSLAM, the remaining alignment error is eliminated. In the process of aligning the point clouds, dead-reckoned DVL errors are estimated along with the errors related to iceberg heading. The output is the the map and trajectory that minimizes the odometry and alignment errors, weighted by the relative uncertainty of each. }
    \label{fig:FullSimSol}
+\end{figure}
+
+\section{Canyon Wall Data}
+
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/CanyonData/BadDriftRealData.png} % requires the graphicx package
+   \caption{Data collected by an AUV in a portion of Monterey Canyon with near-vertical walls. The navigation data was corrupted with a heading error to simulate the effects of iceberg motion or faulty heading sensor. This instance corresponds to a quite aggressive iceberg drift rate or a failed heading gyro. The resulting large dead reckoned drift complicates the task of detecting loop closure.}
+   \label{fig:RealDataWithDrift}
+\end{figure}
+
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/CanyonData/ThreePassConvergence.png} % requires the graphicx package
+   \caption{After processing with the Ceres solver, the large initial errors are eliminated. Three swaths of data collected at different depths are fused into one self-consistent map. }
+   \label{fig:RealDataSolution1}
+\end{figure}
+
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/CanyonData/ThreePassConvergence1.png} % requires the graphicx package
+   \caption{Detailed view of the SLAM reconstruction, highlighting the multiple swaths of data fused into a self-consistent map. As in the simulated data, the pink contour is the AUV trajectory estimate, and the green segments show pre-processed loop closure events. }
+   \label{fig:RealDataSolution1}
+\end{figure}
+
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/CanyonData/ThreePassConvergence2.png} % requires the graphicx package
+   \caption{Detailed view of the SLAM reconstruction, highlighting the multiple swaths of data fused into a self-consistent map. }
+   \label{fig:RealDataSolution2}
 \end{figure}

@@ -1,4 +1,68 @@
 % !TEX root = ../Thesis.tex
 
-\chapter{Methods for Automatic Loop Closure Detection}
+\chapter{Automatic Loop Closure Detection}
 \label{ch.LoopClosure}
+
+One of the most challenging problems with mapping icebergs is automatic loop closure detection. Solving the correspondence problem is crucial to estimating iceberg motion, but difficult precisely because of that motion. This chapter looks more closely at how this difficulty arises, and presents two methods for solving the correspondence problem for underwater mapping tasks where precise inertial navigation is unavailable.
+
+\section{The Challenge of Loop Closure Detection}
+
+% topic paragraph: summarizes the rest, but does it make sense before what is to follow?
+The iceberg motion introduces larger odometry errors, which drives a requirement for increased submap size. However, a larger submap means that more scans have to be concatenated over a longer time. This gives the motion-induced odometry error more chance to warp the submap. This effect creates a desire to use as small a submap as possible. Somehow, a balance must be struck between these competing criteria. 
+
+As earlier discussed in Chapters \ref{ch.Introduction} and \ref{ch.RelatedWork}, static-environment underwater mapping typically creates submaps by concatenating many successive multibeam sonar scans, and then correlating with point cloud registration techniques. These submaps are built at strategic locations where the planned trajectory self-intersects. The maps must be large enough and the crossings frequent enough that overlap is guaranteed, based on the inertial drift characeristics of the vehicle. Less accurate odometry or longer intervals between crossings will cause larger potential drift, and require a larger submap to ensure overlap.
+
+An implicit assumption of the submap method is that the inertial guidance of the vehicle is extremely accurate over the short time it takes to build a submap. Any navigation errors during that time will introduce warping to the submap, which can cause the registration method to fail or worse: create a positive match on different terrain. 
+
+One possible solution to achieve large coverage area with minimal map warping might be to search for the best registration over multiple smaller submaps, and devise a metric to select the best submap alignment pair. However, as odometry error increases, the search space can become large, and point cloud registrations are relatively expensive, and verifying their alignment can be difficult. 
+
+These concerns provide the motivation for the methods developed in the rest of this chapter. They seek to find local, stable, identifiable features in the terrain that can be recognized upon a second observation and used to initialize more accurate point cloud initialization methods. 
+
+\section{Extracting Local Information from Terrain}
+
+The amount and type of information that can be extracted from terrain varies widely by the sensing modality. For multibeam sonar, only range and intensity (effectively reflectivity) are returned by the sensor. This dissertation only considers information that can be obtained from the range information, though future work may investigate the value of intensity for loop closure detection purposes.
+
+\subsection{Curvature and Normal Vector Estimation}
+
+Surface curvature and normal vector direction are two parameters that are often estimated from local patches of point cloud data, and can provide useful information. 
+
+A number of methods exist, but the most efficient method uses principal component analysis to fit a plane to a small neighborhood of points. 
+
+\begin{align} % requires amsmath; align* for no eq. number
+   C = ~&\frac{1}{K} \sum\limits_{k=0}^{K} (\mathbf{p}_k - \mathbf{\bar{p}})  (\mathbf{p}_k - \mathbf{\bar{p}})^\intercal \\
+   \sigma_i\mathbf{\lambda}_i = &~ C\mathbf{\lambda}_i
+\end{align}
+
+Here $\mathbf{p}_k$ are the $K$ nearest neighbors to the point of interest. $\mathbf{\bar{p}}$ can either be the mean of the patch or the interest point itself. These will be very similar except on the boundaries of a point cloud.
+
+The normal to this plane is the eigenvector corresponding to the minimum eigenvalue \cite{?}. The curvature can be estimated as the ratio of eigenvectors
+
+\begin{align} % requires amsmath; align* for no eq. number
+   \kappa = ~&\frac{\sigma_{1}}{\sigma_{1}+\sigma_{2}+\sigma_{3}} 
+\end{align}
+
+or a more complex model, such as a quadratic paraboloid can be used. The former method is simpler, but can fail in noisy point clouds where there is not a single clearly-defined surface. The latter method is used in the 3D extension of Harris Corners \cite{Harris3D}.
+
+Curvature can be used to extract features in the terrain, for later use in comparison. This solves the first problem for extracting landmarks from the terrain: ensuring that these points of interest are well-localized, as discussed in section \ref{sec.2Dfeatures}.  A simple feature descriptor can be constructed based off the curvature and normal vector to aid in the comarison. However, these two quantities do not provide strong discriminative power, as many interest points will have similar curvature and normal direction. The following sections will discuss ways to improve this discriminative ability for use in loop closure detection. 
+
+\subsection{Using Invariant Information to Improve Feature Discriminative Power} 
+
+
+
+\section{Applying 2D Image Features to 3D Terrain}
+
+A wealth of research has been conducted in extracting robust, identiable features from 2D imagery, with great success. The following section details work that leverages this well-established technology for the problem of recognizing 3D terrain. It will be shown that although some effort is necessary to reformat the range data, the 2D and 3D problems are more similar than they are different.
+
+\subsection{Images as Digital Elevation Maps}
+
+Many standard algorithms for extracting robust image feature descriptors only consider image intensity, discarding any color information. The resulting grayscale images can be thought of as digital elevation maps (DEMs), with pixel intensity being the ``height" of the map above that location in the image. This representation is shown in Figure \ref{fig:imAsSurf}. The resulting ``terrain" typically has much larger gradients than most natural terrain.
+
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=\textwidth]{../graphics/imageAsSurf.png} % requires the graphicx package
+   \caption{Algorithms like SIFT and SURF treat images as digital elevation maps, with intensity plotted as height. Note how brighter areas in the photo correspond to higher peaks. In general, image-derived elevation maps have much higher contrast than naturally-occuring terrain.}
+   \label{fig:imAsSurf}
+\end{figure}
+ 
+ \section{3D Point Cloud Features}
+ 
