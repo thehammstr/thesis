@@ -5,7 +5,7 @@
 
 Chapter \ref{ch.IcebergGeometry} recast the problem of iceberg mapping in familiar terms. The vehicle's trajectory through the iceberg frame of reference can be dead-reckoned based on the DVL measurements, and the iceberg's rotation is can be modeled as a drifting rate gyro bias or low-precision compass, both of which have been dealt with extensively in the robotics community.
 
-However, the elimination of the inner loop optimization carries the implicit assumption that any error comes entirely from the iceberg's rotation. In reality, there will be other errors due to measurement and odometry noise that should be considered alongside the rotational error to produce a map of the highest quality possible. GraphSLAM provides a theoretical framework that allows the error associated with each quantity to be weighted according to its uncertainty relative to all other measurements. Additionally, the structure used by GraphSLAM to represent the mapping problem allows it be used to solve large mapping problems very efficiently. For an illustration of this, Montemerlo et. al. calculated a map of Stanford's Main Quad, including $10^5$ poses and $10^8$ measurements in roughly 30 seconds of computer time \cite{?}. As discussed in Chapter \ref{ch.RelatedWork}, many SLAM implementations exist, each with its advantages and disadvantages. In this instance, the ease of representing the iceberg mapping problem as a pose graph, the ability to solve large optimizations efficiently, and the fact that the calculations did not need to be performed online drove the selection of GraphSLAM as a solution method.
+However, the elimination of the inner loop optimization carries the implicit assumption that any error comes entirely from the iceberg's rotation. In reality, there will be other errors due to measurement and odometry noise that should be considered alongside the rotational error to produce a map of the highest quality possible. GraphSLAM provides a theoretical framework that allows the error associated with each quantity to be weighted according to its uncertainty relative to all other measurements. Additionally, the structure used by GraphSLAM to represent the mapping problem allows it be used to solve large mapping problems very efficiently. For an illustration of this, Montemerlo et. al. calculated a map of Stanford's Main Quad, including $10^5$ poses and $10^8$ measurements in roughly 30 seconds of CPU time \cite{?}. As discussed in Chapter \ref{ch.RelatedWork}, many SLAM implementations exist, each with its advantages and disadvantages. In this instance, the ease of representing the iceberg mapping problem as a pose graph, the ability to solve large optimizations efficiently, and the fact that the calculations did not need to be performed online drove the selection of GraphSLAM as a solution method.
 
 \section{GraphSLAM overview}
 
@@ -19,10 +19,43 @@ However, the elimination of the inner loop optimization carries the implicit ass
 
 \begin{figure}[htbp]
    \centering
-   \includegraphics[width=.7\textwidth]{../graphics/placeKitten1.jpeg} % requires the graphicx package
-   \caption{Internal representation of the GraphSLAM problem. Pose and map state beliefs are encoded in the information vector $\xi$ and the odometry and measurement links are encoded in the sparse, symmetric positive-semidefinite matrix, $\Omega$. The structure of the matrix allows efficient solution via the method of conjugate gradients. Additionally, the cumulative effect of multiple obeservations of landmarks can be marginalized out, resulting in a lossless reduction of the optimization, and further improving speed. \emph{PLACEHOLDER GRAPHIC}}
+   \includegraphics[width=\textwidth]{../graphics/InfoMatrix.png} % requires the graphicx package
+   \caption{Internal representation of the GraphSLAM problem. Pose and map state relationships are encoded in the sparse, symmetric positive-semidefinite matrix, $\Omega$. The structure of the matrix allows efficient solution via the method of conjugate gradients. Additionally, the cumulative effect of multiple obeservations of landmarks can be marginalized out, resulting in a lossless reduction of the optimization, and further improving speed. \emph{From Probabilistic Robotics, by Thrun, Burgard, and Fox.}}
    \label{fig:GraphSLAM}
 \end{figure}
+
+\subsection{GraphSLAM as nonlinear least squares}
+
+GraphSLAM represents the mapping problem as a probabilistic graph. Pose nodes correspond to the vehicle's state at discrete times $t$. If an explicit map is to be used, other nodes represent map feature locations. 
+
+Consecutive  pose nodes are linked through odometry links. These links encode the conditional probability distribution with Gaussian form
+
+\begin{equation}
+p\left(x_{t+1}~|~x_t,u_t\right) = \eta~ exp\left(-\frac{1}{2}\left[x_{t+1} - g\left(u_t,x_t\right)\right]^{\intercal}R_t^{-1}\left[x_{t+1} - g\left(u_t,x_t\right)\right]\right)
+\end{equation}
+
+where $g\left(u_t,x_t\right)$ is the motion update equation, a function of state $x_t$ and control input $u_t$ at time $t$, and $R_t$ is the process noise covariance.
+
+Map nodes are connected to the pose nodes from which they were observed through measurement links. These take the same form of the odometry links:
+
+\begin{equation}
+p\left(z^i_{t}~|~x_t,m_j\right) = \eta~ exp\left(-\frac{1}{2}\left[z^i_{t} - h\left(x_t,m_j\right)\right]^{\intercal}Q_t^{-1}\left[z^i_{t} - h\left(x_t,m_j\right)\right]\right)
+\end{equation}
+
+that is, the Normal probability distribution of making measurement $z^i_t$ of map feature $m_j$ at time $t$ given the estimates of the location of $m_j$ and pose $x_t$.
+
+The full posterior for the graph is then given by the sum of the log of each term
+
+\begin{multline}
+J = ~x_0^{\intercal}\Omega_0 x_0 ~+
+\sum_{t}{\left[x_{t+1} - g\left(u_t,x_t\right)\right]^{\intercal}R_t^{-1}\left[x_{t+1} - g\left(u_t,x_t\right)\right]} ~+ \\ \sum_{t}{\sum_{i}{\left[z^i_{t} - h\left(x_t,m_j\right)\right]^{\intercal}Q_t^{-1}\left[z^i_{t} - h\left(x_t,m_j\right)\right]}}
+\end{multline}
+
+The first term is necessary to ``anchor" the map, since all other constraints are purely relative between poses. In effect, it fixes the first point to the origin. 
+
+Internally, these links are linearized, then encoded in an information matrix and an information vector, as detailed in \cite{ref?}. The information matrix is sparse, and symmetric positive semi-definite. The sparsity allows the measurements to be marginalized out, creating a much smaller matrix defined only in the pose space, but containing all the information from the map features. This reduction in size and positive semi-definite structe allows the use of fast solution algorithms like the conjugate gradient method. 
+
+\subsection{Minimum spring energy analogy}
 
 %\Omega = \left[\begin{array}{c c c c c | c c c c}
 %u_{1,1} & u_{1,2} &     0   & 0 & 0 &  z_{1,1} & \hdots & z_{1,i} & 0 \\
@@ -50,6 +83,12 @@ However, the elimination of the inner loop optimization carries the implicit ass
 %\end{array}\right]
 
 \section{State and map representation}
+
+GraphSLAM can be implemented with either explicit or implicit map representations In the explicit case, the locations of discrete features in the map appear as free parameters in the optimization. Additional information about the appearance of the feature is also often included. The locations of these features are estimated in a probabilistic framework simultaneously with the vehicle location. Mutual information regarding navigation offset between two poses that observe the same feature is encoded through that feature. 
+
+The other option is to use an \emph{implicit} map representation, in which information from the terrain is used to estimate the robot's trajectory, but th
+
+The following sections will discuss these different approaches to map representation as they pertain to iceberg mapping. They will also demonstrate the mathematical equivalency between the two approaches. In general, the type of sensor, and terrain will dictate which approach is more convenient. The results presented in Chapter \ref{ch.Results} use an implicit map representation, but an explicit map may be better suited to future work in feature-based automated loop closure as discussed in Chapter \ref{ch.LoopClosure}.
 
 \subsection{Explicit map representation}
 
