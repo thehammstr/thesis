@@ -3,9 +3,54 @@
 \chapter{Mapping Results}
 \label{ch.Results}
 
-I has pretty result graphs
+The following sections show GraphSLAM results from simulation and field data. 
+
+\section{Implementation Details}
+
+Both the simulation and field data results presented here model the vehicle state with the 4-dimensional vector
+
+\begin{equation}
+\vec{x}_t = \left[\begin{array}{c}
+                     x \\ y \\ \psi \\ \beta 
+                     \end{array}\right]
+\end{equation}
+
+where $x$ and $y$ are the horizontal Cartesian coordinates of the vehicle in the iceberg-fixed reference frame, $\psi$ is the vehicle's heading in the iceberg frame, and $\beta$ is the heading rate of the iceberg, or the apparent heading gyro bias due to iceberg motion. 
+
+A kinematic motion model is used, such that
+
+\begin{align}
+x_{t+1} &= x_t + \left[cos(\psi) u_t + sin(\psi)v_t\right]\Delta t +~ \nu_x\\
+y_{t+1} &= y_t + \left[-sin(\psi) u_t + cos(\psi)v_t\right]\Delta t + ~\nu_y \\
+\psi_{t+1}    &= \psi_{t} + \left[\omega_t- \beta_t \right] \Delta t + ~\nu_\psi\\
+\beta_{t +1}   &= \beta_{t} + ~\nu_\beta
+\end{align}
+
+The translational motion update is driven by the DVL. That is, the velocity of the vehicle's center of mass in the iceberg frame, expressed in vehicle-frame coordinates. 
+
+\begin{equation}
+\vec{u}_\text{\tiny{DVL}}(t) = 
+                    \left[\begin{array}{c}
+                     u_t \\ v_t \\ w_t 
+                     \end{array}\right]_V
+\end{equation}
+
+The vehicle's rotational motion update is driven by the vehicle's heading rate gyro measurement $\omega_t$ and the estimated iceberg motion parameter, $\beta_t$. This parameter label, often used to indicate sensor bias, was chosen to highlight the equivalence of unmodeled iceberg motion and time-varying rate gyro bias. The iceberg's large mass and inertia guarantee that its angular rate will be both small and slowly-varying. To capture this, $\beta_t$ is modeled as a random walk, driven only by noise.
+
+Each motion update also has a process noise term $\nu_i$. These are zero-mean Gaussian random variables whose covariance is tuned to reflect the uncertainty of the process. For translation, this is primarily DVL velocity measurement accuracy, for rotation, this is gyro accuracy, and for $\beta$ this is loosely related to the inertia of the iceberg. 
+
+More complex state representations may be used to create a higher-fidelity process model. However, adding more free parameters to the optimization can cause problems if the system dynamics are not well-known, as the optimizer can ``hide" errors in more places, yielding non-physical solutions. The choice of state representation is application-specific. The model should be complex enough to adequately describe the likely sources of error in the process, but no more.
+
 
 \section{Iceberg Simulation}
+
+A simulation environment was created in MATLAB. Data were generated so that the mapping algorithm could be verified against ``truth." A screen capture from this envirionment is shown in Figure \ref{fig:IcebergSim}
+
+A mesh was created based on 3D point cloud data of iceberg [XXX], obtained from the CNRC Iceberg Shapes and Sightings database. \cite{?} This particular iceberg was roughly 150 meters long at the waterline, with a keel depth of about 70 meters.
+
+This mesh was set adrift with known translation and rotation. The simulated AUV then flew a helical path of increasing depth around the iceberg, in wall-following mode. Its feedback controller attempted to maintain a constant standoff distance as measured by the two forward-inclined DVL beams.
+
+When simulated at higher standoff distances, around 50 meters, the two forward DVL beams often lost contact with the iceberg surface. In these instances, the simulated DVL reported ``MAX RANGE" to the controller and was unable to estimate the full iceberg-relative velocity. To handle these incidents, the wall-following feedback controller would saturate its output to gracefully re-acquire the wall. In the mapping phase, the dropouts in measured velocity were interpolated between times when the vehicle had good velocity readings. The process noise during these outages was increased to reflect this. The AUV nominally flies at a constant velocity as expressed in the body frame, so these outages did not have a great effect on the end reconstruction, but a higher fidelity motion model could enable better odometry by using DVL velocity information when only a subset of the beams can see the iceberg surface. This concept will be discussed further in Chapter \ref{ch.FutureWork}.
 
  \begin{figure}[htbp]
    \centering

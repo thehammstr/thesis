@@ -44,18 +44,41 @@ p\left(z^i_{t}~|~x_t,m_j\right) = \eta~ exp\left(-\frac{1}{2}\left[z^i_{t} - h\l
 
 that is, the Normal probability distribution of making measurement $z^i_t$ of map feature $m_j$ at time $t$ given the estimates of the location of $m_j$ and pose $x_t$.
 
-The full posterior for the graph is then given by the sum of the log of each term
+Taking the log of the full joint probability yields a sum of quadratic terms:
 
 \begin{multline}
 J = ~x_0^{\intercal}\Omega_0 x_0 ~+
 \sum_{t}{\left[x_{t+1} - g\left(u_t,x_t\right)\right]^{\intercal}R_t^{-1}\left[x_{t+1} - g\left(u_t,x_t\right)\right]} ~+ \\ \sum_{t}{\sum_{i}{\left[z^i_{t} - h\left(x_t,m_j\right)\right]^{\intercal}Q_t^{-1}\left[z^i_{t} - h\left(x_t,m_j\right)\right]}}
+\label{eq.quadcost}
 \end{multline}
 
 The first term is necessary to ``anchor" the map, since all other constraints are purely relative between poses. In effect, it fixes the first point to the origin. 
 
-Internally, these links are linearized, then encoded in an information matrix and an information vector, as detailed in \cite{ref?}. The information matrix is sparse, and symmetric positive semi-definite. The sparsity allows the measurements to be marginalized out, creating a much smaller matrix defined only in the pose space, but containing all the information from the map features. This reduction in size and positive semi-definite structe allows the use of fast solution algorithms like the conjugate gradient method. 
+The maximum a posteriori values for all free parameters in the optimization are those that minimie this cost function, $J$.
+
+Internally, these links are linearized, then encoded in an information matrix and an information vector, as shown in Figure \ref{fig:GraphSLAM} and fully developed in \cite{ref?}. The information matrix is sparse, and symmetric positive semi-definite. The sparsity allows the measurements to be marginalized out, creating a much smaller matrix defined only in the pose space, but containing all the information from the map features. This reduction in size and positive semi-definite structure allows the use of fast solution algorithms like the conjugate gradient method. 
 
 \subsection{Minimum spring energy analogy}
+
+A useful analogy for gaining intuition into how the GraphSLAM solver works uses the concept of spring potential energy. 
+
+\begin{align}
+P_{\text{spring}} &= \frac{1}{2}k\left(l-l_n\right)^2
+\label{eq.spring}
+\end{align}
+
+Note the similarity between equation \ref{eq.spring} and the right hand side terms of equation \ref{eq.quadcost}. All of them are weighted quadratic functions.
+
+In this analogy, each graph link is modeled as a spring separating the nodes. The natural length $l_n$ of the spring corresponds to the mean of the conditional probability,  $g\left(u_t,x_t\right)$ for odometry, and $h\left(x_t,m_j\right)$ for measurements. The stiffness $k$ is inversely proportional the covariance $R$ or $Q$: the more certain the measurement, the stiffer the effective spring. 
+
+Once the nodes are all tied together with springs of appropriate length and stiffness, any deviation from the natural length will result in additional spring potential energy. The GraphSLAM solution is identical to the \emph{minimum energy} state of this system. In fact, if the nodes were modeled as masses, and viscous damping were applied, dynamic motion simulation could be used to compute the same solution as GraphSLAM. The system would ``relax" into its minimum energy state, and the steady state dynamic solution would be the GraphSLAM posterior solution. While such a method would likely be much slower than using the actual GraphSLAM solution algorithm, the idea of modeling the system as a collection of masses, springs, and dampers provides useful intuition on how the algorithm manipulates the parameters to arrive at a solution.
+
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.65\textwidth]{../graphics/springs.png} % requires the graphicx package
+   \caption{GraphSLAM is equivalent to the minimum energy configuration of a mass-spring-damper system. Each spring's natural length and stiffness are determined by the corresponding measurement and measurement covariance, respectively.}
+   \label{fig:springs}
+\end{figure}
 
 %\Omega = \left[\begin{array}{c c c c c | c c c c}
 %u_{1,1} & u_{1,2} &     0   & 0 & 0 &  z_{1,1} & \hdots & z_{1,i} & 0 \\
