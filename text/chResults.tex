@@ -41,16 +41,34 @@ Each motion update also has a process noise term $\nu_i$. These are zero-mean Ga
 
 More complex state representations may be used to create a higher-fidelity process model. However, adding more free parameters to the optimization can cause problems if the system dynamics are not well-known, as the optimizer can ``hide" errors in more places, yielding non-physical solutions. The choice of state representation is application-specific. The model should be complex enough to adequately describe the likely sources of error in the process, but no more.
 
+\section{Data Collection}
 
-\section{Iceberg Simulation}
+This section details how data were collected for use in the GraphSLAM mapping algorithm.
 
-A simulation environment was created in MATLAB. Data were generated so that the mapping algorithm could be verified against ``truth." A screen capture from this envirionment is shown in Figure \ref{fig:IcebergSim}
+\subsection{Iceberg Simulation}
+
+A simulation environment was created in MATLAB to enable mapping results to be compared with known ``truth" for validation of the method. A screen capture from this envirionment is shown in Figure \ref{fig:IcebergSim}
 
 A mesh was created based on 3D point cloud data of iceberg [XXX], obtained from the CNRC Iceberg Shapes and Sightings database. \cite{?} This particular iceberg was roughly 150 meters long at the waterline, with a keel depth of about 70 meters.
 
 This mesh was set adrift with known translation and rotation. The simulated AUV then flew a helical path of increasing depth around the iceberg, in wall-following mode. Its feedback controller attempted to maintain a constant standoff distance as measured by the two forward-inclined DVL beams.
 
+Multibeam sonar range returns were then generated via ray-tracing on the mesh. These measurements could be corrupted with random noise to simulate imperfect real-world sensing. 
+
 When simulated at higher standoff distances, around 50 meters, the two forward DVL beams often lost contact with the iceberg surface. In these instances, the simulated DVL reported ``MAX RANGE" to the controller and was unable to estimate the full iceberg-relative velocity. To handle these incidents, the wall-following feedback controller would saturate its output to gracefully re-acquire the wall. In the mapping phase, the dropouts in measured velocity were interpolated between times when the vehicle had good velocity readings. The process noise during these outages was increased to reflect this. The AUV nominally flies at a constant velocity as expressed in the body frame, so these outages did not have a great effect on the end reconstruction, but a higher fidelity motion model could enable better odometry by using DVL velocity information when only a subset of the beams can see the iceberg surface. This concept will be discussed further in Chapter \ref{ch.FutureWork}.
+
+\subsection{Canyon Wall Data}
+
+\section{Loop Closure}
+
+Loop closure events were encoded in semi-supervised fashion via an interactive graphical user interface, shown in Figure \ref{fig:GUI}. A user selects two points along the trajectory (magenta line) where it is believed that the same terrain was imaged. Submaps are built by concatenating multibeam sonar measurements around these times. They are shown in red and yellow in both windows. The width of the submap is user-tunable, but should be as small as possible to mitigate warping, while preserving enough information to align the clouds. The user can then launch the Iterative Closest Point algorithm to calculate the submap offset, and the aligned point clouds are displayed in the bottom window. If the result is satisfactory, the user can then write the correspondence information and calculated offset data to file, where it can be used for later optimization. If not, the initialization can be refined until a good registration is achieved. The successfully recorded links are shown in the top window of the GUI with green lines. 
+
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.9\textwidth]{../graphics/IcebergGUI.png} % requires the graphicx package
+   \caption{Loop closure GUI}
+   \label{fig:GUI}
+\end{figure}
 
  \begin{figure}[htbp]
    \centering
@@ -87,7 +105,12 @@ When simulated at higher standoff distances, around 50 meters, the two forward D
    \label{fig:FullSimSol}
 \end{figure}
 
-\section{Canyon Wall Data}
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/SimData/RealIceberg1/50m_standoff/reconstruction_50m_standoff.png} % requires the graphicx package
+   \caption{At 50m standoff distance, the vehicle was out of DVL velocity lock roughly 60\% of the time. In spite of this, the algorithm is able to recover and produce a self-consistent map.}
+   \label{fig:FullSim50m}
+\end{figure}
 
  \begin{figure}[htbp]
    \centering
