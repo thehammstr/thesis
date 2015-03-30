@@ -48,6 +48,13 @@ This section details how data were collected for use in the GraphSLAM mapping al
 \subsection{Iceberg Simulation}
 
 A simulation environment was created in MATLAB to enable mapping results to be compared with known ``truth" for validation of the method. A screen capture from this envirionment is shown in Figure \ref{fig:IcebergSim}
+ 
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.7\textwidth]{../graphics/ceresResults/SimData/RealIceberg1/SimImage1.png} % requires the graphicx package
+   \caption{Screen capture from the iceberg mapping simulation environment. The model was built from data collected from a real iceberg, part of the CNRC iceberg shapes and sightings database. The yellow cylinder represents the multibeam sonar-equipped AUV. The red contour is the current multibeam scan, and the cyan portion represents past scans. Returns are recorded up to the water line. The simulation allows the iceberg to be set adrift with arbitrary motion, and allows the reconstruction to be compared to truth data.}
+   \label{fig:IcebergSim}
+\end{figure}
 
 A mesh was created based on 3D point cloud data of iceberg [XXX], obtained from the CNRC Iceberg Shapes and Sightings database. \cite{?} This particular iceberg was roughly 150 meters long at the waterline, with a keel depth of about 70 meters.
 
@@ -59,9 +66,12 @@ When simulated at higher standoff distances, around 50 meters, the two forward D
 
 \subsection{Canyon Wall Data}
 
+[Talk to Rock to get full details on the mapping vehicle (and mention iceberg AUV?)]
+
 \section{Loop Closure}
 
 Loop closure events were encoded in semi-supervised fashion via an interactive graphical user interface, shown in Figure \ref{fig:GUI}. A user selects two points along the trajectory (magenta line) where it is believed that the same terrain was imaged. Submaps are built by concatenating multibeam sonar measurements around these times. They are shown in red and yellow in both windows. The width of the submap is user-tunable, but should be as small as possible to mitigate warping, while preserving enough information to align the clouds. The user can then launch the Iterative Closest Point algorithm to calculate the submap offset, and the aligned point clouds are displayed in the bottom window. If the result is satisfactory, the user can then write the correspondence information and calculated offset data to file, where it can be used for later optimization. If not, the initialization can be refined until a good registration is achieved. The successfully recorded links are shown in the top window of the GUI with green lines. 
+
 
  \begin{figure}[htbp]
    \centering
@@ -70,12 +80,13 @@ Loop closure events were encoded in semi-supervised fashion via an interactive g
    \label{fig:GUI}
 \end{figure}
 
- \begin{figure}[htbp]
-   \centering
-   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/SimData/RealIceberg1/SimImage1.png} % requires the graphicx package
-   \caption{Screen capture from the iceberg mapping simulation environment. The model was built from data collected from a real iceberg, part of the CNRC iceberg shapes and sightings database. The yellow cylinder represents the multibeam sonar-equipped AUV. The red contour is the current multibeam scan, and the cyan portion represents past scans. Returns are recorded up to the water line. The simulation allows the iceberg to be set adrift with arbitrary motion, and allows the reconstruction to be compared to truth data.}
-   \label{fig:IcebergSim}
-\end{figure}
+\section{Solution via Ceres}
+
+The Ceres Library is a C++ open-source nonlinear least squares optimization library initially developed and used by Google. It has been used in a wide range of image processing and robotic mapping tasks by university and research groups around the world. Its flexibility and speed make it well-suited for these tasks, as, in general, no two experimental setups are exactly the same, and the problem size can be quite large.  
+
+The library allows the user to define cost function objects that tie graph nodes to one another, and incrementally add them to the problem. 
+
+The contributions discussed in Chapter \ref{ch.IcebergGeometry} made the application of this optimized solver a straightforward exercise. 
 
  \begin{figure}[htbp]
    \centering
@@ -87,7 +98,7 @@ Loop closure events were encoded in semi-supervised fashion via an interactive g
  \begin{figure}[htbp]
    \centering
    \includegraphics[width=.9\textwidth]{../graphics/ceresResults/SimData/RealIceberg1/WithDVL1.png} % requires the graphicx package
-   \caption{Incorporating iceberg-facing DVL readings corrects for iceberg translation effects, but cannot resolve changes in the iceberg's heading. This results in a ``corkscrew effect" error pattern, where the reprojected multibeam data appear to twist about the iceberg center.}
+   \caption{The incorporation of iceberg-facing DVL readings corrects for iceberg translation effects, but cannot resolve changes in the iceberg's heading. This results in a ``corkscrew effect" error pattern, where the reprojected multibeam data appear to twist about the iceberg center.}
    \label{fig:WithDVL1}
 \end{figure}
 

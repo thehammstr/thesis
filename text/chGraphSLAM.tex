@@ -21,7 +21,7 @@ However, the elimination of the inner loop optimization carries the implicit ass
    \centering
    \includegraphics[width=\textwidth]{../graphics/InfoMatrix.png} % requires the graphicx package
    \caption{Internal representation of the GraphSLAM problem. Pose and map state relationships are encoded in the sparse, symmetric positive-semidefinite matrix, $\Omega$. The structure of the matrix allows efficient solution via the method of conjugate gradients. Additionally, the cumulative effect of multiple obeservations of landmarks can be marginalized out, resulting in a lossless reduction of the optimization, and further improving speed. \emph{From Probabilistic Robotics, by Thrun, Burgard, and Fox.}}
-   \label{fig:GraphSLAM}
+   \label{fig:GraphSLAMinternal}
 \end{figure}
 
 \subsection{GraphSLAM as nonlinear least squares}
@@ -54,7 +54,7 @@ J = ~x_0^{\intercal}\Omega_0 x_0 ~+
 
 The first term is necessary to ``anchor" the map, since all other constraints are purely relative between poses. In effect, it fixes the first point to the origin. 
 
-The maximum a posteriori values for all free parameters in the optimization are those that minimie this cost function, $J$.
+The maximum likelihood estimates for all free parameters in the optimization are those that minimie this cost function, $J$.
 
 Internally, these links are linearized, then encoded in an information matrix and an information vector, as shown in Figure \ref{fig:GraphSLAM} and fully developed in \cite{ref?}. The information matrix is sparse, and symmetric positive semi-definite. The sparsity allows the measurements to be marginalized out, creating a much smaller matrix defined only in the pose space, but containing all the information from the map features. This reduction in size and positive semi-definite structure allows the use of fast solution algorithms like the conjugate gradient method. 
 
@@ -69,9 +69,9 @@ P_{\text{spring}} &= \frac{1}{2}k\left(l-l_n\right)^2
 
 Note the similarity between equation \ref{eq.spring} and the right hand side terms of equation \ref{eq.quadcost}. All of them are weighted quadratic functions.
 
-In this analogy, each graph link is modeled as a spring separating the nodes. The natural length $l_n$ of the spring corresponds to the mean of the conditional probability,  $g\left(u_t,x_t\right)$ for odometry, and $h\left(x_t,m_j\right)$ for measurements. The stiffness $k$ is inversely proportional the covariance $R$ or $Q$: the more certain the measurement, the stiffer the effective spring. 
+In this analogy, each graph link is modeled as a spring separating the nodes, as shown in Figure \ref{fig:springs}. The natural length $l_n$ of the spring corresponds to the mean of the conditional probability,  $g\left(u_t,x_t\right)$ for odometry, and $h\left(x_t,m_j\right)$ for measurements. The stiffness $k$ is inversely proportional the covariance $R$ or $Q$: the more certain the measurement, the stiffer the effective spring. 
 
-Once the nodes are all tied together with springs of appropriate length and stiffness, any deviation from the natural length will result in additional spring potential energy. The GraphSLAM solution is identical to the \emph{minimum energy} state of this system. In fact, if the nodes were modeled as masses, and viscous damping were applied, dynamic motion simulation could be used to compute the same solution as GraphSLAM. The system would ``relax" into its minimum energy state, and the steady state dynamic solution would be the GraphSLAM posterior solution. While such a method would likely be much slower than using the actual GraphSLAM solution algorithm, the idea of modeling the system as a collection of masses, springs, and dampers provides useful intuition on how the algorithm manipulates the parameters to arrive at a solution.
+Once the nodes are all tied together with springs of appropriate length and stiffness, any deviation from the natural length will result in additional spring potential energy. The GraphSLAM solution is identical to the \emph{minimum energy} state of this system. In fact, if the nodes were modeled as masses, and viscous damping were applied, dynamic motion simulation could be used to compute the same solution as GraphSLAM. The system would ``relax" into its minimum energy state, and the steady state dynamic solution would be the GraphSLAM MLE solution. While such a method would likely be much slower than using the actual GraphSLAM solution algorithm, the idea of modeling the system as a collection of masses, springs, and dampers provides useful intuition on how the algorithm manipulates the parameters to arrive at a solution.
 
 \begin{figure}[htbp]
    \centering
@@ -115,9 +115,15 @@ The following sections will discuss these different approaches to map representa
 
 \subsection{Explicit map representation}
 
-\subsubsection{Known vs. unknown correspondence}
+In the explicit map representation variant of GraphSLAM, the location of features within the map are solved explicitly alonside the vehicle trajectory. This is often used when the map consists primarily of discrete features, such as passive beacons \cite{?}, trees or pilings \cite{Langellaan}, or robust image features \cite{Augenstein}. 
+
 
 \subsection{Implicit map representation}
+
+The implicit map representation uses information in terrain viewed multiple times, but encodes that information directly in pose-to-pose constraints. In effect, this jumps directly to the last graphic in Figure \ref{fig:GraphSLAMinternal}. This is useful when the information in the terrain is dispersed throughout, as opposed to being concentrated in well-localized recognizable landmarks. This is often the case when the vehicle navigates through natural terrain using a range scanner with a wide field of view. In these scenarios, larger scale correlation may provide better offset data than local features. 
+
+
+\section{Known vs. unknown correspondence}
 
 \section{Summary}
 

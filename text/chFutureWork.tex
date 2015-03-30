@@ -3,18 +3,29 @@
 \chapter{Summary and Future Work}
 \label{ch.FutureWork}
 
-
+\section{Summary}
 - Chapter \ref{ch.LoopClosure} laid out some early work in automatically detecting loop closure in natural terrain with poor inertial navigation. 
-- Chapter \ref{ch.Results} assumed that these events had been solved, then built a map using the GraphSLAM method described in Chapter \ref{ch.GraphSLAM}. 
+
+\section{Future Work}
+
+\subsection{Automated Loop Closure Detection}
+- Chapter \ref{ch.Results} presented iceberg mapping results using a SLAM implementation where the correspondences were provided by a user. Humans are exceedingly good at recognizing patterns in noisy data. We are able to focus on important parts of images, point clouds etc. while rejecting clutter. To further automate the iceberg mapping process, a robust means for automatically detecting loop closure events is required. 
 -For future work, it would be good to integrate these processes more tightly.
 	- Prior work used one loop closure detection
 	- My method uses O(dozens)
 	- future solutions could effectively use continuous overlap information to produce most accurate maps
 - Much more work to be done in analyzing effective ways to use information in natural terrain to detect loop closure reliably
 
+\subsection{Tighter coupling between correspondence and correlation}
+
+\subsection{Vehicle path optimization for map accuracy}
+
+\subsection{Extension to other mapping tasks}
+- underwater mapping with low-grade IMU 
 - Space extension 
 	- Different sensors
 	- More degrees of freedom - should work the same, but can make optimization problem harder
 	
+\subsection{Multi-agent mapping}
 -Multi-agent mapping
 	- fusing data from underwater vehicles with surface or aerial info, autonomously creating full coverage maps.
