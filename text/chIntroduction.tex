@@ -19,7 +19,7 @@ The strategy employed in this dissertation is to cast the iceberg mapping proble
 
 One major challenge with performing SLAM in underwater environments is automatic detection of these so-called ``loop closure events." In shallow, feature-rich environments, such as coral reefs, cameras can be used, and robust image features can allow detection of these events. However, when standoff distances are large, or there is not sufficient texture in the terrain to allow image correlation, cameras provide little aid. In these cases, systems typically rely on accurate inertial guidance to provide a good initial estimate of regions of overlap, and then refine these estimates through point cloud correlation techniques like Iterative Closest Point (ICP). These methods can provide very accurate alignment, but are susceptible to local minima, and generally require good intial estimates of alignment to converge to the correct value. As noted above, when the environment is a non-inertial reference frame, even the most accurate inertial navigation system (INS) will not necessarily be able to provide sufficient accuracy for this type of loop closure detection. 
 
-This dissertation: (a) provides a method for generating a self-consistent map of the \emph{entire} submerged portion of a free-drifting iceberg, including multiple swaths collected at different depths; (b) formulates the mapping problem in such a way that the vehicle's inertial position need not be known, eliminating the need for external position fixes. This formulation also shows the equivalence between mapping in non-inertial environments and mapping with imperfect inertial sensors. (c) presents a method for autonomous detection of loop closure events, drawing from well-developed work in the computer vision community; (d) shows mapping results from simulation using shape data from a real iceberg, collected from ship-based sonar, as well as results from AUV field data of an underwater canyon with corrupted compass data. 
+This dissertation: (a) provides a method for generating a self-consistent map of the \emph{entire} submerged portion of a free-drifting iceberg, including multiple swaths collected at different depths; (b) formulates the mapping problem in such a way that the vehicle's inertial position need not be known, eliminating the need for external position fixes. This formulation also shows the equivalence between mapping in non-inertial environments and mapping with imperfect inertial sensors. (c) describes a graphical user interface to aid in detecting and describing loop closure events. It also presents early work in autonomous detection of loop closure events, drawing from well-developed work in the computer vision community; (d) shows mapping results from simulation using shape data from a real iceberg, as well as results from AUV field data of an underwater canyon with corrupted compass data. 
 
 
 
@@ -153,7 +153,7 @@ If the AUV were operating above water, powerful 3D laser scanners would allow a 
 \begin{figure}[h]
    \centering
    \includegraphics[width=.8\textwidth]{../graphics/ScanMatch1.png} % requires the graphicx package
-   \caption{A multibeam sonar could be used for odometry as in Figure \ref{fig:ScanMatch2} if mounted in the horizontal plane asshown, but only for trajectories at constant depth, as the field of view would be very narrow in the vertical direction. However, this configuration could only map a thin layer of the iceberg at a time, so it is unsuitable for the mapping mission.}
+   \caption{A multibeam sonar could be used for odometry as in Figure \ref{fig:ScanMatch2} if mounted in the horizontal plane as shown, but only for trajectories at constant depth, as the field of view would be very narrow in the vertical direction. However, this configuration could only map a thin layer of the iceberg at a time, so it is unsuitable for the mapping mission.}
    \label{fig:ScanMatchMultibeam}
 \end{figure}
 
@@ -185,7 +185,7 @@ Fourth, it presents successful mapping results, both from simulation and from fi
 
 \subsubsection*{Chapter \ref{ch.GraphSLAM}: Solving for Iceberg Shape using GraphSLAM} This section uses the problem formulation developed in Chapter \ref{ch.IcebergGeometry} and solves it using the GraphSLAM algorithm.
 
-\subsubsection*{Chapter \ref{ch.LoopClosure}: Methods for automatic loop closure detection} Limited sensing and moving terrain complicate the detection of loop closure events. This chapter lays out two methods to enable this capability.
+\subsubsection*{Chapter \ref{ch.LoopClosure}: Methods for loop closure detection} Limited sensing and moving terrain complicate the detection of loop closure events. This chapter lays out several methods to enable this capability.
 
 \subsubsection*{Chapter \ref{ch.Results}: Mapping results} Results are presented on simulated data of a drifting iceberg, as well as field data collected in Monterey Canyon. 
 
