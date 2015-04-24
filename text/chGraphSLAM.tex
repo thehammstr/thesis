@@ -283,15 +283,15 @@ The state representation presented above made the implicit assumption that the D
 \end{equation}
 
 \begin{align}
-\vec{v}_{t+1} &= \vec{v}_t + \left( \vec{a}_t + \vec{\omega}_t \times \vec{v}_t \right)dT\
+\vec{v}_{t+1} &= \vec{v}_t + \left( \vec{a}_t + \vec{\omega}_t \times \vec{v}_t \right)dT\\
 \end{align}
 
-where
-
+where $\vec{v}_t$ is the velocity of the vehicle in the iceberg frame, expressed in body coordinates, and $\vec{a}_t$ is the measured acceleration.
+ 
 \begin{align}
 \vec{v}_{t} &=  \left[\begin{array}{c}
                      u_t \\ v_t \\ w_t
-                     \end{array}\right]
+                     \end{array}\right]_V
 \end{align}
 
 This state representation would enforce continuity in the velocity, and enable any and all DVL information to be incorporated, even if there are not enough beams in contact with the iceberg to measure full 3D velocity.
@@ -308,6 +308,8 @@ A link is drawn between every pose node and the node representing constant vehic
 
 Low-cost vehicles may lack DVL entirely, in which case it would be essential to estimate velocity as part of the state. In addition, any time-varying sensor biases can be incorporated in similar fashion to the iceberg's rotation bias term. This is often done on all axes of low-cost MEMs rate gyros, where bias varies with ambient temperature. 
 
+More error states can be appended to the state to estimate such additional errors, but not without risk. Higher dimension state spaces increase the size of the optimization, but more importantly, can give optimizers more places to ``hide" errors. Care must be taken to avoid having the optimizer exploit such state augmentations and produce nonphysical results, unless the plant model is known to a high degree of accuracy.
+ 
 \label{sec.DesignConsiderations}
 
 \section{Summary}

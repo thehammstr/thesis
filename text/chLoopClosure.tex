@@ -3,22 +3,70 @@
 \chapter{Loop Closure Detection}
 \label{ch.LoopClosure}
 
-One of the most challenging problems with mapping icebergs is automatic loop closure detection. Solving the correspondence problem is crucial to estimating iceberg motion, but difficult precisely because of that motion. This chapter looks more closely at how this difficulty arises, and presents two methods for solving the correspondence problem for underwater mapping tasks where precise inertial navigation is unavailable.
+One of the most challenging problems with mapping icebergs is automatic loop closure detection. Solving the correspondence problem is crucial to estimating iceberg motion, but difficult precisely because of that motion. This chapter looks more closely at how this difficulty arises, and proposes two methods for solving the correspondence problem for underwater mapping tasks where precise inertial navigation is unavailable. 
+
+The first method is a streamlined graphical interface that allows a human to direct the search for loop closure events. An automated algorithm then operates on a reduced search space to perform precise alignment, and the user can decide whether the alignment is precise enough to include in the mapping optimization.
+
+The second method comprises early work in full automation of the loop closure detection process. It borrows heavily from computer vision and image processing literature, applying robust image feature extraction techniques to sonar range data in order to detect loop closure. 
 
 \section{The Challenge of Loop Closure Detection}
 
+Inertial navigation errors, whether introduced by moving terrain or poor sensing, complicates the task of loop closure detection in several ways. This section gives a brief review of the underwater mapping technique described in Chapter \ref{ch.RelatedWork} to emphasize the role of loop closure in navigation and mapping. It then describes the particular challenges that arise from these errors.
+
+\subsection{Underwater mapping revisited}
+
+Accurate robotic mapping requires accurate localization within the environment being mapped, as described in Chapter \ref{ch.Introduction}. Underwater robots use a combination of infrastructure, inertial navigation, and environment-aided navigation to localize themselves. 
+
+Nearly all mapping missions rely on information in the terrain to refine the localization and produce a self-consistent map. This process was described in Chapter \ref{ch.RelatedWork}, but for convenience, it is again stated here.
+
+The AUVs are pre-programmed to fly self-intersecting trajectories, and have accurate enough inertial guidance as to guarantee sufficient overlap. Thus the correspondence problem is solved automatically. Submaps are extracted and correlated to estimate drift, and the trajectory is altered in such a way as to distribute the error as unobtrusively as possible, while driving the measured drift to zero.
+
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.7\textwidth]{../graphics/NavPerformance.jpg} % requires the graphicx package
+   \caption{Illustration of normal bathymetric mapping procedure. \emph{www.mbari.org} }
+   \label{fig:BathyMapping2}
+\end{figure}
+
+
 % topic paragraph: summarizes the rest, but does it make sense before what is to follow?
-The iceberg motion introduces larger odometry errors, which drives a requirement for increased submap size. However, a larger submap means that more scans have to be concatenated over a longer time. This gives the motion-induced odometry error more chance to warp the submap. This effect creates a desire to use as small a submap as possible. Somehow, a balance must be struck between these competing criteria. 
 
-As earlier discussed in Chapters \ref{ch.Introduction} and \ref{ch.RelatedWork}, static-environment underwater mapping typically creates submaps by concatenating many successive multibeam sonar scans, and then correlating with point cloud registration techniques. These submaps are built at strategic locations where the planned trajectory self-intersects. The maps must be large enough and the crossings frequent enough that overlap is guaranteed, based on the inertial drift characeristics of the vehicle. Less accurate odometry or longer intervals between crossings will cause larger potential drift, and require a larger submap to ensure overlap.
+\subsection{Search space increase and submap warping due to motion errors}
 
-An implicit assumption of the submap method is that the inertial guidance of the vehicle is extremely accurate over the short time it takes to build a submap. Any navigation errors during that time will introduce warping to the submap, which can cause the registration method to fail or worse: create a positive match on different terrain. 
+The iceberg motion introduces larger odometry errors, which complicates the loop closure detection process in two ways: first, a larger area much be searched in order to guarantee overlap, and second, the submaps themselves can become warped relative to the true terrain shape.
 
-One possible solution to achieve large coverage area with minimal map warping might be to search for the best registration over multiple smaller submaps, and devise a metric to select the best submap alignment pair. However, as odometry error increases, the search space can become large, and point cloud registrations are relatively expensive, and verifying their alignment can be difficult. 
+%All inertial navigation systems drift over time without bound. This is a fundamental limitation of obtaining a position estimate solely by integrating noisy velocity and acceleration measurements. A modern state-of-the art INS can provide drift rates as low as 0.01\% of the distance traveled, but even this low a drift rate will eventually grow large enough to introduce substantial map error.  
 
-These concerns provide the motivation for the methods developed in the rest of this chapter. They seek to find local, stable, identifiable features in the terrain that can be recognized upon a second observation and used to initialize more accurate point cloud initialization methods. 
+Submaps are built at strategic locations where the planned trajectory self-intersects. The maps must be large enough and the crossings frequent enough that overlap is guaranteed, based on the inertial drift characeristics of the vehicle. Less accurate odometry or longer intervals between crossings will cause larger potential drift, and require a larger submap to ensure overlap. 
 
-\section{Extracting Local Information from Terrain}
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.7\textwidth]{../graphics/GraphSLAMcartoons/deadReckoning.png} % requires the graphicx package
+   \caption{The black points are the estimated/planned trajectory. The red points are the actual trajectory. Blurred ellipses show the positional uncertainty due to dead reckoning. The greater the inertial navigation error, the larger the search ellipse for loop closure detection.  }
+   \label{fig:BathyMapping2}
+\end{figure}
+
+
+The second complication arises from the implicit assumption of submap rigidity. The submap method assumes that the inertial guidance of the vehicle is extremely accurate over the short time it takes to build a submap. Any navigation errors during that time will introduce warping to the submap, which can cause the registration method to fail or worse: create a positive match on different terrain. 
+
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.7\textwidth]{../graphics/placeKitten1.jpeg} % requires the graphicx package
+   \caption{Submap warping due to navigation errors.}
+   \label{fig:BathyMapping2}
+\end{figure}
+
+The first issue drives a requirement for increased submap size. However, a larger submap means that more scans have to be concatenated over a longer time. This gives the motion-induced odometry error more chance to warp the submap. This drives the requirement to use as small a submap as possible. Somehow, a balance must be struck between these competing needs. 
+
+%One possible solution to achieve large coverage area with minimal map warping might be to search for the best registration over multiple smaller submaps, and devise a metric to select the best submap alignment pair. However, as odometry error increases, the search space can become large. Point cloud registrations are relatively expensive, and verifying their alignment can be difficult. 
+
+These concerns provide the motivation for the methods developed in the rest of this chapter. The first one, a graphical user interface, leverages humans' excellent pattern recognition ability to provide high level guidance and error checking for the alignment algorithm. It provides a streamlined method for encoding loop closure information for missions where human intervention is feasible. 
+
+The second method continues working toward the goal of removing the need for human intervention entirely. Borrowing from well-developed concepts in the computer vision and image processing communities, and more recent work in point cloud feature extraction, it seeks to find local, stable, identifiable features in the terrain that can be recognized upon a second observation and used to initialize more accurate point cloud registration methods. 
+
+\section{Loop Closure GUI}
+
+\section{Toward loop closure automation}
 
 The amount and type of information that can be extracted from terrain varies widely by the sensing modality. For multibeam sonar, only range and intensity (effectively reflectivity) are returned by the sensor. This dissertation only considers information that can be obtained from the range information, though future work may investigate the value of intensity for loop closure detection purposes.
 
