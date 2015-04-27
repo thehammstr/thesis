@@ -70,15 +70,7 @@ When simulated at higher standoff distances, around 50 meters, the two forward D
 
 \section{Loop Closure}
 
-Loop closure events were encoded in semi-supervised fashion via an interactive graphical user interface, shown in Figure \ref{fig:GUI}. A user selects two points along the trajectory (magenta line) where it is believed that the same terrain was imaged. Submaps are built by concatenating multibeam sonar measurements around these times. They are shown in red and yellow in both windows. The width of the submap is user-tunable, but should be as small as possible to mitigate warping, while preserving enough information to align the clouds. The user can then launch the Iterative Closest Point algorithm to calculate the submap offset, and the aligned point clouds are displayed in the bottom window. If the result is satisfactory, the user can then write the correspondence information and calculated offset data to file, where it can be used for later optimization. If not, the initialization can be refined until a good registration is achieved. The successfully recorded links are shown in the top window of the GUI with green lines. 
-
-
- \begin{figure}[htbp]
-   \centering
-   \includegraphics[width=.9\textwidth]{../graphics/IcebergGUI.png} % requires the graphicx package
-   \caption{Loop closure GUI}
-   \label{fig:GUI}
-\end{figure}
+Loop closure events were encoded in semi-supervised fashion via the interactive graphical user interface, described in Section \ref{sec:GUI}. The simulation data optimization contained roughly 15 loop closure events, and the canyon data had around 25 events. In general, the more loop closure events the optimization contains, the better (more self-consistent) the results, but care must be taken not to supply the optimizer with bad loop closure information, as this will corrupt the results.
 
 \section{Solution via Ceres}
 

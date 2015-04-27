@@ -31,7 +31,7 @@ The AUVs are pre-programmed to fly self-intersecting trajectories, and have accu
 
 % topic paragraph: summarizes the rest, but does it make sense before what is to follow?
 
-\subsection{Search space increase and submap warping due to motion errors}
+\subsection{Motion-induced complications}
 
 The iceberg motion introduces larger odometry errors, which complicates the loop closure detection process in two ways: first, a larger area much be searched in order to guarantee overlap, and second, the submaps themselves can become warped relative to the true terrain shape.
 
@@ -65,52 +65,166 @@ These concerns provide the motivation for the methods developed in the rest of t
 The second method continues working toward the goal of removing the need for human intervention entirely. Borrowing from well-developed concepts in the computer vision and image processing communities, and more recent work in point cloud feature extraction, it seeks to find local, stable, identifiable features in the terrain that can be recognized upon a second observation and used to initialize more accurate point cloud registration methods. 
 
 \section{Loop Closure GUI}
+\label{sec:GUI}
+
+This section describes in detail the graphical user interface designed to allow a user to identify and encode loop closures quickly and easily. 
+
+\subsection{GUI Operation}
+
+Loop closure GUI is meant to be straightforward. As a general rule, the more loop closures that are incorporated into the optimization, the more accurately the iceberg motion can be accounted for, yielding a more accurate and self-consistent map. The user launches the program including an argument that points to the log file including the navigation and sonar data. The vehicle path and multibeam cloud are rendered in the main window. The user can then look for areas of likely overlap and encode links incrementally.
+
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.8\textwidth]{../graphics/GUI.png} % requires the graphicx package
+   \caption{Loop closure GUI being used to encode loop closures on Soquel Canyon data set }
+   \label{fig:GUI}
+\end{figure}
+
+The user drags the slider bars at the top left, labeled ``first index" and ``second index," respectively. These indices correspond to the reference time stamp of the vehicle trajectory data. In the main data window, a white line is rendered that connects these two indices, as feedback for the user. 
+
+A submap is then automatically constructed around these two indices. To do this, the sonar measurements for the $N$ preceding scans and $N$ scans to follow are concatenated into one rigid submap, based on the vehicle's estimated trajectory over that time. Thus each submap contains $2N+1$ multibeam scans, associated with $2N+1$ consecutive vehicle poses. $N$ can be changed by the user using the ``Submap width" slider. Each point cloud is transformed into its central pose's reference frame, with the central pose defined as the origin. Because the vehicle attempts to maintain a constant standoff distance from the icberg surface, this tends to provide a reasonable initialization for the point cloud registration techniques that will later be applied. An implicit assumption is that the motion of the iceberg or the inertial drift of the vehicle during such a short time is small enough that it can safely be neglected. The two submaps are displayed in the lower window of the GUI. Additionally, the extent of the two submaps is overlaid on the full data set in the top window to aid the user in selecting areas of likely overlap.
+
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.6\textwidth]{../graphics/GUIcloseup.png} % requires the graphicx package
+   \caption{Closeup of Figure \ref{fig:GUI}. A white line between the two candidate indices is rendered as visual feedback for the user Also, the extent of the submaps used for registration is overlaid on the raw data in red and yellow. The green lines are loop closure events that have already been recorded.}
+   \label{fig:GUIcloseup}
+\end{figure}
+
+Once the user determines that the two submaps likely correspond to the same terrain, he or she can click the ``ICP" button. This applies the iterative closest point algorithm to the two submaps and displays the result to the lower window. For the iceberg implementation, the depth, pitch, and roll of the vehicle is assumed to be known, allowing a reduced model to be used for point cloud registration. Only the horizontal offsets $dx$ and $dy$, and heading offset $d\psi$ are estimated by the algorithm. Extending this method to the full six degree-of-freedom case would require the full estimation model, but using the reduced model makes the algorithm more robust to bad initial alignments, and is sufficient for this application. 
+ 
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.8\textwidth]{../graphics/GUI_preICP.png} % requires the graphicx package
+   \caption{The bottom window of the GUI shows the two subclouds in detail. Before ICP, these two clouds display some misalignment.}
+   \label{fig:GUI_preicp}
+\end{figure}
+
+The user can then inspect the resulting point clouds to determine whether ICP converged to a good alignment. If it has, the user clicks the ``Accept/write" button, and the position and heading offset between the two reference indices are recorded to file immediately. Otherwise, the user can choose different map points, submap widths, etc. and try again. If a bad alignment is accidentally recorded, the ``Delete Last" button removes it. Upon acceptance, the white line connecting the two reference indices turns green, and persists in the main display until it is either deleted or the session ends. This helps the user remember which areas already have loop closure information, and which still need to be processed. These lines can be seen in Figures \ref{fig:GUI} and \ref{fig:GUIcloseup}.
+
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.8\textwidth]{../graphics/placeKitten1.jpeg} % requires the graphicx package
+   \caption{After ICP is performed, the user can inspect the result to determine whether the alignment algorithm converged accurately.}
+   \label{fig:GUI_poseicp}
+\end{figure}
+
+The link will only be written to file if ICP has already been performed. The link data is recorded in human-readable CSV file format, so loop closure information from multiple sessions with the GUI can be spliced together later. Bad links can also be removed from the file by simply deleting a line of the file. 
+
+\subsection{Implementation details}
+
+The loop closure GUI was designed using the open-source Qt framework. The back-end point cloud processing as well as the point cloud display window rendering was done with Point Cloud Library (PCL) \cite{PCL}. The sonar and navigation data are stored in a CSV file after minimal pre-processing that uses some simple heuristics to remove spurious returns.
 
 \section{Toward loop closure automation}
 
 The amount and type of information that can be extracted from terrain varies widely by the sensing modality. For multibeam sonar, only range and intensity (effectively reflectivity) are returned by the sensor. This dissertation only considers information that can be obtained from the range information, though future work may investigate the value of intensity for loop closure detection purposes.
 
-\subsection{Curvature and Normal Vector Estimation}
+\subsection{Applying 2D image features to 3D terrain}
 
-Surface curvature and normal vector direction are two parameters that are often estimated from local patches of point cloud data, and can provide useful information. 
+A wealth of research has been conducted in extracting robust, identiable features from 2D imagery. The following section details work that leverages this well-established technology for the problem of recognizing 3D terrain. It was hypothesized that since many image processing techniques treat images as if they were terrain maps, the techniques developed for imagery may be useful when dealing with actual maps of terrain. Although this work is still in its early stages, the hypothesis appears to be supported by data from an underwater canyon mapping mission.
 
-A number of methods exist, but the most efficient method uses principal component analysis to fit a plane to a small neighborhood of points. 
+\subsubsection{Creating images from terrain}
 
-\begin{align} % requires amsmath; align* for no eq. number
-   C = ~&\frac{1}{K} \sum\limits_{k=0}^{K} (\mathbf{p}_k - \mathbf{\bar{p}})  (\mathbf{p}_k - \mathbf{\bar{p}})^\intercal \\
-   \sigma_i\mathbf{\lambda}_i = &~ C\mathbf{\lambda}_i
-\end{align}
-
-Here $\mathbf{p}_k$ are the $K$ nearest neighbors to the point of interest. $\mathbf{\bar{p}}$ can either be the mean of the patch or the interest point itself. These will be very similar except on the boundaries of a point cloud.
-
-The normal to this plane is the eigenvector corresponding to the minimum eigenvalue \cite{?}. The curvature can be estimated as the ratio of eigenvectors
-
-\begin{align} % requires amsmath; align* for no eq. number
-   \kappa = ~&\frac{\sigma_{1}}{\sigma_{1}+\sigma_{2}+\sigma_{3}} 
-\end{align}
-
-or a more complex model, such as a quadratic paraboloid can be used. The former method is simpler, but can fail in noisy point clouds where there is not a single clearly-defined surface. The latter method is used in the 3D extension of Harris Corners \cite{Harris3D}.
-
-Curvature can be used to extract features in the terrain, for later use in comparison. This solves the first problem for extracting landmarks from the terrain: ensuring that these points of interest are well-localized, as discussed in section \ref{sec.2Dfeatures}.  A simple feature descriptor can be constructed based off the curvature and normal vector to aid in the comarison. However, these two quantities do not provide strong discriminative power, as many interest points will have similar curvature and normal direction. The following sections will discuss ways to improve this discriminative ability for use in loop closure detection. 
-
-\subsection{Using Invariant Information to Improve Feature Discriminative Power} 
-
-
-
-\section{Applying 2D Image Features to 3D Terrain}
-
-A wealth of research has been conducted in extracting robust, identiable features from 2D imagery, with great success. The following section details work that leverages this well-established technology for the problem of recognizing 3D terrain. It will be shown that although some effort is necessary to reformat the range data, the 2D and 3D problems are more similar than they are different.
-
-\subsection{Images as Digital Elevation Maps}
-
-Many standard algorithms for extracting robust image feature descriptors only consider image intensity, discarding any color information. The resulting grayscale images can be thought of as digital elevation maps (DEMs), with pixel intensity being the ``height" of the map above that location in the image. This representation is shown in Figure \ref{fig:imAsSurf}. The resulting ``terrain" typically has much larger gradients than most natural terrain.
+Many standard algorithms for extracting robust image feature descriptors only consider image intensity, discarding any color information. The resulting grayscale images can be thought of as digital elevation maps (DEMs), with pixel intensity being the ``height" of the map above that location in the image. This representation is shown in Figure \ref{fig:imAsSurf}. 
 
 \begin{figure}[htbp]
    \centering
    \includegraphics[width=\textwidth]{../graphics/imageAsSurf.png} % requires the graphicx package
-   \caption{Algorithms like SIFT and SURF treat images as digital elevation maps, with intensity plotted as height. Note how brighter areas in the photo correspond to higher peaks. In general, image-derived elevation maps have much higher contrast than naturally-occuring terrain.}
+   \caption{Algorithms like SIFT and SURF treat images as digital elevation maps, with intensity plotted as height. Note how brighter areas in the photo correspond to higher peaks. The algorithms use gradient information to detect and describe local stable features.}
    \label{fig:imAsSurf}
 \end{figure}
- 
- \section{3D Point Cloud Features}
- 
+
+In order to produce an image from range data, a few steps must be taken. First, a reference plane and corresponding projection direction must be chosen. A grid is constructed on the reference plane, and the distance between a sounding an its projection onto that plane will be encoded as the ``intensity" of the resulting image. For instance, when creating a normal DEM map of the seafloor, the reference plane is horizontal $(x,y)$, and the projection direction is vertical $(z)$. However, operating around an iceberg, with vertical or even undercut sides, creates an ambiguity as to which direction the projection should occur. 
+
+The method presented here calculates the average normal for the entire submap and uses that as the projection direction. The reference plane is set perpendicular to this such that all soundings lie on the positive-$z$ side of the plane.
+
+When applied to the sonar submap shown in Figure \ref{fig:submap_rangeImage}, this yields the image shown in Figure \ref:{fig:holyImage}. Sonar occlusions result in a number of holes or gaps in the data. This does not occur in camera imagery, as the data is collected  all at once, and projected directly onto the camera's imaging sensor. Additionally, sometimes a number of soundings project to the same pixel. To handle the latter case, the average pixel height is used in the final image. 
+
+To fill in the gaps, a repetitive procedure of eroding the image and restoring the known pixels to their original values is used. The pixels lacking data are initialized with a value of $0$. The image is then convolved with a Gaussian kernel, which acts as a low-pass filter, effectively smearing the image, filling in some of the gaps. 
+
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=\textwidth]{../graphics/placeKitten1.jpeg} % requires the graphicx package
+   \caption{A submap of sonar measurements collected in Soquel Canyon.}
+   \label{fig:submap_rangeImage}
+\end{figure}
+
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=\textwidth]{../graphics/placeKitten1.jpeg} % requires the graphicx package
+   \caption{A DEM created from the data shown in Figure \ref{fig:submap_rangeImage}. Notice that since the data was recorded from multiple viewpoints and the projection is not aligned with a single camera boresight, the resulting images has a number of holes.}
+   \label{fig:holyImage}
+\end{figure}
+
+The second step restores the pixels that began with valid data to their original values. The result is equivalent to bilinear interpolation in the unpopulated areas, and preserves the values of the valid data. The result of this process can be seen in Figure \ref{fig:rangeImage}
+
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.8\textwidth]{../graphics/rangeImage.png} % requires the graphicx package
+   \caption{After the erode-restore process, the gaps in the image are smoothed out, but the original structure remains.}
+   \label{fig:rangeImage}
+\end{figure}
+
+The last step in creating a SIFT-ready image is Contrast-Limited Adaptive Histogram Equalization (CLAHE). Algorithms like SIFT and SURF use gradient information in images to extract the features. The CLAHE process attempts to enhance details without skewing the overall contrast level of the image. \cite{clahe?}
+
+
+Robust image features like SIFT can be extracted from the resulting image and used to look for loop closure events. Figure \ref{fig:SIFTrangeImage} shows some features extracted from such an image, and Figure \ref{fig:matches} shows how these features can be matched. Upon reimaging a portion of terrain and extracting a second set of features, matching can be performed. Techniques like RANSAC can be used to screen for false matches. If a consistent model can be found using a sufficient number of matches, there is a high likelihood that the two submaps correspond to the same terrain, and precision alignment can be performed using ICP with reduced risk of false alignment. 
+
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.8\textwidth]{../graphics/SIFTrangeImage.png} % requires the graphicx package
+   \caption{A random sampling of SIFT features extracted from the range image.}
+   \label{fig:SIFTrangeImage}
+\end{figure}
+
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.8\textwidth]{../graphics/placeKitten1.jpeg} % requires the graphicx package
+   \caption{}
+   \label{fig:matches}
+\end{figure}
+
+\subsubsection{A note on robustness}
+
+2D image feature techniques are powerful, but they cannot create information where there is none. If the terrain is perfectly flat and featureless, they will not produce meaningful results. 
+
+The matching techniques described above treat the features as if they lie in a plane, which is not necessarily a valid assumption. The same terrain, when projected in different directions can change appearance drastically. Using the average normal of the point cloud data as the projection direction for the range image, as described above, is a simple heuristic. However, it appears to be relatively robust to the selected plane. Figure \ref{ref:lighting}, shows the images resulting from projecting the same range data in a number of directions. The central image uses the average normal plane. Above and below it represent $\pm 15$deg of elevation and left and right $\pm 15$ deg of azimuth, relative to neutral.
+
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=\textwidth]{../graphics/rangeImageLighting.png} % requires the graphicx package
+   \caption{The range image remains relatively consistent over $\pm 15$deg of azimuth and elevation change in projection direction. Qualitatively, it looks like changes in lighting over the terrain, for which image features like SIFT and SURF claim some robustness \cite{citationneeded}.}
+   \label{fig:rangeImage}
+\end{figure}
+
+%\section{3D Point Cloud Features}
+% 
+% \subsection{Using Invariant Information to Improve Feature Discriminative Power} 
+%
+%
+% 
+%Recent advances in the affordability and capability of ranging sensors has spurred research in the development of robust point cloud features akin to those used in 2D image processing. They seek to encode local information contained in the point cloud in order to classify interest points or compare with databases of known shapes. 
+% 
+% \subsection{Curvature and Normal Vector Estimation}
+%
+%Surface curvature and normal vector direction are two parameters that are often estimated from local patches of point cloud data, and can provide useful information. 
+%
+%A number of methods exist, but the most efficient method uses principal component analysis to fit a plane to a small neighborhood of points. 
+%
+%\begin{align} % requires amsmath; align* for no eq. number
+%   C = ~&\frac{1}{K} \sum\limits_{k=0}^{K} (\mathbf{p}_k - \mathbf{\bar{p}})  (\mathbf{p}_k - \mathbf{\bar{p}})^\intercal \\
+%   \sigma_i\mathbf{\lambda}_i = &~ C\mathbf{\lambda}_i
+%\end{align}
+%
+%Here $\mathbf{p}_k$ are the $K$ nearest neighbors to the point of interest. $\mathbf{\bar{p}}$ can either be the mean of the patch or the interest point itself. These will be very similar except on the boundaries of a point cloud.
+%
+%The normal to this plane is the eigenvector corresponding to the minimum eigenvalue \cite{?}. The curvature can be estimated as the ratio of eigenvectors
+%
+%\begin{align} % requires amsmath; align* for no eq. number
+%   \kappa = ~&\frac{\sigma_{1}}{\sigma_{1}+\sigma_{2}+\sigma_{3}} 
+%\end{align}
+%
+%or a more complex model, such as a quadratic paraboloid can be used. The former method is simpler, but can fail in noisy point clouds where there is not a single clearly-defined surface. The latter method is used in the 3D extension of Harris Corners \cite{Harris3D}.
+%
+%Curvature can be used to extract features in the terrain, for later use in comparison. This solves the first problem for extracting landmarks from the terrain: ensuring that these points of interest are well-localized, as discussed in section \ref{sec.2Dfeatures}.  A simple feature descriptor can be constructed based off the curvature and normal vector to aid in the comarison. 
+% 
