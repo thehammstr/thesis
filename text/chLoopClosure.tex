@@ -7,7 +7,7 @@ One of the most challenging problems with mapping icebergs is automatic loop clo
 
 The first method is a streamlined graphical interface that allows a human to direct the search for loop closure events. An automated algorithm then operates on a reduced search space to perform precise alignment, and the user can decide whether the alignment is precise enough to include in the mapping optimization.
 
-The second method comprises early work in full automation of the loop closure detection process. It borrows heavily from computer vision and image processing literature, applying robust image feature extraction techniques to sonar range data in order to detect loop closure. 
+The second method comprises early work toward full automation of the loop closure detection process. It borrows heavily from computer vision and image processing literature, applying robust image feature extraction techniques to sonar range data in order to detect loop closure. 
 
 \section{The Challenge of Loop Closure Detection}
 
@@ -31,7 +31,7 @@ The AUVs are pre-programmed to fly self-intersecting trajectories, and have accu
 
 % topic paragraph: summarizes the rest, but does it make sense before what is to follow?
 
-\subsection{Motion-induced complications}
+\subsection{Complications due to motion}
 
 The iceberg motion introduces larger odometry errors, which complicates the loop closure detection process in two ways: first, a larger area much be searched in order to guarantee overlap, and second, the submaps themselves can become warped relative to the true terrain shape.
 
@@ -51,9 +51,9 @@ The second complication arises from the implicit assumption of submap rigidity. 
 
  \begin{figure}[htbp]
    \centering
-   \includegraphics[width=.7\textwidth]{../graphics/placeKitten1.jpeg} % requires the graphicx package
-   \caption{Submap warping due to navigation errors.}
-   \label{fig:BathyMapping2}
+   \includegraphics[width=\textwidth]{../graphics/warpage.png} % requires the graphicx package
+   \caption{The effect of heading drift rate error on map warping. In red is a high elevation view of 11 minutes of data from a vertical section of Soquel Canyon. It is projected with no heading rate error. The green and blue clouds are the same data, but have heading rate errors of $\pm0.001$ rad/s. Note how the edges of the warped map curl away from truth.}
+   \label{fig:motionErrorWarping}
 \end{figure}
 
 The first issue drives a requirement for increased submap size. However, a larger submap means that more scans have to be concatenated over a longer time. This gives the motion-induced odometry error more chance to warp the submap. This drives the requirement to use as small a submap as possible. Somehow, a balance must be struck between these competing needs. 
@@ -75,7 +75,7 @@ Loop closure GUI is meant to be straightforward. As a general rule, the more loo
 
  \begin{figure}[htbp]
    \centering
-   \includegraphics[width=.8\textwidth]{../graphics/GUI.png} % requires the graphicx package
+   \includegraphics[width=\textwidth]{../graphics/GUI.png} % requires the graphicx package
    \caption{Loop closure GUI being used to encode loop closures on Soquel Canyon data set }
    \label{fig:GUI}
 \end{figure}
@@ -86,7 +86,7 @@ A submap is then automatically constructed around these two indices. To do this,
 
  \begin{figure}[htbp]
    \centering
-   \includegraphics[width=.6\textwidth]{../graphics/GUIcloseup.png} % requires the graphicx package
+   \includegraphics[width=.9\textwidth]{../graphics/GUIcloseup.png} % requires the graphicx package
    \caption{Closeup of Figure \ref{fig:GUI}. A white line between the two candidate indices is rendered as visual feedback for the user Also, the extent of the submaps used for registration is overlaid on the raw data in red and yellow. The green lines are loop closure events that have already been recorded.}
    \label{fig:GUIcloseup}
 \end{figure}
@@ -95,8 +95,8 @@ Once the user determines that the two submaps likely correspond to the same terr
  
  \begin{figure}[htbp]
    \centering
-   \includegraphics[width=.8\textwidth]{../graphics/GUI_preICP.png} % requires the graphicx package
-   \caption{The bottom window of the GUI shows the two subclouds in detail. Before ICP, these two clouds display some misalignment.}
+   \includegraphics[width=\textwidth]{../graphics/misaligned_subcloud.png} % requires the graphicx package
+   \caption{The bottom window of the GUI shows the two subclouds in detail. The window is fully interactive, so the user can view the clouds from any angle, zoom, etc. Before ICP, these two clouds display some misalignment. The right image shows the top view, to highlight the misalignment.}
    \label{fig:GUI_preicp}
 \end{figure}
 
@@ -104,8 +104,8 @@ The user can then inspect the resulting point clouds to determine whether ICP co
 
  \begin{figure}[htbp]
    \centering
-   \includegraphics[width=.8\textwidth]{../graphics/placeKitten1.jpeg} % requires the graphicx package
-   \caption{After ICP is performed, the user can inspect the result to determine whether the alignment algorithm converged accurately.}
+   \includegraphics[width=\textwidth]{../graphics/aligned_subcloud.png} % requires the graphicx package
+   \caption{After ICP is performed, the user can inspect the result to determine whether the alignment algorithm converged accurately. The right image shows the top view, to highlight the alignment}
    \label{fig:GUI_poseicp}
 \end{figure}
 
@@ -127,31 +127,31 @@ A wealth of research has been conducted in extracting robust, identiable feature
 
 Many standard algorithms for extracting robust image feature descriptors only consider image intensity, discarding any color information. The resulting grayscale images can be thought of as digital elevation maps (DEMs), with pixel intensity being the ``height" of the map above that location in the image. This representation is shown in Figure \ref{fig:imAsSurf}. 
 
-\begin{figure}[htbp]
-   \centering
-   \includegraphics[width=\textwidth]{../graphics/imageAsSurf.png} % requires the graphicx package
-   \caption{Algorithms like SIFT and SURF treat images as digital elevation maps, with intensity plotted as height. Note how brighter areas in the photo correspond to higher peaks. The algorithms use gradient information to detect and describe local stable features.}
-   \label{fig:imAsSurf}
-\end{figure}
+%\begin{figure}[htbp]
+%   \centering
+%   \includegraphics[width=\textwidth]{../graphics/imageAsSurf.png} % requires the graphicx package
+%   \caption{Algorithms like SIFT and SURF treat images as digital elevation maps, with intensity plotted as height. Note how brighter areas in the photo correspond to higher peaks. The algorithms use gradient information to detect and describe local stable features.}
+%   \label{fig:imAsSurf}
+%\end{figure}
 
 In order to produce an image from range data, a few steps must be taken. First, a reference plane and corresponding projection direction must be chosen. A grid is constructed on the reference plane, and the distance between a sounding an its projection onto that plane will be encoded as the ``intensity" of the resulting image. For instance, when creating a normal DEM map of the seafloor, the reference plane is horizontal $(x,y)$, and the projection direction is vertical $(z)$. However, operating around an iceberg, with vertical or even undercut sides, creates an ambiguity as to which direction the projection should occur. 
 
 The method presented here calculates the average normal for the entire submap and uses that as the projection direction. The reference plane is set perpendicular to this such that all soundings lie on the positive-$z$ side of the plane.
 
-When applied to the sonar submap shown in Figure \ref{fig:submap_rangeImage}, this yields the image shown in Figure \ref:{fig:holyImage}. Sonar occlusions result in a number of holes or gaps in the data. This does not occur in camera imagery, as the data is collected  all at once, and projected directly onto the camera's imaging sensor. Additionally, sometimes a number of soundings project to the same pixel. To handle the latter case, the average pixel height is used in the final image. 
+When applied to the sonar submap shown in Figure \ref{fig:submap_rangeImage}, this yields the image shown in Figure \ref{fig:holyImage}. Sonar occlusions result in a number of holes or gaps in the data. This does not occur in camera imagery, as the data is collected  all at once, and projected directly onto the camera's imaging sensor. Additionally, sometimes a number of soundings project to the same pixel. To handle the latter case, the average pixel height is used in the final image. 
 
 To fill in the gaps, a repetitive procedure of eroding the image and restoring the known pixels to their original values is used. The pixels lacking data are initialized with a value of $0$. The image is then convolved with a Gaussian kernel, which acts as a low-pass filter, effectively smearing the image, filling in some of the gaps. 
 
 \begin{figure}[htbp]
    \centering
-   \includegraphics[width=\textwidth]{../graphics/placeKitten1.jpeg} % requires the graphicx package
+   \includegraphics[width=\textwidth]{../graphics/submap_rangeImage.png} % requires the graphicx package
    \caption{A submap of sonar measurements collected in Soquel Canyon.}
    \label{fig:submap_rangeImage}
 \end{figure}
 
 \begin{figure}[htbp]
    \centering
-   \includegraphics[width=\textwidth]{../graphics/placeKitten1.jpeg} % requires the graphicx package
+   \includegraphics[width=.8\textwidth]{../graphics/holyImage} % requires the graphicx package
    \caption{A DEM created from the data shown in Figure \ref{fig:submap_rangeImage}. Notice that since the data was recorded from multiple viewpoints and the projection is not aligned with a single camera boresight, the resulting images has a number of holes.}
    \label{fig:holyImage}
 \end{figure}
@@ -160,13 +160,19 @@ The second step restores the pixels that began with valid data to their original
 
 \begin{figure}[htbp]
    \centering
-   \includegraphics[width=.8\textwidth]{../graphics/rangeImage.png} % requires the graphicx package
+   \includegraphics[width=.7\textwidth]{../graphics/lowcontrast2.png} % requires the graphicx package
    \caption{After the erode-restore process, the gaps in the image are smoothed out, but the original structure remains.}
    \label{fig:rangeImage}
 \end{figure}
 
 The last step in creating a SIFT-ready image is Contrast-Limited Adaptive Histogram Equalization (CLAHE). Algorithms like SIFT and SURF use gradient information in images to extract the features. The CLAHE process attempts to enhance details without skewing the overall contrast level of the image. \cite{clahe?}
 
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.7\textwidth]{../graphics/rangeImage.png} % requires the graphicx package
+   \caption{Adaptive Histogram Equalization boosts the detail of the image, making it easier for algorithms like SIFT to find features.}
+   \label{fig:rangeImage}
+\end{figure}
 
 Robust image features like SIFT can be extracted from the resulting image and used to look for loop closure events. Figure \ref{fig:SIFTrangeImage} shows some features extracted from such an image, and Figure \ref{fig:matches} shows how these features can be matched. Upon reimaging a portion of terrain and extracting a second set of features, matching can be performed. Techniques like RANSAC can be used to screen for false matches. If a consistent model can be found using a sufficient number of matches, there is a high likelihood that the two submaps correspond to the same terrain, and precision alignment can be performed using ICP with reduced risk of false alignment. 
 
@@ -179,8 +185,8 @@ Robust image features like SIFT can be extracted from the resulting image and us
 
 \begin{figure}[htbp]
    \centering
-   \includegraphics[width=.8\textwidth]{../graphics/placeKitten1.jpeg} % requires the graphicx package
-   \caption{}
+   \includegraphics[width=\textwidth]{../graphics/siftMatches.png} % requires the graphicx package
+   \caption{SIFT feature matches between two successive passes by the Soquel Canyon wall. }
    \label{fig:matches}
 \end{figure}
 
@@ -188,13 +194,13 @@ Robust image features like SIFT can be extracted from the resulting image and us
 
 2D image feature techniques are powerful, but they cannot create information where there is none. If the terrain is perfectly flat and featureless, they will not produce meaningful results. 
 
-The matching techniques described above treat the features as if they lie in a plane, which is not necessarily a valid assumption. The same terrain, when projected in different directions can change appearance drastically. Using the average normal of the point cloud data as the projection direction for the range image, as described above, is a simple heuristic. However, it appears to be relatively robust to the selected plane. Figure \ref{ref:lighting}, shows the images resulting from projecting the same range data in a number of directions. The central image uses the average normal plane. Above and below it represent $\pm 15$deg of elevation and left and right $\pm 15$ deg of azimuth, relative to neutral.
+The matching techniques described above treat the features as if they lie in a plane, which is not necessarily a valid assumption. The same terrain, when projected in different directions can change appearance drastically. Using the average normal of the point cloud data as the projection direction for the range image, as described above, is a simple heuristic. However, it appears to be relatively robust to the selected plane. Figure \ref{ref:lighting} shows the images resulting from projecting the same range data in a number of directions. The central image uses the average normal plane. Above and below it represent $\pm 15$deg of elevation and left and right $\pm 15$ deg of azimuth, relative to neutral.
 
 \begin{figure}[htbp]
    \centering
    \includegraphics[width=\textwidth]{../graphics/rangeImageLighting.png} % requires the graphicx package
    \caption{The range image remains relatively consistent over $\pm 15$deg of azimuth and elevation change in projection direction. Qualitatively, it looks like changes in lighting over the terrain, for which image features like SIFT and SURF claim some robustness \cite{citationneeded}.}
-   \label{fig:rangeImage}
+   \label{fig:lighting}
 \end{figure}
 
 %\section{3D Point Cloud Features}
