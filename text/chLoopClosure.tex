@@ -43,7 +43,7 @@ Submaps are built at strategic locations where the planned trajectory self-inter
    \centering
    \includegraphics[width=.7\textwidth]{../graphics/GraphSLAMcartoons/deadReckoning.png} % requires the graphicx package
    \caption{The black points are the estimated/planned trajectory. The red points are the actual trajectory. Blurred ellipses show the positional uncertainty due to dead reckoning. The greater the inertial navigation error, the larger the search ellipse for loop closure detection.  }
-   \label{fig:BathyMapping2}
+   \label{fig:BathyMapping3}
 \end{figure}
 
 
@@ -171,7 +171,7 @@ The last step in creating a SIFT-ready image is Contrast-Limited Adaptive Histog
    \centering
    \includegraphics[width=.7\textwidth]{../graphics/rangeImage.png} % requires the graphicx package
    \caption{Adaptive Histogram Equalization boosts the detail of the image, making it easier for algorithms like SIFT to find features.}
-   \label{fig:rangeImage}
+   \label{fig:rangeImageHC}
 \end{figure}
 
 Robust image features like SIFT can be extracted from the resulting image and used to look for loop closure events. Figure \ref{fig:SIFTrangeImage} shows some features extracted from such an image, and Figure \ref{fig:matches} shows how these features can be matched. Upon reimaging a portion of terrain and extracting a second set of features, matching can be performed. Techniques like RANSAC can be used to screen for false matches. If a consistent model can be found using a sufficient number of matches, there is a high likelihood that the two submaps correspond to the same terrain, and precision alignment can be performed using ICP with reduced risk of false alignment. 

@@ -160,7 +160,7 @@ Taking the dot product of this equation with $\hat{d}_{i} $ yields,
     \hat{d}_{i} \cdot~^{I}\vec{v}^{B_{cm}} ~ + ~\hat{d}_{i} \cdot\left(^{I}\vec{\omega}^{B}\times\vec{r}^{~~\nicefrac{S_i}{B_{cm}}}\right)  \\
     \underbrace{\hat{d}_{i} \cdot~^{I}\vec{v}^{V_{cm}}}_{\text{Assumed known}} ~+~ \underbrace{\frac{~dr_{i,t}}{~dt} }_{\text{From DVL}}  &=
     \underbrace{\hat{d}_{i} \cdot~^{I}\vec{v}^{B_{cm}}}_{\text{Estimated}} ~ + ~\hat{d}_{i} \cdot\left(\underbrace{^{I}\vec{\omega}^{B}}_{\text{From outer loop}}\times\underbrace{\vec{r}^{~~\nicefrac{S_i}{B_{cm}}}}_{\text{Estimated}}\right)  
-         \label{eqn:expensive}
+         \label{eqn:expensive2}
 \end{align}
 
 Kimball arranged the terms of Equation \ref{eqn:expensive} within the nested loop optimization shown in Figure \ref{fig:NestedLoop}. The terms that are assumed known or are estimated in the outer loop make up the rows of the matrix $A$. The $\frac{~dr_{i,t}}{~dt}$ term is measured directly by the DVL, and corresponds to entries of the vector $b$. The remaining parameters to be estimated are concatenated in the vector $x_{ls}$ and solved via linear least squares in the inner loop optimization. 

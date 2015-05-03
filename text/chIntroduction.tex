@@ -2,7 +2,7 @@
 
 \chapter{Introduction}
 \label{ch.Introduction}
-The work presented in this thesis enables the creation of full 3-D shape reconstructions of the submerged portion of free-drifting icebergs using data from autonomous underwater vehicles (AUVs). Accurate iceberg profiles or maps are useful in a number of scientific and industrial applications. They are normally acquired through the use of ship-based sonar or Remotely-Operated Vehicles (ROVs). However, AUVs are increasingly being used for this task, though current methods often make strong assumptions about the iceberg's motion, require the AUV to be constantly fed position updates from a ``tender" ship, or can only map incomplete portions of the iceberg at a time. \cite{}
+The work presented in this thesis enables the creation of full 3-D shape reconstructions of the submerged portion of free-drifting icebergs using data from autonomous underwater vehicles (AUVs). Accurate iceberg profiles or maps are useful in a number of scientific and industrial applications. They are normally acquired through the use of ship-based sonar or Remotely-Operated Vehicles (ROVs). However, AUVs are increasingly being used for this task, though current methods often make strong assumptions about the iceberg's motion, require the AUV to be constantly fed position updates from a ``tender" ship, or can only map incomplete portions of the iceberg at a time \cite{Kimball2011b}.
 
 \begin{figure}[htbp]
    \centering
@@ -29,7 +29,7 @@ This dissertation: (a) provides a method for generating a self-consistent map of
 
 Accurate iceberg shape reconstructions have a number of uses, depending on the time scale of interest: immediate, days to weeks, and months to years. 
 
-Energy companies operating in polar regions routinely hire contractors to do ship-based reconstructions of icebergs that pose a risk to their infrastructure. They use these reconstructions to help predict how the iceberg drift with the wind and ocean currents, and in high-fidelity collision simulations to asses the likelihood of damage in the even of impact with a drilling rig or pipeline\cite{?}. Of particular importance in the latter case is knowing the depth and shape of the iceberg keel, as a keel dragging across the seafloor can cause catastrophic damage to pipelines. This is known as ``iceberg scour," and motivates the need for mapping the full depth of the iceberg.
+Energy companies operating in polar regions routinely hire contractors to do ship-based reconstructions of icebergs that pose a risk to their infrastructure. They use these reconstructions to help predict how the iceberg drift with the wind and ocean currents, and in high-fidelity collision simulations to asses the likelihood of damage in the even of impact with a drilling rig or pipeline \cite{ralph2008iceberg} \cite{fuglem1996iceberg}. Of particular importance in the latter case is knowing the depth and shape of the iceberg keel, as a keel dragging across the seafloor can cause catastrophic damage to pipelines. This is known as ``iceberg scour," and motivates the need for mapping the full depth of the iceberg.
 
 Scientists who study iceberg ecology can also gain immediate benefit from iceberg reconstructions. Having a map of the iceberg allows them to ``geo-reference" their data in the frame of reference of the iceberg, providing much higher spatial resolution than offered by ship-based measurement alone.
 
@@ -52,7 +52,7 @@ AUVs address all of these concerns. They easily operate under brash ice, can app
 \end{figure}
 
 
-There are drawbacks, however: AUVs are limited in the size and power of the sensors they can carry, and can only collect limited volumes of water for later study, when compared to ships. Additionally, they often have limited maneuverability compared with ROVs, which can cause difficulty when operating around complex terrain or ice structure \cite{>}. Acoustic modems allow limited real-time communication with AUVs, but have very low bandwidth, requiring AUVs to be highly self-sufficient, and prohibiting immediate access to the data they collect. Because of this, AUVs will likely augment greatly, rather than completely replace ship-based surveys of icebergs for the foreseeable future. Working together, the surface vessels and underwater vehicles will provide more accurate reconstructions and a much clearer picture of the free-drifting iceberg environment than either method of study could alone.
+There are drawbacks, however: AUVs are limited in the size and power of the sensors they can carry, and can only collect limited volumes of water for later study, when compared to ships. Additionally, they often have limited maneuverability compared with ROVs, which can cause difficulty when operating around complex terrain or ice structure. Acoustic modems allow limited real-time communication with AUVs, but have very low bandwidth, requiring AUVs to be highly self-sufficient, and prohibiting immediate access to the data they collect. Because of this, AUVs will likely augment greatly, rather than completely replace ship-based surveys of icebergs for the foreseeable future. Working together, the surface vessels and underwater vehicles will provide more accurate reconstructions and a much clearer picture of the free-drifting iceberg environment than either method of study could alone.
 
 \section{Mapping in underwater environments}
 
@@ -121,7 +121,7 @@ This motion has two major implications: first, it means that the iceberg constit
    \label{fig:naiveMapping}
 \end{figure}
 
-If the AUV were operating above water, powerful 3D laser scanners would allow a direct measurement of rotation and translation between measurements reducing or eliminating the errors associated to iceberg motion. This is shown in figure \ref{fig:ScanMatch}. These types of scanners can map and perform odometry simultaneously, and are often used on terrestrial robots and Unmanned Surface Vehicles, but do not work underwater \cite{ref:Singapore}. The multibeam sonars available to an AUV only scan in two dimensions. For mapping the iceberg, the sonar is oriented with the beam oriented perpindicular to the direction of travel in order to sweep out the widest area, as shown in Figure \ref{fig:beamOrientation}.  In order to perform scan matching for odometry, the sonar would need to be oriented in the horizontal plane, as in Figure \ref{fig:ScanMatchMultibeam}. This drives a need for environment-aided localization techniques, as described above. 
+If the AUV were operating above water, powerful 3D laser scanners would allow a direct measurement of rotation and translation between measurements reducing or eliminating the errors associated to iceberg motion. This is shown in figure \ref{fig:ScanMatch}. These types of scanners can map and perform odometry simultaneously, and are often used on terrestrial robots and Unmanned Surface Vehicles, but do not work underwater \cite{Papadopoulos2014}. The multibeam sonars available to an AUV only scan in two dimensions. For mapping the iceberg, the sonar is oriented with the beam oriented perpindicular to the direction of travel in order to sweep out the widest area, as shown in Figure \ref{fig:beamOrientation}.  In order to perform scan matching for odometry, the sonar would need to be oriented in the horizontal plane, as in Figure \ref{fig:ScanMatchMultibeam}. This drives a need for environment-aided localization techniques, as described above. 
 
 \begin{figure}[htbp]
    \centering
@@ -181,7 +181,7 @@ Fourth, it presents successful mapping results, both from simulation and from fi
 
 \subsubsection*{Chapter \ref{ch.RelatedWork}: Related Work} A survey of methods currently used for iceberg profiling is presented, along with related work in Simultaneous Localization and Mapping, and methods for feature recognition and automatic loop closure detection.
 
-\subsubsection*{Chapter \ref{ch.IcebergGeometry}: Iceberg Geometry}  This chapter recasts the optimization used by Kimball \cite{} in the moving reference frame of the iceberg. This reduces greatly the number of estimation parameters, and eliminates the need for the vehicle to have knowledge of its inertial position.
+\subsubsection*{Chapter \ref{ch.IcebergGeometry}: Iceberg Geometry}  This chapter recasts the optimization used by Kimball \cite{Kimball2011b} in the moving reference frame of the iceberg. This reduces greatly the number of estimation parameters, and eliminates the need for the vehicle to have knowledge of its inertial position.
 
 \subsubsection*{Chapter \ref{ch.GraphSLAM}: Solving for Iceberg Shape using GraphSLAM} This section uses the problem formulation developed in Chapter \ref{ch.IcebergGeometry} and solves it using the GraphSLAM algorithm.
 

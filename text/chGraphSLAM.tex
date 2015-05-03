@@ -263,7 +263,7 @@ The measurement model used in the explicit map case represents the actual physic
    \centering
    \includegraphics[width=.9\textwidth]{../graphics/measModel.png} % requires the graphicx package
    \caption{Using an explicit map makes error characterization of the measurement model straightforward. The measured range is modeled as a Gaussian with mean $z_t^i$ and covariance $\sigma_{a}$ along the beam and $\sigma_{x}$ across the beam.}
-   \label{fig:GraphSLAM}
+   \label{fig:GraphSLAMmeasModel}
 \end{figure}
 
 
@@ -276,7 +276,7 @@ The state and measurement models described above are appropriate for the types o
 The state representation presented above made the implicit assumption that the DVL remained in ``bottom lock" on the iceberg the majority of the time. At higher standoff distances, this may not be the case. In such instances, it may be advantageous to model the velocity as well as the position of the vehicle, and treat the DVL as a measurement (which it is, in reality) as opposed to an input.
 
 \begin{equation}
-\label{eq.state}
+\label{eq.altState}
 \vec{x}= \left[\begin{array}{c}
                      x \\ y \\ u \\ v \\ \psi \\ \beta 
                      \end{array}\right]
