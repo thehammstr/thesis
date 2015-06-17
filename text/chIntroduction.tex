@@ -19,11 +19,29 @@ The strategy employed in this dissertation is to cast the iceberg mapping proble
 
 One major challenge with performing SLAM in underwater environments is automatic detection of these so-called ``loop closure events." In shallow, feature-rich environments, such as coral reefs, cameras can be used, and robust image features can allow detection of these events. However, when standoff distances are large, or there is not sufficient texture in the terrain to allow image correlation, cameras provide little aid. In these cases, systems typically rely on accurate inertial guidance to provide a good initial estimate of regions of overlap, and then refine these estimates through point cloud correlation techniques like Iterative Closest Point (ICP). These methods can provide very accurate alignment, but are susceptible to local minima, and generally require good intial estimates of alignment to converge to the correct value. As noted above, when the environment is a non-inertial reference frame, even the most accurate inertial navigation system (INS) will not necessarily be able to provide sufficient accuracy for this type of loop closure detection. 
 
-This dissertation: (a) provides a method for generating a self-consistent map of the \emph{entire} submerged portion of a free-drifting iceberg, including multiple swaths collected at different depths; (b) formulates the mapping problem in such a way that the vehicle's inertial position need not be known, eliminating the need for external position fixes. This formulation also shows the equivalence between mapping in non-inertial environments and mapping with imperfect inertial sensors. (c) describes a graphical user interface to aid in detecting and describing loop closure events. It also presents early work in autonomous detection of loop closure events, drawing from well-developed work in the computer vision community; (d) shows mapping results from simulation using shape data from a real iceberg, as well as results from AUV field data of an underwater canyon with corrupted compass data. 
+This dissertation presents several contributions: 
+
+a) It provides a method for generating a self-consistent map of the \emph{entire} submerged portion of a free-drifting iceberg, including multiple swaths collected at different depths.
+
+b) It formulates the mapping problem in such a way that the vehicle's inertial position need not be known, eliminating the need for external position fixes. This formulation also shows the equivalence between mapping in non-inertial environments and mapping with imperfect inertial sensors. 
+
+c) It describes two tools for encoding loop closure information into the mapping process. The first is a graphical user interface with which a human user can detect these events. The second is a method for autonomous detection of loop closure events, drawing from well-developed work in the computer vision community.
+
+d) It shows mapping results from simulation using shape data from a real iceberg, as well as results from AUV field data of an underwater canyon with simulated motion effects. In both cases, the algorithm is able to produce an accurate, self-consistent map of the body despite large odometry errors due to its motion.  
 
 
 
 \section{Motivation}
+
+\subsection{Life in extreme environments}
+
+The underlying goal of the research presented in this dissertation is to develop techniques that enable the study of life in extreme environments. In particular, a number of preorganic molecular species thought to be necessary for life have been observed in high concentrations in comets and asteroids \cite{}. In fact, some theories hypothesize that these biological building blocks were first delivered to Earth via these objects impacting the planet several billion years ago \cite{}. Because of these and other reasons, asteroids and comets are scientific points of interest. Several recent missions have studied them, like NASA's Deep Impact \cite{} and ESA's Rosetta \cite{}, and NASA has begun considering future manned missions to study them \cite{}.
+
+One challenge in the study of these celestial bodies is the lack of navigational infrastructure. There is no equivalent of GPS to supply a robotic vehicle with its position in the frame of reference of the body, and installing one on the surface would be exceedingly difficult. Star trackers and inertial guidance systems can be used, but these provide position of the vehicle in inertial space, not relative to the body \cite{}. In general, these bodies are free to rotate, making them non-inertial reference frames.
+
+If a map of the body is available, terrain-relative navigation techniques can be used to localize relative to it, regardless of how it may be moving. Additionally, a map is a valuable scientific tool unto itself, allowing other data to be location-referenced and enabling longitudinal studies in the evolution of a body's shape. However, generating a map of a body that is moving relative to the inertial reference frame presents several challenges.
+
+This dissertation deals with the analog mission of robotic exploration around a free-drifting iceberg, specifically the creation of a 3-dimensional map reconstruction of its underwater portion. While the mission is not a perfect analog to the comet or asteroid mission, both involve the study of life in extreme environments, a non-inertial reference frame, and navigation without installed infrastructure.  By conducting such real-world analog robotic exploration missions, lessons can be learned and risks can be mitigated before incurring the cost of launching hardware into space. 
 
 \subsection{Iceberg shape reconstruction}
 
