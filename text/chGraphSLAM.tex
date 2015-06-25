@@ -7,64 +7,62 @@ Chapter \ref{ch.IcebergGeometry} recast the problem of iceberg mapping in a form
 
 A number of techniques can be applied to solve this new formulation of the mapping problem. Many of these techniques have been developed extensively in the robotics community, and a number of powerful software tools are available to solve the techniques' associated optimizations. While a number of these methods could have been used for profiling icebergs, the ease of representing the problem as a pose graph, the ability to solve large optimizations efficiently, and the fact that the calculations did not need to be performed online drove the selection of GraphSLAM as a solution method. 
 
-This chapter will give a brief overview of the mechanics of Graph SLAM, advantages of the method, and a description of how the typical vehicle state definition was modified in order to accomodate the errors associated with iceberg motion. Additionally, there will be a discussion of how different sensing modalities and error modes could drive choices for alternative state definitions.
-
-\section{Advantages of the GraphSLAM method}
-
-GraphSLAM provides a solid theoretical framework for modeling errors associated with the mapping task, can be used to solve very large problems efficiently, and has a wide enough user base that there already exist optimized solvers, enabling fast application to the problem of profiling icebergs.
-
-The reformulation of the iceberg mapping problem detailed in Chapter \ref{ch.IcebergGeometry} can be solved using the modified form of Kimball's method, shown in Figure \ref{fig:NestedLoop2} with the deterministic inner loop. However, the elimination of the inner loop optimization carries the implicit assumption that any error comes entirely from the iceberg's rotation. In reality, there will be other errors due to measurement and odometry noise that should be considered alongside the rotational error to produce a map of the highest quality possible. 
-
-GraphSLAM provides a theoretical framework that allows the error associated with each quantity to be weighted according to its uncertainty relative to all other measurements. This serves to provide better justification for the weighting terms used in the map optimization, addressing one of the areas of future work proposed by Kimball. Additionally, the structure used by GraphSLAM to represent the mapping problem allows it be used to solve large mapping problems very efficiently. For an illustration of this, Montemerlo et. al. calculated a map of Stanford's Main Quad, including $10^5$ poses and $10^8$ range measurements in roughly 30 seconds of CPU time \cite{?}. This is the same order of magnitude problem size as the iceberg profiling problem considered in this thesis.
-
-Another attractive aspect of using GraphSLAM to solve the iceberg profiling problem is that there exist a number of efficient, optimized, and easy-to-use software libraries to solve such graph optimization problems. Of these, an open source nonlinear least-squares graph solver library called Ceres was used. This library was initially developed by Google for in-house use on Google Maps' street view feature, stitching images together into a self-consistent map. They later released it for public development, and it has been used by a number of universities and research institutions for SLAM, bundle adjustment, and a number of other robotics tasks. \cite{ceres}
+This chapter will give a brief overview of the mechanics of Graph SLAM, advantages of the method, and a description of how the typical vehicle state definition was modified in order to accomodate the errors associated with iceberg motion. Additionally, there will be a discussion of how different sensing modalities and error modes could drive choices for alternative state definitions. However, it will not go into the low-level details of how the GraphSLAM algorithm implements its optimization. For more detail on that, the reader should refer to the sources in the related works section.
 
 \section{GraphSLAM overview}
-
-GraphSLAM represents the mapping problem as a collection of connected nodes. Some nodes represent vehicle poses, while others may optionally represent locations and characteristics of features in the map. The links between the nodes encode pairwise information about how nodes are related to each other, either through odometry or measurement of the environment. In GraphSLAM variants with explicit map representation, poses are connected to consecutive poses through odometry links, and to map nodes via measurement links. All loop closure information flows through the map nodes, labeled $z_i$ in Figure \ref{fig:GraphSLAM}. In implicit map variants, information from multiple observations of the same terrain are encoded in pre-processing, and measurement links are applied directly between pose nodes, as seen in the link labled $c$ in Figure \ref{fig:GraphSLAM}. 
 
 \begin{figure}[htbp]
    \centering
    \includegraphics[width=.7\textwidth]{../graphics/factor_graph.png} % requires the graphicx package
-   \caption{GraphSLAM models the mapping problem as a probabilistic graph.  The poses $x_i$ and $x_{i+1}$ are linked via odometry terms. Additionally, any two poses where the same landmark was observed are linked by measurement terms through that landmark. These links represent Gaussian conditional probabilities. \emph{PLACEHOLDER GRAPHIC}}
+   \caption{Graph representation of mapping problem.  The poses $x_i$ and $x_{i+1}$ are linked via odometry terms. Additionally, any two poses where the same landmark was observed are linked by measurement terms through that landmark. These links represent Gaussian conditional probabilities. \emph{PLACEHOLDER GRAPHIC}}
    \label{fig:GraphSLAM}
 \end{figure}
 
+\subsection{Mapping as a probabilistic graph}
 
-\subsection{Motion and measurement models}
-\label{sec.motionmeas}
-GraphSLAM uses nonlinear motion and measurement models similar to the Extended Kalman Filter.
+GraphSLAM represents the mapping problem as a probabilistic graph. This can be visualized as a collection of connected nodes, as in Figure \ref{fig:GraphSLAM}. Some nodes represent vehicle poses, $x_t$, while others [optionally] represent locations and characteristics of features in the map, $m_j$. 
 
-\begin{equation}
-x_{t+1} = g\left(u_t,x_t\right) + \nu_p
-\end{equation}
+The links between the nodes encode pairwise information about how nodes are related to each other, either through odometry or measurement of the environment. Specifically, the algorithm models each link as giving the conditional probabibility distribution of a node given its linked node, and models this distribution as a Gaussian. For example, consier two pose estimates $x_t$ and  $x_{t+1}$ and nonlinear motion model $g(x_t,u_t)$, where $u_t$ is the control input at time $t$. The graphical link between $x_t$ and  $x_{t+1}$ represents the probability distribution: 
 
-\begin{equation}
-z_{t} = h\left(x_t,m_j\right) + \nu_m
-\end{equation}
+\begin{align}
+p\left(x_{t+1}~|~x_t,u_t\right) & \sim \mathcal{N}\left(g(x_t,u_t), R_t\right)
+\label {eq:Gauss1}
+\end{align}
 
-where $u_t$ is the control input, $m_j$ is the observed map feature and $\nu_{[~]}$ represent Gaussian white noise terms to model the process and measurement uncertainty.
+where $R$ is the process noise covariance matrix. Note that this representation is identical to that of the Extended Kalman Filter (EKF) motion model, normally written 
+\begin{align}
+x_{t+1} &= g\left(u_t,x_t\right) + \nu_p\\
+R &\equiv E\left(\nu_p \nu_p^\intercal\right) 
+\end{align}
+
+In GraphSLAM variants with explicit map representation, poses are connected to map nodes via measurement links. If a measurement $z^i_t$ of map feature $m_j$ is made at time $t$, then $x_t$ and $m_j$ are linked via the measurement function $h \left(x_t,m_j\right)$ such that 
+
+\begin{align}
+p\left(z^i_{t}~|~x_t,m_j\right) & \sim \mathcal{N}\left(h(x_t,u_t), Q_t\right)
+\label {eq:Gauss2}
+\end{align}
+
+Here, $Q$ is the measurement covariance. Again, this is equivalent to the EKF measurement update
+
+\begin{align}
+z_{t} &= h\left(x_t,m_j\right) + \nu_m\\
+Q &\equiv E\left(\nu_m \nu_m^\intercal\right) 
+\end{align}
+
+The full posterior probability of the graph is then given by the product of all these conditional terms. Solving for the maximum likelihood estimate requires finding the combination of free parameters (nodes) that maximizes this posterior probability. 
 
 \subsection{GraphSLAM as nonlinear least squares}
 
-The mapping problem is represented as a probabilistic graph. Pose nodes correspond to the vehicle's state at discrete times $t$. If an explicit map is to be used, other nodes represent map feature locations. 
-
-Consecutive  pose nodes are linked through odometry links. These links encode the conditional probability distribution with Gaussian form
+The graph can be optimized via a nonlinear least squares approach. To see this, Equations \ref{eq:Gauss1} and \ref{eq:Gauss2} are expanded by the definition of the Normal distribution.
 
 \begin{equation}
 p\left(x_{t+1}~|~x_t,u_t\right) = \eta~ exp\left(-\frac{1}{2}\left[x_{t+1} - g\left(u_t,x_t\right)\right]^{\intercal}R_t^{-1}\left[x_{t+1} - g\left(u_t,x_t\right)\right]\right)
 \end{equation}
 
-where $g\left(u_t,x_t\right)$ is the motion update equation described in \ref{sec.motionmeas}, and $R_t$ is the process noise covariance.
-
-Map nodes are connected to the pose nodes from which they were observed through measurement links. These take the same form of the odometry links:
-
 \begin{equation}
 p\left(z^i_{t}~|~x_t,m_j\right) = \eta~ exp\left(-\frac{1}{2}\left[z^i_{t} - h\left(x_t,m_j\right)\right]^{\intercal}Q_t^{-1}\left[z^i_{t} - h\left(x_t,m_j\right)\right]\right)
 \label{eq.measModel}
 \end{equation}
-
-that is, the Normal probability distribution of making measurement $z^i_t$ of map feature $m_j$ at time $t$ given the estimates of the location of $m_j$ and pose $x_t$. $Q_t$ is the measurement covariance. 
 
 Taking the log of the full joint probability yields a sum of quadratic terms:
 
@@ -76,16 +74,7 @@ J = ~x_0^{\intercal}\Omega_0 x_0 ~+
 
 The first term is necessary to ``anchor" the map, since all other constraints are purely relative between poses. In effect, it fixes the first point to the origin. 
 
-The maximum likelihood estimates for all free parameters in the optimization are those that minimize this cost function, $J$.
-
-Internally, these links are linearized, then encoded in an information matrix and an information vector, as shown in Figure \ref{fig:GraphSLAMinternal} and fully developed in \cite{ref?}. The information matrix is sparse, and symmetric positive semi-definite. The sparsity allows the measurements to be marginalized out, creating a much smaller matrix defined only in the pose space, but containing all the information from the map features. This reduction in size and positive semi-definite structure allows the use of fast solution algorithms like the conjugate gradient method. Implementations using implicit map definitions essentially bypass this marginalization step, building the graph over only the poses, as shown in the last subfigure of Figure \ref{fig:GraphSLAMinternal}. The results presented in Chapter \ref{ch.Results} use such an implicit map, but future work may find explicit map representation useful. This will be discussed in Chapter \ref{ch.LoopClosure}.
-
-\begin{figure}[htbp]
-   \centering
-   \includegraphics[width=\textwidth]{../graphics/InfoMatrix.png} % requires the graphicx package
-   \caption{Internal representation of the GraphSLAM problem. Pose and map state relationships are encoded in the sparse, symmetric positive-semidefinite matrix, $\Omega$. The structure of the matrix allows efficient solution via the method of conjugate gradients. Additionally, the cumulative effect of multiple obeservations of landmarks can be marginalized out, resulting in a lossless reduction of the optimization, and further improving speed. \emph{From Probabilistic Robotics, by Thrun, Burgard, and Fox.}}
-   \label{fig:GraphSLAMinternal}
-\end{figure}
+The maximum likelihood estimates for all free parameters $x_t$ and $m_j$ in the optimization are those that minimize this cost function, $J$.
 
 \subsection{Minimum spring energy analogy}
 
@@ -108,6 +97,18 @@ Once the nodes are all tied together with springs of appropriate length and stif
    \caption{GraphSLAM is equivalent to the minimum energy configuration of a mass-spring-damper system. Each spring's natural length and stiffness are determined by the corresponding measurement and measurement covariance, respectively.}
    \label{fig:springs}
 \end{figure}
+
+
+\subsection{Advantages of the GraphSLAM method}
+
+GraphSLAM provides a solid theoretical framework for modeling errors associated with the mapping task, can be used to solve very large problems efficiently, and has a wide enough user base that there already exist optimized solvers, enabling fast application to the problem of profiling icebergs.
+
+The reformulation of the iceberg mapping problem detailed in Chapter \ref{ch.IcebergGeometry} can be solved using the modified form of Kimball's method, shown in Figure \ref{fig:NestedLoop2} with the deterministic inner loop. However, the elimination of the inner loop optimization carries the implicit assumption that any error comes entirely from the iceberg's rotation. In reality, there will be other errors due to measurement and odometry noise that should be considered alongside the rotational error to produce a map of the highest quality possible. 
+
+GraphSLAM provides a theoretical framework that allows the error associated with each quantity to be weighted according to its uncertainty relative to all other measurements. This serves to provide better justification for the weighting terms used in the map optimization, addressing one of the areas of future work proposed by Kimball. Additionally, the structure used by GraphSLAM to represent the mapping problem allows it be used to solve large mapping problems very efficiently. For an illustration of this, Montemerlo et. al. calculated a map of Stanford's Main Quad, including $10^5$ poses and $10^8$ range measurements in roughly 30 seconds of CPU time \cite{?}. This is the same order of magnitude problem size as the iceberg profiling problem considered in this thesis.
+
+Another attractive aspect of using GraphSLAM to solve the iceberg profiling problem is that there exist a number of efficient, optimized, and easy-to-use software libraries to solve such graph optimization problems. Of these, an open source nonlinear least-squares graph solver library called Ceres was used. This library was initially developed by Google for in-house use on Google Maps' street view feature, stitching images together into a self-consistent map. They later released it for public development, and it has been used by a number of universities and research institutions for SLAM, bundle adjustment, and a number of other robotics tasks. \cite{ceres}
+
 
 %\Omega = \left[\begin{array}{c c c c c | c c c c}
 %u_{1,1} & u_{1,2} &     0   & 0 & 0 &  z_{1,1} & \hdots & z_{1,i} & 0 \\
@@ -136,11 +137,28 @@ Once the nodes are all tied together with springs of appropriate length and stif
 
 \subsection{Choice of map representation}
 
-As mentioned above, GraphSLAM can be implemented with either explicit or implicit map representations. In the explicit map representation variant of GraphSLAM, the location of features within the map are solved alonside the vehicle trajectory. This is often used when the map consists primarily of discrete features, such as passive beacons \cite{?}, trees or pilings \cite{Langellaan}, or robust image features \cite{Augenstein}.
+GraphSLAM can be implemented with either explicit or implicit map representations. This section weighs the merits of each approach as it relates to the task of iceberg profiling.
 
-The implicit map representation uses information in terrain that has been viewed multiple times, but encodes that information directly in pose-to-pose constraints. By correlating submaps built from concatenated measurements, translational and rotational offsets between poses can be estimated and enforced directly between pose nodes. This is useful when the information in the terrain is dispersed throughout, as opposed to being concentrated in well-localized recognizable landmarks. This is often the case when the vehicle navigates through natural terrain using a range scanner with a wide field of view. In these scenarios, larger scale correlation may provide better offset data than local features. 
+\subsubsection{Implicit map}
+The implicit map representation uses information in terrain that has been viewed multiple times, but encodes that information directly in pose-to-pose constraints, effectively creating a ``pseudo-odometry" link. By correlating submaps built from concatenated measurements, translational and rotational offsets between poses can be estimated and enforced directly between pose nodes. 
 
-The implicit map formulation is used in the results presented in Chapter \ref{ch.Results}, but the explicit map formulation may prove advantageous in future work involving automatic loop closure methods as introduced in Chapter \ref{ch.LoopClosure}, so it is mentioned here for completeness.
+This approach is useful when the information in the terrain is dispersed throughout, as opposed to being concentrated in well-localized recognizable landmarks. This is often the case when the vehicle navigates through natural terrain using a range scanner with a wide field of view. In these scenarios, larger scale correlation may provide better offset data than local features. 
+
+One downside of using this method with the sensors available onboard is that it can fall prey to the submap warping described in Chapter \ref{ch.LoopClosure}, as many planar scans must be concatenated together over time, assuming that the vehicle's motion through the iceberg's reference frame is well modeled. If this assumption is not valid, the point cloud registration techniques that drive this approach can suffer from reduced accuracy or fail altogether, yielding map inconsistencies. 
+
+Another potential source of error in this method arises from the difficulty of quantifying the uncertainty introduced into the mapping optimization based on the registration results. Stated another way, choosing the appropriate relative weights for the pseudo-odometry links in the GraphSLAM optimization can be difficult, and links between those weights and hard, quanifiable parameters like sensor noise specifications are more tenuous.  
+
+Based on its ability to work in terrain with diffuse data, the implicit map formulation is used in the results presented in Chapter \ref{ch.Results}.
+
+
+\subsubsection{Explicit map} 
+
+In the explicit map variant of GraphSLAM, the locations of features within the map are solved alonside the vehicle trajectory. This is often used when the map consists primarily of discrete features, such as passive beacons \cite{?}, trees or pilings \cite{Langellaan}, or robust image features \cite{Augenstein}.
+
+This method circumvents the problem of submap warping by distilling the information contained in the terrain to a single point. Since no point cloud registration is used, there is no need to make a small motion assumption for the iceberg, which  would be advantageous for fast-moving objects. However, there must be enough local information to form a discrete, recognizable feature. Doing this with range data alone in natural terrain can be challenging. 
+
+In underwater mapping of natural terrain, including icebergs, it can be difficult to identify individual features with enough distinctiveness that they can be reliably used for mapping. However, early work published by the author has made some advances into leveraging understanding about the terrain to make features in sonar data more distinctive. Future work in this area, including the use of sonar intensity return, may eventually make this representation more attractive.
+
 
 \subsection{Known vs. unknown correspondence}
 
@@ -148,7 +166,41 @@ An important factor in any SLAM problem is solving the \emph{correspondence prob
 
 The results presented in Chapter \ref{ch.Results} were generated by a formulation of GraphSLAM using pre-computed correspondences, as described in Chapter \ref{ch.LoopClosure}. Possible future implementations that discover correspondences as the algorithm progresses will be discussed in Chapter \ref{ch.FutureWork}.
 
-\section{State and measurement model}
+\section{Applying GraphSLAM to iceberg profiling}
+
+Thus far, a high-level overview of the GraphSLAM algorithm has been presented, along with several design considerations for its implementation. This section describes in detail how all the components of iceberg profiling, from loop closure to iceberg-relative motion, can be combined within the GraphSLAM framework to  yield an accurate reconstruction. 
+
+More specifically, it is now required that all the components in the conditional probability relations (restated here for convenience) be defined, all modeling assumptions be stated clearly, and choices of relative weights be justified. 
+
+\begin{align}
+p\left(x_{t+1}~|~x_t,u_t\right) & \sim \mathcal{N}\left(g(x_t,u_t), R_t\right) \\
+p\left(z^i_{t}~|~x_t,m_j\right) & \sim \mathcal{N}\left(h(x_t,u_t), Q_t\right)
+\end{align}
+
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.7\textwidth]{../graphics/placeKitten1.jpeg} % requires the graphicx package
+   \caption{Inputs and outputs of GraphSLAM\emph{PLACEHOLDER GRAPHIC}}
+   \label{fig:GraphSLAMIO}
+\end{figure}
+
+\subsection{State and motion models}
+
+The state and models used in GraphSLAM depend on the modeling assumptions of both the vehicle and the iceberg. These are stated here, and used to create a reduced state representation and kinematic motion model to feed into GraphSLAM
+
+\subsubsection{Vehicle motion model}
+
+\subsubsection{Iceberg motion model}
+
+\subsubsection{GraphSLAM state $\left[~x_t~\right]$}
+
+\subsubsection{GraphSLAM motion model $\left[~g\left(x_t,u_t\right)~\right]$ }
+
+\subsection{Sensor model}
+
+Multibeam and DVL, including dvl dropouts
+
+%################
 
 The approach to modeling the iceberg mapping problem depends on the vehicle characteristics and what sensing it has available to it. This section assumes a vehicle as described in Section \ref{sec.VehicleSetup}, namely a torpedo-shaped AUV with sideways-facing DVL and multibeam sonar. Other vehicle and sensor configurations may benefit from different representations. A brief discussion of these considerations is given at the end of this section. 
 

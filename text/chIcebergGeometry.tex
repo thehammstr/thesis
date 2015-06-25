@@ -40,8 +40,8 @@ The vehicle model used for this paper is similar to the Dorado-class AUV. This i
 
 \begin{figure}[htbp]
    \centering
-   \includegraphics[scale=.4]{../graphics/AllSonar.png} % requires the graphicx package
-   \caption{Orientation of DVL and multibeam beams with respect to AUV.  \emph{Graphic courtesy of Peter Kimball}}
+   \includegraphics[scale=.35]{../graphics/sonarIllustrations/resonAndDVL.png} % requires the graphicx package
+   \caption{Orientation of DVL and multibeam beams with respect to AUV. Green lines are DVL beams, and red lines are multibeam. Vehicle is traveling left-to-right.}
    \label{fig:DVL}
 \end{figure}
 
@@ -211,9 +211,9 @@ The terms of Equation \ref{eqn:getIt} can again be arranged such that all terms 
 
 where $[~~~]_\times$ is the matrix representation of the vector cross product, $B_x(t_j)$ is the $2\times2N_\text{control points}$ matrix of position spline basis functions evaluated at time $t_j$, and $\dot{B}_x(t_j)$ is the equivalent matrix for the basis derivatives. $\vec{P}_x$ are the iceberg position spline control points being estimated in the inner optimization loop.
 
-The important thing to take from this is the estimation vector $x_{ls}$ now contains \emph{only} the points $P_x$. The ``map points" that made the vector in Equation \ref{eqn:LeastSquares} so long are absent. This improves greatly the speed of the inner loop optimization, as the number of parameters to estimate is on the order of 10 instead of thousands.
+The important thing to take from this is the estimation vector $x_{ls}$ now contains \emph{only} the points $P_x$. The ``map points" that made the vector in Equation \ref{eqn:LeastSquares} so long are absent. This improves greatly the speed of the inner loop optimization, as the number of parameters to estimate is on the order of 10 instead of hundreds or thousands.
 
-TO DO: I THINK I NEED TO BACK UP THE STATEMENT THAT THESE POINTS CAN BE ELIMINATED WITHOUT SACRIFICING ACCURACY, SINCE THEY'RE ONLY OBSERVED ONCE (EXCEPT FOR LOOP CLOSURE POINTS), AND THE COSINE-DEPENDENT RANGE-VELOCITY AMBIGUITY.
+%TO DO: I THINK I NEED TO BACK UP THE STATEMENT THAT THESE POINTS CAN BE ELIMINATED WITHOUT SACRIFICING ACCURACY, SINCE THEY'RE ONLY OBSERVED ONCE (EXCEPT FOR LOOP CLOSURE POINTS), AND THE COSINE-DEPENDENT RANGE-VELOCITY AMBIGUITY.
 
 \subsection{Solution in the Iceberg Reference Frame}
 \label{sec.MainContrib}
@@ -280,7 +280,7 @@ Equation \ref{eqn:boom} allows the body components of the vehicle's velocity in 
    \label{eqn:LSDVL}
 \end{equation}
 
-where each row of $A_{DVL}$ comprises the body-fixed unit vector of one of the four DVL beams $\left[\hat{d}_i\right]_V^\intercal$, and each entry in $b$ is the corresponding Doppeler measurement $ -\frac{dr_{i,t}}{dt} $. However, because the vehicle's heading in the iceberg cannot be observed directly, the the rotation matrix $~^BR^{V}(t) $ must be estimated in the outer loop. Given this transformation between the vehicle frame and iceberg frame, 
+where each row of $A_{DVL}$ comprises the body-fixed unit vector of one of the four DVL beams $\left[\hat{d}_i\right]_V^\intercal$, and each entry in $b$ is the corresponding Doppler measurement $ -\frac{dr_{i,t}}{dt} $. However, the vehicle's heading in the iceberg cannot be observed directly by the DVL, so the the rotation matrix $~^BR^{V}(t) $ must be estimated in the outer loop. Given this transformation between the vehicle frame and iceberg frame, 
 
    \begin{equation}
    ^B\vec{v}^{V_{cm}}_B= ~^BR^{~V}~ \cdot~^B\vec{v}^{V_{cm}}_V
