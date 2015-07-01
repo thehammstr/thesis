@@ -157,7 +157,7 @@ In the explicit map variant of GraphSLAM, the locations of features within the m
 
 This method circumvents the problem of submap warping by distilling the information contained in the terrain to a single point. Since no point cloud registration is used, there is no need to make a small motion assumption for the iceberg, which  would be advantageous for fast-moving objects. However, there must be enough local information to form a discrete, recognizable feature. Doing this with range data alone in natural terrain can be challenging. 
 
-In underwater mapping of natural terrain, including icebergs, it can be difficult to identify individual features with enough distinctiveness that they can be reliably used for mapping. However, early work published by the author has made some advances into leveraging understanding about the terrain to make features in sonar data more distinctive. Future work in this area, including the use of sonar intensity return, may eventually make this representation more attractive.
+In underwater mapping of natural terrain, including icebergs, it can be difficult to identify individual features with enough distinctiveness that they can be reliably used for mapping. However, early work published by the author has made some advances into leveraging understanding about the terrain to make features in sonar data more distinctive. \cite{me!} Future work in this area, including the use of sonar intensity return, may eventually make this representation more attractive.
 
 
 \subsection{Known vs. unknown correspondence}
@@ -179,8 +179,8 @@ p\left(z^i_{t}~|~x_t,m_j\right) & \sim \mathcal{N}\left(h(x_t,u_t), Q_t\right)
 
 \begin{figure}[htbp]
    \centering
-   \includegraphics[width=.7\textwidth]{../graphics/placeKitten1.jpeg} % requires the graphicx package
-   \caption{Inputs and outputs of GraphSLAM\emph{PLACEHOLDER GRAPHIC}}
+   \includegraphics[width=.9\textwidth]{../graphics/GraphSLAMflowchart/Slide1.png} % requires the graphicx package
+   \caption{Inputs and outputs of GraphSLAM.}
    \label{fig:GraphSLAMIO}
 \end{figure}
 
@@ -189,37 +189,51 @@ p\left(z^i_{t}~|~x_t,m_j\right) & \sim \mathcal{N}\left(h(x_t,u_t), Q_t\right)
 The state and models used in GraphSLAM depend on the modeling assumptions of both the vehicle and the iceberg. These are stated here, and used to create a reduced state representation and kinematic motion model to feed into GraphSLAM
 
 \subsubsection{Vehicle motion model}
+\label{sec:VehicleMotion}
+The vehicle assumed in this dissertation is a Monterey Bay Aquarium Research Institute (MBARI) Dorado-class AUV. These are 21-inch diameter torpedo-shaped vehicles that range in length from 8 feet to 21 feet, depending on the specific configuration for a given mission. They are passively stabilized in roll, and control pitch and heading by vectoring the thrust from the propeller. Consequently, they must maintain forward velocity in order to maneuver. They cruise at around 1.5 m/s and have a minimum turning radius of 17 m, which equates to a maximum angular velocity in heading of 5 deg/s. \cite{?}
+
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.8\textwidth]{../graphics/mappingAUV.jpg} % requires the graphicx package
+   \caption{A Dorado-class AUV.}
+   \label{fig:AUV}
+\end{figure}
+
+It is assumed that the vehicle can determine its depth accurately via pressure sensor, and its \emph{inertial} attitude via a combination of gyro, accelerometer, and compass measurements. These assumptions, combined with assumptions about the iceberg motion, will allow a reduction in the size of the vehicle state for the purposes of mapping, as will be shown in the following sections.
+
+The vehicle's DVL is an important input to the motion model. It is mounted on the port side of the vehicle and its four beams all nominally point at the iceberg. However, at large standoff distances from smaller icebergs, or with dynamic iceberg geometry, one or more beams of the DVL may not intersect the surface, yielding incomplete velocity information. Without at least three beams in contact with the iceberg, the full 3D velocity cannot be determined uniquely. However, these DVL dropouts are detectable. In the simulation results shown in Chapter \ref{ch.Results} such occurances were handled by interpolating between valid vehicle-frame measurements and increasing the process noise during dropouts. The implicit underlying assumption here is that changes in the vehicle's velocity are smooth, and the vehicle's velocity in the body frame does not deviate far from nominal. For the Dorado-class AUVs, which normally fly at a fixed forward velocity with little sideslip, this is generally a valid assumption. In simulation, this approach obtained good results, even with over 60\% dropout, but a more principled approach using a vehicle state that includes velocity could potentially make better use of partial DVL information, at the cost of computational speed. This is discussed briefly in Section \ref{sec.VelocityState}.
+
 
 \subsubsection{Iceberg motion model}
 
+Icebergs are modeled as rigid bodies having three degrees of freedom: horizontal motion in the $xy$-plane and rotation in heading, $\psi$. In reality, icebergs are dynamic objects, subject to constant change due to melt, wave action, wind erosion, internal stresses, etc. These forces can lead to sudden, violent changes like calving, where a large portion of the iceberg separates and falls off, or ``turtling," where the iceberg rapidly flips over and settles into a new stable floating orientation. These phenomena present dangerous conditions to equipment and personnell, and are a primary driver for using robots for up-close iceberg study.  However, these classes of motion are not included in the iceberg motion model for the mapping problem, as they would likely cause any mapping mission to be aborted in the best case, and the loss of the vehicle in the worst.
+
+Iceberg motion can vary by size, shape, and region in which the iceberg is found but typical figures include .03-.08 m/s in translation  and 5-10 deg/hr in heading rate. In extreme cases, translation rates of .27 m/s and rotation rates of 40 dg/hr have been recorded. \cite{?} \cite{?}. 
+
+These translational rates can be up to 20\% of the AUV's speed, which could cause extremely large apparent drift if left unaccounted for. Fortunately, the DVL provides iceberg-relative translational velocity information, and the problem formulation developed in Chapter \ref{ch.IcebergGeometry} eliminates these terms from the optimization.
+
+The rotation rates of icebergs are three orders of magnitude slower than the maximum vehicle rotation rate, even at the fast end of the spectrum. Nonetheless, the rotational motion is large enough that it must be accounted for or it will result in a warped, inconsistent map of all but the smallest of icebergs. A last, implicit assumption about icebergs is that their motion changes very slowly. Their large mass and inertia yield dynamics with very large time constants. 
+
+For these reasons, lacking a means to measure directly the heading of the iceberg or the relative heding between iceberg and vehicle, the rotation rate can be modeled as a slowly-varying gyroscope bias on the vehicle heading. In other words, the iceberg's rotation rate can be modeled as constant over short periods, and much smaller than the vehicle's achievable rotation rate at all time scales.
+
 \subsubsection{GraphSLAM state $\left[~x_t~\right]$}
 
-\subsubsection{GraphSLAM motion model $\left[~g\left(x_t,u_t\right)~\right]$ }
-
-\subsection{Sensor model}
-
-Multibeam and DVL, including dvl dropouts
-
-%################
-
-The approach to modeling the iceberg mapping problem depends on the vehicle characteristics and what sensing it has available to it. This section assumes a vehicle as described in Section \ref{sec.VehicleSetup}, namely a torpedo-shaped AUV with sideways-facing DVL and multibeam sonar. Other vehicle and sensor configurations may benefit from different representations. A brief discussion of these considerations is given at the end of this section. 
-
-\subsection{State model}
-
-The state representation is as follows: 
+Based on the above discussion of assumptions about AUV and vehicle motions the following state representation was used:
 
 \begin{equation}
 \label{eq.state}
-\vec{x}= \left[\begin{array}{c}
+\vec{x}_t= \left[\begin{array}{c}
                      x \\ y \\ \psi \\ \beta 
-                     \end{array}\right]
+                     \end{array}\right]_B
 \end{equation}
 
-This is a common 2D-planar robotic mapping state representation, augmented with a drift rate term, $\beta$ to account for the iceberg's rotational motion.
+This is a common 2D-planar robotic mapping state representation, augmented with a drift rate term, $\beta$ to account for the iceberg's rotational motion. Here, the subscript $B$ indicates that all parameters are written in the iceberg reference frame. That is to say, $x$, $y$, and $\psi$ denote the horizontal position and heading of the vehicle expressed \emph{in the iceberg's frame of reference}, and $\beta$ is the drift rate in the vertical direction (which is the same in both the iceberg and inertial frames, by the assumption of planar motion). 
 
-It is assumed that the vehicle depth could be measured directly by onboard pressure sensors, reducing the problem to two dimensions in translation, denoted $x$ and $y$. This is a reasonable simplification for iceberg profiling. In mapping static terrain, low frequency tidal offset effects must often be estimated, but since an iceberg floats with the tides, this is not a concern. Large amplitude waves can also introduce depth errors, but at much higher frequencies than the tides. These effects can be mitigated by combining integrated DVL-measured vertical velocity for high frequencies and depth sensor for low frequencies in a complementary filter framework.
+As stated in Section \ref{sec:VehicleMotion}, it is assumed that the vehicle depth can be measured directly by onboard pressure sensors, reducing the problem to two dimensions in translation, denoted $x$ and $y$. This is a reasonable simplification for iceberg profiling. In mapping static terrain, low frequency tidal offset effects must often be estimated, but since an iceberg floats with the tides, this is not a concern. Large amplitude waves can also introduce depth errors, but at much higher frequencies than the tides. These effects can be mitigated by combining integrated DVL-measured vertical velocity for high frequencies and depth sensor for low frequencies in a complementary filter framework.
 
 Section \ref{sec.MainContrib} showed that the sideways-facing DVL could be used to directly measure the body components of the vehicle's velocity in the iceberg frame of reference. However, the vehicle's heading in the frame of reference of the iceberg, $\psi$, can not be directly measured with the assumed sensor suite, and must be estimated in the SLAM framework. The iceberg angular drift rate can be safely assumed to be relatively small, and to change slowly due to the large inertia of the iceberg, but may have nonzero mean value over the course of the mapping run. This drift is labeled $\beta$. 
+
+\subsubsection{GraphSLAM motion model $\left[~g\left(x_t,u_t\right)~\right]$ }
 
 A kinematic motion model is used, such that
 
@@ -243,6 +257,8 @@ The vehicle's rotational motion update is driven by the vehicle's heading rate g
 
 Each motion update also has a process noise term $\nu_i$. These are zero-mean Gaussian random variables whose covariance is tuned to reflect the uncertainty of the process. For translation, this is primarily DVL velocity measurement accuracy, for rotation, this is gyro accuracy, and for $\beta$ this is loosely related to the inertia of the iceberg. 
 
+Dropouts in the DVL velocity measurement were interpolated as described in Section \ref{sec:VehicleMotion} and the corresponding $\nu$ term was increased slightly to reflect the reduced confidence in these quantities.
+
 A state representation without the drift term $\beta$ could have been used, increasing the process noise covariance on the heading to account for unmodeled drift of the iceberg. This would result in the same state representation typically used in mobile (wheeled) robotic SLAM problems, as in \cite{ProbRob}. However, the zero-mean uncorrelated process noise assumption would have biased the navigation estimate, consistently underestimating any DC-component of the angular rate of the iceberg. For this reason, explicit modeling of the rotational drift rate was selected.
 
 \subsubsection{Equivalence to compass error}
@@ -251,15 +267,47 @@ The iceberg drift parameter label $\beta$ is often used to indicate sensor bias.
 
 This equivalency allows the same mapping framework to be used for more traditional static mapping problems where the inertial sensing is less precise, such as a vehicle with low-cost sensors. The only underlying assumption is that the sensor bias changes on a time scale much slower than the vehicle dynamics. This holds true in the iceberg case due to the large inertia of the ice, and is also a valid assumption for many low-cost MEMs-type inertial sensors, where temperature fluctuations are the largest source of drifting biases \cite{citationneeded}. Depending on the expected error modes, other modeling considerations may be necessary. This will be discussed in section \ref{sec.DesignConsiderations}.
 
+
 \subsection{Measurement model}
 
 The measurement model used in a GraphSLAM implementation depends on the sensor type and configuration as well as the type of map representation used. The results presented in Chapter \ref{ch.Results} use an implicit map, an explicit map may be beneficial in future work for automating loop closure and abstracts the raw measurements less. Therefore, a method is discussed for each.
 
+\subsubsection{Explicit map}
+
+Using an explicit map makes the error characterization of the measurement model straightforward, but introduces correspondence challenges when applied to the type of terrain encountered in iceberg profiling. 
+
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.8\textwidth]{../graphics/GraphSLAM.png} % requires the graphicx package
+   \caption{Illustration of GraphSLAM with discrete features whose positions are solved for explicitly (green triangles).  }
+   \label{fig:ExplicitMap}
+\end{figure}
+
+The measurement model used in the explicit map case represents the actual physics more closely than registering concatenated point clouds. Specifically, the measurement function $h\left(x_t,m_j\right)$ models the sonar beam directly, and the covariance of each individual measurement can be determined from known sensor characteristics. That information can be added directly to the information matrix used by the GraphSLAM solver. This is the matrix $Q_t$ in Equation \ref{eq.measModel}. 
+
+The challenge with using an explicity map map for profiling icebergs or other underwater natural terrain is detecting robust landmarks. Manmade structures typically have sharp corners, edges, flat planes, or other distinct geometric features, while natural terrain takes on lower contrast, more organic shapes that can be difficult to distinguish from one another. Future work in detecting and characterizing such features, as described in Chapter \ref{ch.LoopClosure} may work well with an explicit map implementation, but such capability is not yet sufficiently robust for the error characterization advantages to outweigh the correspondence difficulties. For this reason, only implicit map results are given in Chapter \ref{ch.Results}.
+
+
+
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.9\textwidth]{../graphics/measModel.png} % requires the graphicx package
+   \caption{Using an explicit map makes error characterization of the measurement model straightforward. The measured range is modeled as a Gaussian with mean $z_t^i$ and covariance $\sigma_{a}$ along the beam and $\sigma_{x}$ across the beam.}
+   \label{fig:GraphSLAMmeasModel}
+\end{figure}
+
 \subsubsection{Implicit map}
 
-Performing GraphSLAM with an implicit map involves the abstraction of many observations of points on the iceberg surface to a single pose-to-pose synthetic measurement. This has the advantage of being able to describe succinctly any scattered loop closure information, but makes it more difficult to characterize accurately the errors associated with the measurement. 
+Performing GraphSLAM with an implicit map involves the abstraction of many observations of points on the iceberg surface to a single pose-to-pose ``synthetic measurement." This measurement has a form identical to that of the odometry links in the graph, in that it penalizes any deviation \emph{between two poses} from the offset calculated by the registration algorithm.  This has the advantage of being able to describe succinctly any scattered loop closure information, but makes it more difficult to characterize accurately the errors associated with the measurement. 
 
-The procedure is as follows: 
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.8\textwidth]{../graphics/GraphSLAMpose2pose.png} % requires the graphicx package
+   \caption{The implicit map method uses terrain information to generate pose-to-pose synthetic measurements or ``pseudo-odometry" (red arcs). }
+   \label{fig:RelativePoses}
+\end{figure}
+
+The procedure is given in Algorithm 1.
 
 
 \begin{algorithm}
@@ -275,8 +323,6 @@ Extract rotation offset from $R$ , translation from $t$\;
 \Output{2D translation and 1D rotation offset between poses $\vec{x}(t_1)$ and $\vec{x}(t_2)$ }
  \caption{Implicit map ``measurement" synthesis}
 \end{algorithm} 
-
-Map registration algorithms like Iterative Closest Point vary in their implementation, computational complexity, and robustness to bad initializations. Improving on these techniques is a major area for future improvement, as validation of ICP alignments is the part of the data pipeline requiring greatest human oversight in the current implementation.\\
 
 
 \begin{algorithm}[H]
@@ -295,28 +341,19 @@ Add projected measurements to subcloud \;
 \end{algorithm}
 ~\\
 
+Map registration algorithms like Iterative Closest Point vary in their implementation, computational complexity, and robustness to bad initializations. Improving on these techniques is a major area for future improvement, as validation of ICP alignments is the part of the data pipeline requiring greatest human oversight in the current implementation.
+
 Using this implicit map formulation has several advantages. Point cloud registration, or ``scan matching," performs well when there are not many strong, highly recognizable features in the data, but many weaker ones. This is the case when mapping natural terrain: there are not generally straight lines or sharp corners, but many gentle curves and ripples. Taken individually, these features are not very discernable from one another, but when considered as a collection, including their locations relative to one another, they can create a unique signature that can be recognized. Point cloud registration essentially does this automatically, by matching entire pointclouds to one another based on geometry, rather than attempting to match individual points within the clouds.
 
 The implicit map formulation also bypasses the marginalization step of the GraphSLAM optimization, solving a smaller problem per iteration and converging more quickly. 
 
-There are drawbacks, however. A large one is the underlying assumption that the drift of the iceberg is negligible during the time interval whose measurements form the submap. In general, this is not true, and errors due to motion will manifest as warping of the submap. This effect can introduce registration error, but can be mitigated by using as short an interval as possible while maintaining sufficient texture to register point clouds. However, this pressure to shrink the submap makes the correspondence problem more challenging, as smaller submaps are less likely to overlap. It is possible to recompute the pose-to-pose offsets calculated by point cloud registration during the optimization, but the computational cost may be significant, and coupling between the registration and solver may cause instability in the solution. 
+There are drawbacks, however. A large one is the underlying assumption that the drift of the iceberg is negligible during the time interval whose measurements form the submap. While iceberg rotation rates are generally small, any errors due to non-zero motion will manifest as warping of the submap. This effect can introduce registration error, but can be mitigated by using as short an interval as possible while maintaining sufficient texture to register point clouds.
 
-Another challenge is determining how synthetic measurements should be weighted in the optimization. Assigning uncertainty to the synthetic measurement becomes challenging, as the pose offsets are obtained from many aggregated measurements. The error statistics can no longer be generated from known sensor error characteristics. Some mapping implementations solve this issue by assuming that point cloud alignment is perfect, and treating the calculated offsets as constraints, rather than penalty terms. The approach presented in this dissertation uses heuristics to determine the weight to be given to these synthetic measurements based on convergence speed, general sensor characteristics, and qualitative map consistency. 
+Another difficulty is determining how synthetic measurements should be weighted in the optimization. Assigning uncertainty to the synthetic measurement becomes challenging, as the pose offsets are obtained from many aggregated measurements. The error statistics can no longer be generated from known sensor error characteristics. Some mapping implementations solve this issue by assuming that point cloud alignment is perfect, and treating the calculated offsets as constraints, rather than penalty terms. The approach presented in this dissertation uses heuristics to determine the weight to be given to these synthetic measurements based on convergence speed, general sensor characteristics, and qualitative map consistency. 
 
 
 
-\subsubsection{Explicit map}
 
-Using an explicit map makes the error characterization of the measurement model more straightforward, but introduces correspondence challenges when applied to the type of terrain encountered in iceberg profiling. 
-
-The measurement model used in the explicit map case represents the actual physics more closely than registering concatenated point clouds. The sonar can be characterized such that the covariance matrix of each individual return is known, and that information can be added directly to the information matrix. This is the matrix $Q_t$ in Equation \ref{eq.measModel}.
-
-\begin{figure}[htbp]
-   \centering
-   \includegraphics[width=.9\textwidth]{../graphics/measModel.png} % requires the graphicx package
-   \caption{Using an explicit map makes error characterization of the measurement model straightforward. The measured range is modeled as a Gaussian with mean $z_t^i$ and covariance $\sigma_{a}$ along the beam and $\sigma_{x}$ across the beam.}
-   \label{fig:GraphSLAMmeasModel}
-\end{figure}
 
 
 \section{Application-specific design considerations}
@@ -324,7 +361,7 @@ The measurement model used in the explicit map case represents the actual physic
 The state and measurement models described above are appropriate for the types of errors one expects to encounter when profiling free-drifting icebergs. Other vehicle configurations or different missions may benefit from other representations: modeling is highly application-specific, and requires careful thought on the part of the engineer. Presented here is a discussion of several cases that differ from the mission and/or vehicle configuration assumed above, and possible ways to account for these differences.
 
 \subsection{DVL as measurement instead of input}
-
+\label{sec.VelocityState}
 The state representation presented above made the implicit assumption that the DVL remained in ``bottom lock" on the iceberg the majority of the time. At higher standoff distances, this may not be the case. In such instances, it may be advantageous to model the velocity as well as the position of the vehicle, and treat the DVL as a measurement (which it is, in reality) as opposed to an input.
 
 \begin{equation}

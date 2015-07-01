@@ -5,42 +5,6 @@
 
 The following sections show GraphSLAM results from simulation and field data. 
 
-\section{Implementation Details}
-
-Both the simulation and field data results presented here model the vehicle state with the 4-dimensional vector
-
-\begin{equation}
-\vec{x}_t = \left[\begin{array}{c}
-                     x \\ y \\ \psi \\ \beta 
-                     \end{array}\right]
-\end{equation}
-
-where $x$ and $y$ are the horizontal Cartesian coordinates of the vehicle in the iceberg-fixed reference frame, $\psi$ is the vehicle's heading in the iceberg frame, and $\beta$ is the heading rate of the iceberg, or the apparent heading gyro bias due to iceberg motion. 
-
-A kinematic motion model is used, such that
-
-\begin{align}
-x_{t+1} &= x_t + \left[cos(\psi) u_t + sin(\psi)v_t\right]\Delta t +~ \nu_x\\
-y_{t+1} &= y_t + \left[-sin(\psi) u_t + cos(\psi)v_t\right]\Delta t + ~\nu_y \\
-\psi_{t+1}    &= \psi_{t} + \left[\omega_t- \beta_t \right] \Delta t + ~\nu_\psi\\
-\beta_{t +1}   &= \beta_{t} + ~\nu_\beta
-\end{align}
-
-The translational motion update is driven by the DVL. That is, the velocity of the vehicle's center of mass in the iceberg frame, expressed in vehicle-frame coordinates. 
-
-\begin{equation}
-\vec{u}_\text{\tiny{DVL}}(t) = 
-                    \left[\begin{array}{c}
-                     u_t \\ v_t \\ w_t 
-                     \end{array}\right]_V
-\end{equation}
-
-The vehicle's rotational motion update is driven by the vehicle's heading rate gyro measurement $\omega_t$ and the estimated iceberg motion parameter, $\beta_t$. This parameter label, often used to indicate sensor bias, was chosen to highlight the equivalence of unmodeled iceberg motion and time-varying rate gyro bias. The iceberg's large mass and inertia guarantee that its angular rate will be both small and slowly-varying. To capture this, $\beta_t$ is modeled as a random walk, driven only by noise.
-
-Each motion update also has a process noise term $\nu_i$. These are zero-mean Gaussian random variables whose covariance is tuned to reflect the uncertainty of the process. For translation, this is primarily DVL velocity measurement accuracy, for rotation, this is gyro accuracy, and for $\beta$ this is loosely related to the inertia of the iceberg. 
-
-More complex state representations may be used to create a higher-fidelity process model. However, adding more free parameters to the optimization can cause problems if the system dynamics are not well-known, as the optimizer can ``hide" errors in more places, yielding non-physical solutions. The choice of state representation is application-specific. The model should be complex enough to adequately describe the likely sources of error in the process, but no more.
-
 \section{Data Collection}
 
 This section details how data were collected for use in the GraphSLAM mapping algorithm.
@@ -64,11 +28,26 @@ Multibeam sonar range returns were then generated via ray-tracing on the mesh. T
 
 When simulated at higher standoff distances, around 50 meters, the two forward DVL beams often lost contact with the iceberg surface. In these instances, the simulated DVL reported ``MAX RANGE" to the controller and was unable to estimate the full iceberg-relative velocity. To handle these incidents, the wall-following feedback controller would saturate its output to gracefully re-acquire the wall. In the mapping phase, the dropouts in measured velocity were interpolated between times when the vehicle had good velocity readings. The process noise during these outages was increased to reflect this. The AUV nominally flies at a constant velocity as expressed in the body frame, so these outages did not have a great effect on the end reconstruction, but a higher fidelity motion model could enable better odometry by using DVL velocity information when only a subset of the beams can see the iceberg surface. This concept will be discussed further in Chapter \ref{ch.FutureWork}.
 
-\subsection{Canyon Wall Data}
+\subsection{Soquel Canyon Wall Data}
 
 [Talk to Rock to get full details on the mapping vehicle (and mention iceberg AUV?)]
 
 \section{Loop Closure}
+
+\subsection{Automatic Loop Closure}
+
+The automatic loop closure detection scheme detailed in Chapter \ref{ch.LoopClosure} was applied to the Soquel Canyon wall dataset. In order to avoid introducing bad correspondences into the graph optimization, conservative thresholds were used on feature matching and outlier rejection. As a result, only two loop closure events were identified with high enough confidence to add them to the optimization. One of these matches is shown in Figure \ref{fig:autoLC}.
+
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.9\textwidth]{../graphics/siftMatches.png} % requires the graphicx package
+   \caption{A loop closure event detected automatically by the method described in Chapter \ref{ch.LoopClosure}}
+   \label{fig:autoLC}
+\end{figure}
+
+The resolution of the simulated iceberg model was insufficient for automatic loop closure detection. The simulated sonar returns were generated from a model that had already been smoothed from raw data, so there was not enough small-scale texture to detect pseudo-image features. Indeed, even with noise-free simulated measurements, the model's smoothness yielded worse point cloud alignment than the raw canyon data.
+
+\subsection{Manually-assisted Loop Closure}
 
 Loop closure events were encoded in semi-supervised fashion via the interactive graphical user interface, described in Section \ref{sec:GUI}. The simulation data optimization contained roughly 15 loop closure events, and the canyon data had around 25 events. In general, the more loop closure events the optimization contains, the better (more self-consistent) the results, but care must be taken not to supply the optimizer with bad loop closure information, as this will corrupt the results.
 
@@ -79,6 +58,12 @@ The Ceres Library is a C++ open-source nonlinear least squares optimization libr
 The library allows the user to define cost function objects that tie graph nodes to one another, and incrementally add them to the problem. 
 
 The contributions discussed in Chapter \ref{ch.IcebergGeometry} made the application of this optimized solver a straightforward exercise. 
+
+\subsection{Simulation Results}
+
+\subsubsection{Thirty-meter standoff distance}
+
+The 150 meter-long simulated iceberg's keel was reconstructed to an rms accuracy of 0.8 m. To compute this, the reconstructed shape was registered against the original model via ICP. For each point in the registered, reconstructed cloud, the distance to the model's nearest surface was recorded. These results are shown in Figure \ref{fig:RMS}
 
  \begin{figure}[htbp]
    \centering
@@ -110,10 +95,27 @@ The contributions discussed in Chapter \ref{ch.IcebergGeometry} made the applica
 
  \begin{figure}[htbp]
    \centering
+   \includegraphics[width=.9\textwidth]{../graphics/rmspoint8.png} % requires the graphicx package
+   \caption{The reconstructed keel (blue points) laid over the model. The rms error was measured to be .8m for the roughly 150 meter-long iceberg. Red points mark the center of each face of the model, used to aid the calculation.}
+   \label{fig:RMS}
+\end{figure}
+
+\subsubsection{Increased Standoff distance}
+
+At an increased standoff distance of 50 meters, the DVL only remained locked in on the iceberg around 40\% of the time, yielding less precise odometry. Despite this, the mapping algorithm was able to correct for the iceberg's motion.
+
+ \begin{figure}[htbp]
+   \centering
    \includegraphics[width=.9\textwidth]{../graphics/ceresResults/SimData/RealIceberg1/50m_standoff/reconstruction_50m_standoff.png} % requires the graphicx package
    \caption{At 50m standoff distance, the vehicle was out of DVL velocity lock roughly 60\% of the time. In spite of this, the algorithm is able to recover and produce a self-consistent map.}
    \label{fig:FullSim50m}
 \end{figure}
+
+\subsection{Soquel Canyon Results}
+
+\subsubsection{Automatic loop closure detection solution}
+
+\subsubsection{Manual loop closure detection solution}
 
  \begin{figure}[htbp]
    \centering
