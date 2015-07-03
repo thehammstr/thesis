@@ -3,7 +3,9 @@
 \chapter{The Geometry of Iceberg Mapping}
 \label{ch.IcebergGeometry}
 
-This chapter details improvements on the method for iceberg mapping developed by Kimball and Rock \cite{}. It uses the same basic geometric relations as a starting point, and improves on them in two key regards. First, several mathematical substitutions are made to reduce the quantity of parameters to be estimated, and eliminate inertial terms from the optimization. Second, all derivatives are taken in the moving reference frame. These changes yield a smaller estimation problem with no sacrifice in accuracy, and remove the need for the vehicle to be supplied with inertial navigation fixes, which is an operational benefit.
+This chapter details improvements on the method for iceberg mapping developed by Kimball and Rock \cite{}. Generating an accurate, self-consistent iceberg map requires accurate determination of the vehicle's pose \emph{within the frame of reference of the iceberg.} At a high level, Kimball's method assumed that the vehicle's pose in the \emph{inertial} frame could be determined, and estimated the motion of the iceberg based on the measurements. The vector difference between these two quantities is the pose in the iceberg frame. The method presented here estimates the vehicle pose in the iceberg frame directly. In doing so, it reduces the number of estimation parameters by several orders of magnitude, yielding corresponding speed increases, increases autonomy by removing the need for inertial position fixes, and puts the problem into a form that facilitates the use of pre-existing, highly-optimized solvers.
+
+The method uses the same basic geometric relations as a starting point, and improves on them in two key regards. First, several mathematical substitutions are made to reduce the quantity of parameters to be estimated, and eliminate inertial terms from the optimization. Second, all derivatives are taken in the moving reference frame. These changes yield a smaller estimation problem with no sacrifice in accuracy, and remove the need for the vehicle to be supplied with inertial navigation fixes, which is an operational benefit.
 
 Kimball's method had the structure shown in Figure \ref{fig:NestedLoop}. The optimization is split into linear and nonlinear parts. The inner loop estimation vector $\hat{\bar{x}}_{ls}$ comprises $O(10)$ iceberg motion spline control points $P_x$ and $O(1000)$ iceberg-fixed points, denoted $S_i$ in Figure \ref{fig:LoopEquation}.
 
@@ -115,6 +117,9 @@ B =&~ \text{Iceberg}
 
 \section{Geometric Problem Definition}
 
+This section develops the equations by which DVL data is incorporated into the optimization to enforce motion consistency in the mapping optimization. First, an overview of the previous method is presented. This illustrates the general approach to how DVL information is incorporated, and shows how the changes presented in this thesis provide gains in terms of speed and reduced complexity.
+
+\subsection{Overview of previous method}
 The starting point for the estimation problem is the so-called ``Loop Equation," as illustrated in Figure \ref{fig:LoopEquation}. The optimizer seeks to minimize loop closure alignment error while ensuring that the terms of this equation remain consistent with one another. 
 
 \begin{align}
@@ -170,10 +175,10 @@ Kimball arranged the terms of Equation \ref{eqn:expensive} within the nested loo
     \label{eqn:LeastSquares}
 \end{equation}
 
-where $\hat{\bar{x}}_{ls}  \in \mathbb{R}^{ 2P_x + 2N_{s_i}}$. $P_x$ is the number of spline control points used to estimate the iceberg's translation, and $N_{S_i}$ is the number of iceberg-fixed ``map points," $S_i$.
+where $\hat{\bar{x}}_{ls}  \in \mathbb{R}^{ 2P_x + 2N_{s_i}}$. $P_x$ is the number of spline control points used to estimate the iceberg's translation and inertial velocity, and $N_{S_i}$ is the number of iceberg-fixed ``map points," $S_i$.
 
 
-Note that the math here differs from that presented by Kimball in that the four DVL beams are not abstracted to a single point before optimizing, but the fundamental concept remains the same.
+Note that the math here differs slightly from that presented by Kimball in that the four DVL beams are not abstracted to a single point before optimizing. However, the fundamental concept and mechanics of the solution method remain the same.
 
 
 
@@ -211,7 +216,9 @@ The terms of Equation \ref{eqn:getIt} can again be arranged such that all terms 
 
 where $[~~~]_\times$ is the matrix representation of the vector cross product, $B_x(t_j)$ is the $2\times2N_\text{control points}$ matrix of position spline basis functions evaluated at time $t_j$, and $\dot{B}_x(t_j)$ is the equivalent matrix for the basis derivatives. $\vec{P}_x$ are the iceberg position spline control points being estimated in the inner optimization loop.
 
-The important thing to take from this is the estimation vector $x_{ls}$ now contains \emph{only} the points $P_x$. The ``map points" that made the vector in Equation \ref{eqn:LeastSquares} so long are absent. This improves greatly the speed of the inner loop optimization, as the number of parameters to estimate is on the order of 10 instead of hundreds or thousands.
+The important thing to take from this is the estimation vector $x_{ls}$ now contains \emph{only} the points $P_x$. The ``map points" that caused the vector in Equation \ref{eqn:LeastSquares} to have high dimensionality are absent. This improves greatly the speed of the inner loop optimization, as the number of parameters to estimate is on the order of 10 instead of hundreds or thousands.
+
+This substitution can be used as a drop-in replacement to the previous method, with the values of $A$ and $b$ in Equation \ref{eqn:LeastSquares} changed only slightly. Since least squares computational complexity is proportional to the square of the number of parameters estimated, this reduction yields significant savings. However, at this point, the method still requires knowledge of the inertial position and velocity of the vehicle, which can be difficult to determine accurately while underwater. The next section performs the same calculations as above, but defined entirely with respect to the moving iceberg frame, and with all derivatives taken in that frame, to eliminate this need. 
 
 %TO DO: I THINK I NEED TO BACK UP THE STATEMENT THAT THESE POINTS CAN BE ELIMINATED WITHOUT SACRIFICING ACCURACY, SINCE THEY'RE ONLY OBSERVED ONCE (EXCEPT FOR LOOP CLOSURE POINTS), AND THE COSINE-DEPENDENT RANGE-VELOCITY AMBIGUITY.
 
@@ -276,18 +283,18 @@ and then taking the component  in the direction of $\hat{d}_i$ via the inner pro
 Equation \ref{eqn:boom} allows the body components of the vehicle's velocity in the iceberg's reference frame to be measured to high precision via least squares. This is exactly the normal principle of operation for a DVL in ``bottom lock." 
 
    \begin{equation}
-   ~^B\vec{v}^{V_{cm}}_V = A_{DVL}^\dagger b
+   ~^B\vec{v}^{~V_{cm}}_V = A_{DVL}^\dagger b
    \label{eqn:LSDVL}
 \end{equation}
 
-where each row of $A_{DVL}$ comprises the body-fixed unit vector of one of the four DVL beams $\left[\hat{d}_i\right]_V^\intercal$, and each entry in $b$ is the corresponding Doppler measurement $ -\frac{dr_{i,t}}{dt} $. However, the vehicle's heading in the iceberg cannot be observed directly by the DVL, so the the rotation matrix $~^BR^{V}(t) $ must be estimated in the outer loop. Given this transformation between the vehicle frame and iceberg frame, 
+where each row of $A_{DVL}$ comprises the body-fixed unit vector of one of the four DVL beams $\left[\hat{d}_i\right]_V^\intercal$, and each entry in $b$ is the corresponding Doppler measurement $ -\frac{dr_{i,t}}{dt} $. However, the vehicle's heading in the iceberg cannot be observed directly by the DVL, so the the rotation matrix $~^BR^{~V}(t) $ must be estimated in the outer loop. Given this transformation between the vehicle frame and iceberg frame, 
 
    \begin{equation}
-   ^B\vec{v}^{V_{cm}}_B= ~^BR^{~V}~ \cdot~^B\vec{v}^{V_{cm}}_V
+   ^B\vec{v}^{~V_{cm}}_B= ~^BR^{~V}~ \cdot~^B\vec{v}^{~V_{cm}}_V
    \label{eqn:boomLinAlg}
 \end{equation}
 
-the quantity $^B\vec{v}^{V_{cm}}_B$ can be integrated to obtain the vehicle's iceberg-relative position. This is how the large linear least-squares inner loop optimization shown in Figure \ref{fig:NestedLoop} can be replaced by a deterministic trajectory propagation, as shown in Figure \ref{fig:NestedLoop2}. This also makes the problem's structure essentially identical to mapping tasks commonly solved via SLAM in the terrestrial robotics community, a link that will be developed fully in Chapter \ref{ch.GraphSLAM}.
+the quantity $^B\vec{v}^{~V_{cm}}_B$ can be integrated to obtain the vehicle's iceberg-relative position. This is how the large linear least-squares inner loop optimization shown in Figure \ref{fig:NestedLoop} can be replaced by a deterministic trajectory propagation, as shown in Figure \ref{fig:NestedLoop2}. This also makes the problem's structure essentially identical to mapping tasks commonly solved via SLAM in the terrestrial robotics community, a link that will be developed fully in Chapter \ref{ch.GraphSLAM}.
 
 \section{Summary}
 
