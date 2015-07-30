@@ -1,13 +1,13 @@
 % !TEX root = ../Thesis.tex
 
-\chapter{Loop Closure Detection}
+\chapter{Data Correspondence for Loop Closure}
 \label{ch.LoopClosure}
 
 One of the most challenging problems with mapping icebergs is automatic loop closure detection. Solving the correspondence problem is crucial to estimating iceberg motion, but difficult precisely because of that motion. This chapter looks more closely at how this difficulty arises, and proposes two methods for solving the correspondence problem for underwater mapping tasks where precise inertial navigation is unavailable. 
 
-The first method is a streamlined graphical interface that allows a human to direct the search for loop closure events. An automated algorithm then operates on a reduced search space to perform precise alignment, and the user can decide whether the alignment is precise enough to include in the mapping optimization.
+The first method is a streamlined graphical interface that allows a human to direct the search for loop closure events. An automated algorithm then operates on a reduced search space to perform precise alignment, and the user decides whether the alignment is precise enough to include in the mapping optimization. This prevents the inclusion of false correspondences that result from becoming trapped in local minima, a common failure mode for distance-based registration algorithms.
 
-The second method comprises early work toward full automation of the loop closure detection process. It borrows heavily from computer vision and image processing literature, applying robust image feature extraction techniques to sonar range data in order to detect loop closure. 
+The second method comprises early work toward full automation of the loop closure detection process. It borrows heavily from computer vision and image processing literature, applying robust image feature extraction techniques to sonar range data in order to detect loop closure. In essence, this methods seeks to identify and describe ``landmarks" in the data that can be used to detect when an area has been visited before.  
 
 \section{The Challenge of Loop Closure Detection}
 
@@ -17,9 +17,11 @@ Inertial navigation errors, whether introduced by moving terrain or poor sensing
 
 Accurate robotic mapping requires accurate localization within the environment being mapped, as described in Chapter \ref{ch.Introduction}. Underwater robots use a combination of infrastructure, inertial navigation, and environment-aided navigation to localize themselves. 
 
-Nearly all mapping missions rely on information in the terrain to refine the localization and produce a self-consistent map. This process was described in Chapter \ref{ch.RelatedWork}, but for convenience, it is again stated here.
+Nearly all robotic mapping missions rely on information in the terrain to refine the localization and produce a self-consistent map. This is true even when infrastructure like GPS is available, as data registration methods often provide relative pose information with much higher precision than satellite-based positioning systems. This process was described in Chapter \ref{ch.RelatedWork}, but for convenience, it is again stated here.
 
-The AUVs are pre-programmed to fly self-intersecting trajectories, and have accurate enough inertial guidance as to guarantee sufficient overlap. Thus the correspondence problem is solved automatically. Submaps are extracted and correlated to estimate drift, and the trajectory is altered in such a way as to distribute the error as unobtrusively as possible, while driving the measured drift to zero.
+In a typical autonomous underwater mapping mission an AUVs is pre-programmed to fly a path over terrain defined by waypoints while gathering data. To account for inertial drift, the path must be made to self-intersect at regular intervals. Submaps are extracted and correlated to estimate drift, and the trajectory is altered in such a way as to distribute odometry error as unobtrusively as possible, while driving the measured drift to zero. 
+
+The minimum frequency of these self-intersecting trajectories is a function of the vehicle's inertial navigational accuracy: the lower the drift, the longer the vehicle can travel before it needs to ``close a loop." This constraint is due to the fact that AUVs typically rely on inertial navigation accuracy to ensure that they are observing the same terrain, which removes the need to perform data corresponcence explicitly. However, if the vehicle travels for too long, it can no longer guarantee sufficient sonar overlap when it revisits previously ensonified terrain. 
 
  \begin{figure}[htbp]
    \centering
@@ -31,9 +33,21 @@ The AUVs are pre-programmed to fly self-intersecting trajectories, and have accu
 
 % topic paragraph: summarizes the rest, but does it make sense before what is to follow?
 
-\subsection{Complications due to motion}
+\subsection{Iceberg-specific mapping}
 
-The iceberg motion introduces larger odometry errors, which complicates the loop closure detection process in two ways: first, a larger area much be searched in order to guarantee overlap, and second, the submaps themselves can become warped relative to the true terrain shape.
+Mapping icebergs present some challenges compared with static mapping, but also allow for some simplifications. This section explores these differences.
+
+\subsubsection{Iceberg-specific simplifications}
+
+In some ways, the data correspondence problem is simplified when mapping icebergs. This is because the iceberg can be thought of as a cyclical environment: assuming the vehicle maintains a constant depth and distance from the iceberg (both of which can be done with onboard sensors), if it swims for long enough, it is \emph{guaranteed} to revisit the same portion of the iceberg multiple times. The positional uncertainty is effectively reduced to a 1-dimensional periodic problem. This is not true in general for traditional bathymetric mapping tasks, where a vehicle with sufficiently large drift could completely miss all previously observed terrain. 
+
+This fact simplifies the data correspondence problem significantly. Given enough data, the problem statement becomes ``which of these data correspond to each other," as opposed to the harder question of ``do any of these data correspond to each other."
+
+However, while this geometric fact reduces the dimensionality of the data correspondence search, it also limits how frequently loop closure can occur. While normal mapping can include as many loop closures as necessary for map accuracy, for larger icebergs, a long time may pass between traversals of the same area, giving motion effects time to compound. 
+
+\subsubsection{Complications due to motion} 
+
+While the cyclical nature of iceberg mapping simplifies the problem, the fact that is in motion makes it more complicated. The iceberg motion introduces larger apparent odometry errors, which complicates the loop closure detection process in two ways: first, a larger area must be searched in order to guarantee overlap, and second, the submaps themselves can become warped relative to the true terrain shape, making correlation techniques less accurate and reliable.
 
 %All inertial navigation systems drift over time without bound. This is a fundamental limitation of obtaining a position estimate solely by integrating noisy velocity and acceleration measurements. A modern state-of-the art INS can provide drift rates as low as 0.01\% of the distance traveled, but even this low a drift rate will eventually grow large enough to introduce substantial map error.  
 
@@ -47,7 +61,9 @@ Submaps are built at strategic locations where the planned trajectory self-inter
 \end{figure}
 
 
-The second complication arises from the implicit assumption of submap rigidity. The submap method assumes that the inertial guidance of the vehicle is extremely accurate over the short time it takes to build a submap. Any navigation errors during that time will introduce warping to the submap, which can cause the registration method to fail or worse: create a positive match on different terrain. 
+The second complication arises from the implicit assumption of submap rigidity. The submap method assumes that the inertial guidance of the vehicle is accurate over the short time it takes to build a submap. Any navigation errors during that time will introduce warping to the submap, which can cause the registration method to fail or worse: create a positive match on different terrain. 
+
+For reference, a typical mapping mission would see a vehicle traveling around 1.5 m/s at 40m standoff distance from the wall. Assuming ranging error of 1\% of distance traveled and a relatively fast-rotating iceberg (20 deg/hr) the warping effect would become noticeable after about 100m. Longer than that, the warping would no longer be lost in the noise. 
 
  \begin{figure}[htbp]
    \centering
@@ -56,13 +72,14 @@ The second complication arises from the implicit assumption of submap rigidity. 
    \label{fig:motionErrorWarping}
 \end{figure}
 
-The first issue drives a requirement for increased submap size. However, a larger submap means that more scans have to be concatenated over a longer time. This gives the motion-induced odometry error more chance to warp the submap. This drives the requirement to use as small a submap as possible. Somehow, a balance must be struck between these competing needs. 
+The increased navigational uncertainty would require increased submap size. However, a larger submap means that more scans have to be concatenated over a longer time. This gives the motion-induced odometry error more chance to warp the submap, which creates an incentive to use as small a submap as possible. Somehow, a balance must be struck between these competing needs. 
 
 %One possible solution to achieve large coverage area with minimal map warping might be to search for the best registration over multiple smaller submaps, and devise a metric to select the best submap alignment pair. However, as odometry error increases, the search space can become large. Point cloud registrations are relatively expensive, and verifying their alignment can be difficult. 
 
-These concerns provide the motivation for the methods developed in the rest of this chapter. The first one, a graphical user interface, leverages humans' excellent pattern recognition ability to provide high level guidance and error checking for the alignment algorithm. It provides a streamlined method for encoding loop closure information for missions where human intervention is feasible. 
+These concerns provide the motivation for the methods developed in the rest of this chapter. The first one, a graphical user interface, leverages humans' excellent pattern recognition ability to provide high level guidance and error checking for the alignment algorithm. It provides a streamlined method for encoding loop closure information, and guards against local minima and false matches. 
 
-The second method continues working toward the goal of removing the need for human intervention entirely. Borrowing from well-developed concepts in the computer vision and image processing communities, and more recent work in point cloud feature extraction, it seeks to find local, stable, identifiable features in the terrain that can be recognized upon a second observation and used to initialize more accurate point cloud registration methods. 
+The second method works toward removing the need for human intervention entirely. Borrowing from well-developed concepts in the computer vision and image processing communities, and more recent work in point cloud feature extraction, it seeks to find local, stable, identifiable features in the terrain that can be recognized upon a second observation. These distinctive ``landmarks" can be used to initialize more accurate point cloud registration methods, avoiding convergence into local minima. 
+
 
 \section{Loop Closure GUI}
 \label{sec:GUI}
@@ -71,49 +88,15 @@ This section describes in detail the graphical user interface designed to allow 
 
 \subsection{GUI Operation}
 
-Loop closure GUI operation is meant to be straightforward. As a general rule, the more loop closures that are incorporated into the optimization, the more accurately the iceberg motion can be accounted for, yielding a more accurate and self-consistent map. The user launches the program including an argument that points to the log file including the navigation and sonar data. The vehicle path and multibeam cloud are rendered in the main window. The user can then look for areas of likely overlap and encode links incrementally.
+Loop closure GUI operation is meant to be straightforward. As a general rule, the more loop closures that are incorporated into the optimization, the more accurately the iceberg motion can be accounted for, yielding a more accurate and self-consistent map. The GUI allows dozens of matches to be detected and encoded in a matter of minutes. For a detailed discussion on usage of the GUI, refer to the Appendix.
 
  \begin{figure}[htbp]
    \centering
-   \includegraphics[width=\textwidth]{../graphics/GUI.png} % requires the graphicx package
+   \includegraphics[width=\textwidth]{../graphics/guiscreenshots/GUIsim.png} % requires the graphicx package
    \caption{Loop closure GUI being used to encode loop closures on Soquel Canyon data set }
    \label{fig:GUI}
 \end{figure}
 
-The user drags the slider bars at the top left, labeled ``first index" and ``second index," respectively. These indices correspond to the reference time stamp of the vehicle trajectory data. In the main data window, a white line is rendered that connects these two indices, as feedback for the user. 
-
-A submap is then automatically constructed around these two indices. To do this, the sonar measurements for the $N$ preceding scans and $N$ scans to follow are concatenated into one rigid submap, based on the vehicle's estimated trajectory over that time. Thus each submap contains $2N+1$ multibeam scans, associated with $2N+1$ consecutive vehicle poses. $N$ can be changed by the user using the ``Submap width" slider. Each point cloud is transformed into its central pose's reference frame, with the central pose defined as the origin. Because the vehicle attempts to maintain a constant standoff distance from the icberg surface, this tends to provide a reasonable initialization for the point cloud registration techniques that will later be applied. An implicit assumption is that the motion of the iceberg or the inertial drift of the vehicle during such a short time is small enough that it can safely be neglected. The two submaps are displayed in the lower window of the GUI. Additionally, the extent of the two submaps is overlaid on the full data set in the top window to aid the user in selecting areas of likely overlap.
-
- \begin{figure}[htbp]
-   \centering
-   \includegraphics[width=.9\textwidth]{../graphics/GUIcloseup.png} % requires the graphicx package
-   \caption{Closeup of Figure \ref{fig:GUI}. A white line between the two candidate indices is rendered as visual feedback for the user Also, the extent of the submaps used for registration is overlaid on the raw data in red and yellow. The green lines are loop closure events that have already been recorded.}
-   \label{fig:GUIcloseup}
-\end{figure}
-
-Once the user determines that the two submaps likely correspond to the same terrain, he or she can click the ``ICP" button. This applies the iterative closest point algorithm to the two submaps and displays the result to the lower window. For the iceberg implementation, the depth, pitch, and roll of the vehicle is assumed to be known, allowing a reduced model to be used for point cloud registration. Only the horizontal offsets $dx$ and $dy$, and heading offset $d\psi$ are estimated by the algorithm. Extending this method to the full six degree-of-freedom case would require the full estimation model, but using the reduced model makes the algorithm more robust to bad initial alignments, and is sufficient for this application. 
- 
- \begin{figure}[htbp]
-   \centering
-   \includegraphics[width=\textwidth]{../graphics/misaligned_subcloud.png} % requires the graphicx package
-   \caption{The bottom window of the GUI shows the two subclouds in detail. The window is fully interactive, so the user can view the clouds from any angle, zoom, etc. Before ICP, these two clouds display some misalignment. The right image shows the top view, to highlight the misalignment.}
-   \label{fig:GUI_preicp}
-\end{figure}
-
-The user can then inspect the resulting point clouds to determine whether ICP converged to a good alignment. If it has, the user clicks the ``Accept/write" button, and the position and heading offset between the two reference indices are recorded to file immediately. Otherwise, the user can choose different map points, submap widths, etc. and try again. If a bad alignment is accidentally recorded, the ``Delete Last" button removes it. Upon acceptance, the white line connecting the two reference indices turns green, and persists in the main display until it is either deleted or the session ends. This helps the user remember which areas already have loop closure information, and which still need to be processed. These lines can be seen in Figures \ref{fig:GUI} and \ref{fig:GUIcloseup}.
-
- \begin{figure}[htbp]
-   \centering
-   \includegraphics[width=\textwidth]{../graphics/aligned_subcloud.png} % requires the graphicx package
-   \caption{After ICP is performed, the user can inspect the result to determine whether the alignment algorithm converged accurately. The right image shows the top view, to highlight the alignment}
-   \label{fig:GUI_poseicp}
-\end{figure}
-
-The link will only be written to file if ICP has already been performed. The link data is recorded in human-readable CSV file format, so loop closure information from multiple sessions with the GUI can be spliced together later. Bad links can also be removed from the file by simply deleting a line of the file. 
-
-\subsection{Implementation details}
-
-The loop closure GUI was designed using the open-source Qt framework. The back-end point cloud processing as well as the point cloud display window rendering was done with Point Cloud Library (PCL) \cite{PCL}. The sonar and navigation data are stored in a CSV file after minimal pre-processing that uses some simple heuristics to remove spurious returns.
 
 \section{Toward loop closure automation}
 
@@ -127,16 +110,16 @@ A wealth of research has been conducted in extracting robust, identiable feature
 
 Many standard algorithms for extracting robust image feature descriptors only consider image intensity, discarding any color information. The resulting grayscale images can be thought of as digital elevation maps (DEMs), with pixel intensity being the ``height" of the map above that location in the image. This representation is shown in Figure \ref{fig:imAsSurf}. 
 
-%\begin{figure}[htbp]
-%   \centering
-%   \includegraphics[width=\textwidth]{../graphics/imageAsSurf.png} % requires the graphicx package
-%   \caption{Algorithms like SIFT and SURF treat images as digital elevation maps, with intensity plotted as height. Note how brighter areas in the photo correspond to higher peaks. The algorithms use gradient information to detect and describe local stable features.}
-%   \label{fig:imAsSurf}
-%\end{figure}
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=\textwidth]{../graphics/imageAsSurf.png} % requires the graphicx package
+   \caption{Algorithms like SIFT and SURF treat images as digital elevation maps, with intensity plotted as height. Note how brighter areas in the photo correspond to higher peaks. The algorithms use gradient information to detect and describe local stable features.}
+   \label{fig:imAsSurf}
+\end{figure}
 
 In order to produce an image from range data, a few steps must be taken. First, a reference plane and corresponding projection direction must be chosen. A grid is constructed on the reference plane, and the distance between a sounding an its projection onto that plane will be encoded as the ``intensity" of the resulting image. For instance, when creating a normal DEM map of the seafloor, the reference plane is horizontal $(x,y)$, and the projection direction is vertical $(z)$. However, operating around an iceberg, with vertical or even undercut sides, creates an ambiguity as to which direction the projection should occur. 
 
-The method presented here calculates the average normal for the entire submap and uses that as the projection direction. The reference plane is set perpendicular to this such that all soundings lie on the positive-$z$ side of the plane.
+The method presented here calculates the average normal for the entire submap and uses that as the projection direction. The reference plane is set perpendicular to this, such that all soundings lie on the positive-$z$ side of the plane.
 
 When applied to the sonar submap shown in Figure \ref{fig:submap_rangeImage}, this yields the image shown in Figure \ref{fig:holyImage}. Sonar occlusions result in a number of holes or gaps in the data. This does not occur in camera imagery, as the data is collected  all at once, and projected directly onto the camera's imaging sensor. Additionally, sometimes a number of soundings project to the same pixel. To handle the latter case, the average pixel height is used in the final image. 
 
@@ -174,7 +157,7 @@ The last step in creating a SIFT-ready image is Contrast-Limited Adaptive Histog
    \label{fig:rangeImageHC}
 \end{figure}
 
-Robust image features like SIFT can be extracted from the resulting image and used to look for loop closure events. Figure \ref{fig:SIFTrangeImage} shows some features extracted from such an image, and Figure \ref{fig:matches} shows how these features can be matched. Upon reimaging a portion of terrain and extracting a second set of features, matching can be performed. Techniques like RANSAC can be used to screen for false matches. If a consistent model can be found using a sufficient number of matches, there is a high likelihood that the two submaps correspond to the same terrain, and precision alignment can be performed using ICP with reduced risk of false alignment. 
+Robust image features can be extracted from the resulting image and used to look for loop closure events. The work presented here used SIFT features, though other feature classes could be used. Figure \ref{fig:SIFTrangeImage} shows some features extracted from such an image, and Figure \ref{fig:matches} shows how these features can be matched. Upon reimaging a portion of terrain and extracting a second set of features, matching is performed. Techniques like RANSAC can be used to screen for false matches by enforcing geometric consistency between the matches. If a consistent model can be found using a sufficient number of matches, there is a high likelihood that the two submaps correspond to the same terrain, and precision alignment can be performed using ICP with reduced risk of false alignment. 
 
 \begin{figure}[htbp]
    \centering
@@ -194,7 +177,7 @@ Robust image features like SIFT can be extracted from the resulting image and us
 
 2D image feature techniques are powerful, but they cannot create information where there is none. If the terrain is perfectly flat and featureless, they will not produce meaningful results. 
 
-The matching techniques described above treat the features as if they lie in a plane, which is not necessarily a valid assumption. The same terrain, when projected in different directions can change appearance drastically. Using the average normal of the point cloud data as the projection direction for the range image, as described above, is a simple heuristic. However, it appears to be relatively robust to the selected plane. Figure \ref{ref:lighting} shows the images resulting from projecting the same range data in a number of directions. The central image uses the average normal plane. Above and below it represent $\pm 15$deg of elevation and left and right $\pm 15$ deg of azimuth, relative to neutral.
+The matching techniques described above treat the features as if they lie in a plane, which is not necessarily a valid assumption. The same terrain, when projected in different directions can change appearance drastically. Using the average normal of the point cloud data as the projection direction for the range image, as described above, is a simple heuristic. However, it appears to be relatively robust to the selected plane. Figure \ref{ref:lighting} shows the images resulting from projecting the same range data in a number of directions. The central image uses the average normal plane. Above and below it represent $\pm 15$deg of elevation and left and right $\pm 15$ deg of azimuth, relative to neutral. While the images remain qualitatively similar, the ability to detect SIFT keypoints reliably falls off between 5 and 10 degrees off-nominal.
 
 \begin{figure}[htbp]
    \centering
