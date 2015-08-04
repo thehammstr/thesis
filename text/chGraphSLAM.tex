@@ -7,7 +7,7 @@ Chapter \ref{ch.IcebergGeometry} recast the problem of iceberg mapping in a form
 
 A number of techniques can be applied to solve this new formulation of the mapping problem. Many of these techniques have been developed extensively in the robotics community, and a number of powerful software tools are available to solve the techniques' associated optimizations. While a number of these methods could have been used for profiling icebergs, the ease of representing the problem as a pose graph, the ability to solve large optimizations efficiently, and the fact that the calculations did not need to be performed online drove the selection of GraphSLAM as a solution method. 
 
-This chapter will give a brief overview of the mechanics of Graph SLAM, advantages of the method, and a description of how the typical vehicle state definition was modified in order to accomodate the errors associated with iceberg motion. Additionally, there will be a discussion of how different sensing modalities and error modes could drive choices for alternative state definitions. However, it will not go into the low-level details of how the GraphSLAM algorithm implements its optimization. For more detail on that, the reader should refer to the sources in the related works section.
+This chapter will give a brief overview of the mechanics of Graph SLAM, advantages of the method, and a description of how the iceberg mapping problem was framed to fit within the framework of the method. Additionally, there will be a discussion of how different sensing modalities and error modes could drive choices for alternative state definitions. However, it will not go into the low-level details of how the GraphSLAM algorithm implements its optimization. For more detail on that, the reader should refer to the sources in the related works section.
 
 \section{GraphSLAM overview}
 
@@ -242,9 +242,10 @@ A kinematic motion model is used, such that
 \begin{align}
 x_{t+1} &= x_t + \left[cos(\psi) u_t + sin(\psi)v_t\right]\Delta t +~ \nu_x\\
 y_{t+1} &= y_t + \left[-sin(\psi) u_t + cos(\psi)v_t\right]\Delta t + ~\nu_y \\
-\psi_{t+1}    &= \psi_{t} + \left[\omega_t- \beta_t \right] \Delta t + ~\nu_\psi\\
+\psi_{t+1}    &= \psi_{t} + \Delta\psi_t^I - \beta_t\Delta t + ~\nu_\psi \\
 \beta_{t +1}   &= \beta_{t} + ~\nu_\beta
 \end{align}
+
 
 The translational motion update is driven by the DVL. That is, the velocity of the vehicle's center of mass in the iceberg frame, expressed in vehicle-frame coordinates. 
 
@@ -255,7 +256,7 @@ The translational motion update is driven by the DVL. That is, the velocity of t
                      \end{array}\right]_V
 \end{equation}
 
-The vehicle's rotational motion update is driven by the vehicle's heading rate gyro measurement $\omega_t$ and the estimated iceberg motion parameter, $\beta_t$.  The iceberg's large mass and inertia guarantee that its angular rate will be both small and slowly-varying. To capture this, $\beta_t$ is modeled as a random walk, driven only by noise.
+The vehicle's rotational motion update is driven by the vehicle's inertial heading estimate from gyro and compass, $\psi^I$ and the estimated iceberg motion parameter, $\beta_t$.  The iceberg's large mass and inertia guarantee that its angular rate will be both small and slowly-varying. To capture this, $\beta_t$ is modeled as a random walk, driven only by noise.
 
 Each motion update also has a process noise term $\nu_i$. These are zero-mean Gaussian random variables whose covariance is tuned to reflect the uncertainty of the process. For translation, this is primarily DVL velocity measurement accuracy, for rotation, this is gyro accuracy, and for $\beta$ this is loosely related to the inertia of the iceberg. 
 
@@ -287,7 +288,7 @@ Using an explicit map makes the error characterization of the measurement model 
 
 The measurement model used in the explicit map case represents the actual physics more closely than registering concatenated point clouds. Specifically, the measurement function $h\left(x_t,m_j\right)$ models the sonar beam directly, and the covariance of each individual measurement can be determined from known sensor characteristics. That information can be added directly to the information matrix used by the GraphSLAM solver. This is the matrix $Q_t$ in Equation \ref{eq.measModel}. 
 
-The challenge with using an explicity map map for profiling icebergs or other underwater natural terrain is detecting robust landmarks. Manmade structures typically have sharp corners, edges, flat planes, or other distinct geometric features, while natural terrain takes on lower contrast, more organic shapes that can be difficult to distinguish from one another. Future work in detecting and characterizing such features, as described in Chapter \ref{ch.LoopClosure} may work well with an explicit map implementation, but such capability is not yet sufficiently robust for the error characterization advantages to outweigh the correspondence difficulties. For this reason, only implicit map results are given in Chapter \ref{ch.Results}.
+The challenge with using an explicity map for profiling icebergs or other underwater natural terrain is detecting robust landmarks. Manmade structures typically have sharp corners, edges, flat planes, or other distinct geometric features, while natural terrain takes on lower contrast, more organic shapes that can be difficult to distinguish from one another. Future work in detecting and characterizing such features, as described in Chapter \ref{ch.LoopClosure} may work well with an explicit map implementation, but such capability is not yet sufficiently robust for the error characterization advantages to outweigh the correspondence difficulties. For this reason, only implicit map results are given in Chapter \ref{ch.Results}.
 
 
 
@@ -405,4 +406,4 @@ More error states can be appended to the state to estimate such additional error
 
 \section{Summary}
 
-GraphSLAM is a method well-suited to the problem of mapping icebergs. Its structure allows efficient solution of large mapping problems, and provides a convenient theoretical framework to describe the odometry and sonar measurements that drive the mapping process. With minimal augmentation to the state representation, the errors introduced by iceberg rotational motion can be accounted for, and additional augmentation can account for other error modes, if necessary. Finally, the GraphSLAM framework allows many swaths of data including multiple loop closure events to be incorporated in a single batch optimization, which is an improvement over prior art.
+GraphSLAM is a method well-suited to the problem of mapping icebergs. Its structure allows efficient solution of large mapping problems, and provides a convenient theoretical framework to describe the odometry and sonar measurements that drive the mapping process. With minimal augmentation to the state representation, the errors introduced by iceberg rotational motion can be accounted for, and additional augmentation can account for other error modes, if necessary. Finally, the GraphSLAM framework allows many swaths of data including multiple loop closure events to be incorporated in a single batch optimization, which is an improvement over prior methods.

@@ -347,6 +347,8 @@ where $d_i$ and $m_i$ are the body-fixed DVL and multibeam measurements, respect
    \label{fig:headingObservability}
 \end{figure}
 
+Any odometry error that accumulates between $t_1$ and $t_2$ will show up as a difference between the expected range the patch and the actual range. This is shown by the ghosted AUV at $t_2$. Navigation error due to the iceberg's rotation has caused its position estimate to pull away from the iceberg relative to the true location (solid AUV). As a result, an error, shown at bottom, develops between the DVL reading at the first time, and the multibeam at the second time. This difference can provide information on the accumulated heading error.
+
 There are two practical challenges to employing this approach. The first is essentially a signal-to-noise ratio problem from trying to measure extremely small quantities with noisy sensors. The second again has to do with ambiguity in the data correspondence problem. 
 
 For the first challenge, assume that the data correspondence can be solved. Applying some rough real-world figures, at 40m standoff distance and a forward DVL angle of $30^\circ$ from the wall, $m_2$ would coincide with $d_1$ after 23m of travel, or 15s at 1.5 m/s. If the iceberg is rotating at 20 deg/hr, which is fast for an iceberg, this would introduce about 1 mm of of translational error. Assuming that both DVL and multibeam have ranging errors of 1\% of distance traveled, the problem can be stated simply: look for an error of a fraction of a milimeter, with a sensor that returns $40m \pm 40 cm$.
@@ -395,7 +397,19 @@ Chapter \ref{ch.Results} makes this smoothness assumption and models the iceberg
 
 In order to perform scan matching for odometry, the sonar would need to be oriented in the horizontal plane, as in Figure \ref{fig:ScanMatchMultibeam}. 
 
-TODO: add imagenex heading estimate graph and a bit more explanation.
+By incrementally aligning these high-overlap scans, a direct measurement can be made of the vehicle's iceberg-relative heading rate. There is no longer a need to make assumptions about the iceberg's motion, other than that it is planar. Additionally, given the vehicle's compass, the iceberg's rotation could be extracted from the measurements.
+
+To generate these measurements, scans are aligned using ICP with 3-DOF point-to-plane distance penalty. The heading offset for each scan match is used to update the vehicle's heading estimate, rather than compass and bias estimate. The difference between the sonar-based heading estimate and the compass heading gives a reasonable approximation of the iceberg's true heading rate: Figure \ref{fig:filtIgnx}
+
+
+\begin{figure}[h]
+   \centering
+   \includegraphics[width=\textwidth]{../graphics/filtIgnxHeading.png} % requires the graphicx package
+   \caption{Comparing the horizontal sonar-derived heading estimate with the compass provides and estimate of the iceberg's rotational motion.}
+   \label{fig:filtIgnx}
+\end{figure}
+
+These results were generated in simulation with no ranging error on the sonar. In practice, range errors would cause performance degradation. With the low-cost obstacle avoidance sonars currently mounted on teh vehicle, the accuracy is insufficient to outperform the compass drift model, but work toward improving the signal processing algorithms to make this approach feasible is underway. Adding a high-precision multibeam sonar of the type used for mapping in horizontal orientation would work, but is prohibitively expensive.
 
 \section{Summary}
 
