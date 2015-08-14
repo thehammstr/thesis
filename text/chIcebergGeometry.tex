@@ -3,7 +3,7 @@
 \chapter{Determining Motion Between Loop Closures}
 \label{ch.IcebergGeometry}
 
-Chapter \ref{ch.LoopClosure} described in great detail the process of loop closure detection. This process aligned clouds of multibeam sonar data to provide a rotational and translational offset between two poses that is used to eliminate navigational drift. If the navigation estimate were perfect, this offset error would be zero. However, in general this is not the case, and the motion estimate must be altered in order to satisfy the loop closure constraint. The challenge is to distribute these errors in such a way as to minimize the resulting odometry errors, while still satisfying loop closure. In broad terms, loop closure gives a starting and ending point to the vehicle's trajectory, and the optimizer must choose the most likely path to connect these points out of all possible paths, using whatever sensor observations it has available to it. 
+Chapter \ref{ch.LoopClosure} described the process of loop closure detection. This process aligned clouds of multibeam sonar data to provide a rotational and translational offset between two poses that is used to eliminate navigational drift. If the navigation estimate were perfect, this offset error would be zero. However, in general this is not the case, and the motion estimate must be altered in order to satisfy the loop closure constraint. The challenge is to distribute these errors in such a way as to minimize the resulting odometry errors, while still satisfying loop closure. In broad terms, loop closure gives a starting and ending point to the vehicle's trajectory, and the optimizer must choose the most likely path to connect these points out of all possible paths, using whatever sensor observations it has available to it, as shown in Figure \ref{fig:MultiPath}. This is step 2a of the iceberg SLAM diagram originally presented in Chapter \ref{ch.ProblemStatement}, and shown again for convenience in Figure \ref{fig:icebergSLAMmotion}
 
 \begin{figure}[htbp]
    \centering
@@ -12,7 +12,14 @@ Chapter \ref{ch.LoopClosure} described in great detail the process of loop closu
    \label{fig:MultiPath}
 \end{figure}
 
-This chapter details improvements on the method for estimating the vehicle's iceberg-relative trajectory between loop closure events using available sensors, developed by Kimball and Rock \cite{}. Generating an accurate, self-consistent iceberg map requires accurate determination of the vehicle's pose \emph{within the frame of reference of the iceberg.} At a high level, Kimball's method assumed that the vehicle's pose in the \emph{inertial} frame could be determined, and estimated the motion of the iceberg based on the measurements. The vector difference between these two quantities is the pose in the iceberg frame. The method presented here estimates the vehicle pose in the iceberg frame directly. In doing so, it reduces the number of estimation parameters by several orders of magnitude, yielding corresponding speed increases. It also increases autonomy by removing the need for inertial position fixes, and puts the problem into a form that facilitates the use of pre-existing, highly-optimized solvers.
+\begin{figure}[htb]
+   \centering
+   \includegraphics[scale=.6]{../graphics/IcebergSLAM/IcebergSLAMphotos/Slide4.png} % requires the graphicx package
+   \caption{Motion estimation in the iceberg SLAM problem}
+   \label{fig:icebergSLAMmotion}
+\end{figure}
+
+This chapter presents improvements on the method for estimating the vehicle's iceberg-relative trajectory between loop closure events using available sensors, developed by Kimball and Rock \cite{}. Generating an accurate, self-consistent iceberg map requires accurate determination of the vehicle's pose \emph{within the frame of reference of the iceberg.} At a high level, Kimball's method assumed that the vehicle's pose in the \emph{inertial} frame could be determined, and estimated the motion of the iceberg based on the measurements. The vector difference between these two quantities is the pose in the iceberg frame. The method presented here estimates the vehicle pose in the iceberg frame directly. In doing so, it reduces the number of estimation parameters by several orders of magnitude, yielding corresponding speed increases. It also increases autonomy by removing the need for inertial position fixes, and puts the problem into a form that facilitates the use of pre-existing, highly-optimized solvers.
 
 The method uses the same basic geometric relations as a starting point, and improves on them in two key regards. First, several mathematical substitutions are made to reduce the number of parameters to be estimated, and eliminate inertial terms from the optimization. Second, all derivatives are taken in the moving reference frame. These changes yield a smaller estimation problem with no sacrifice in accuracy, and remove the need for the vehicle to be supplied with inertial navigation fixes, which is an operational benefit.
 
@@ -29,7 +36,7 @@ Kimball's method had the structure shown in Figure \ref{fig:NestedLoop}. The opt
         \right]
 \end{align}
 
-Although the inner loop is a linear operation, the number of parameters to be estimated grows linearly with the map size, and can result in slow performance for large icebergs. The method presented in this thesis eliminates the inner loop estimation entirely, resulting in an optimization were only the heading of the iceberg as a function of time need be estimated. This can be seen graphically in Figure \ref{fig:NestedLoop2} The specifics of the manipulations used to eliminate this part of the optimization will be developed fully in the following sections. 
+Although the inner loop is a linear operation, the number of parameters to be estimated grows linearly with the map size, and can result in slow performance for large icebergs. The changes presented enable the elimination of the inner loop estimation entirely, resulting in an optimization were only the heading of the iceberg as a function of time need be estimated. This can be seen graphically in Figure \ref{fig:NestedLoop2} The specifics of the manipulations used to eliminate this part of the optimization will be developed fully in the following sections. 
 
 \begin{figure}[htbp]
    \centering
@@ -45,25 +52,7 @@ Although the inner loop is a linear operation, the number of parameters to be es
    \label{fig:NestedLoop2}
 \end{figure}
 
-\section{Vehicle and Sensor Characteristics}
-\label{sec.VehicleSetup}
-The vehicle model used for this paper is similar to the Dorado-class AUV. This is a torpedo-shaped vessel that achieves pitch and heading control through vectored thrust. The vehicle is ballasted to be passively stable in roll, and slightly positively buoyant, so that if it stops moving forward, it will tend to float to the surface. The high-precision onboard inertial measurement unit can determine the vehicle's attitude in the inertial frame to high precision. Additionally, depth can be measured accurately using a pressure sensor. 
 
-\begin{figure}[htbp]
-   \centering
-   \includegraphics[scale=.35]{../graphics/sonarIllustrations/resonAndDVL.png} % requires the graphicx package
-   \caption{Orientation of DVL and multibeam beams with respect to AUV. Green lines are DVL beams, and red lines are multibeam. Vehicle is traveling left-to-right.}
-   \label{fig:DVL}
-\end{figure}
-
-
-This paper assumes that the AUV being used is equipped with a sideways-facing DVL such that all four beams are nominally incident on the side of the iceberg. With this configuration, the AUV maintains ``bottom lock" or ``iceberg lock" on the iceberg, giving it a measurement of its velocity in the iceberg's reference frame. The AUV is also assumed to have a multibeam sonar aligned with the scan plane perpendicular to the vehicle's nominal velocity, used for mapping. 
-
-For each sonar sounding from both the multibeam and DVL, a range is returned. Since the each beam's orientation in the vehicle frame is known, each measurement can be represented as a vector expressed in the vehicle's frame of reference.
-
-The DVL returns velocity information as well. Specifically, it measures the frequency shift of the returned signal, which corresponds directly to the instantaneous rate of change of the length of the DVL beam $\left( \frac{d||\vec{r}^{~\nicefrac{s_i}{V_{cm}}}||}{dt}\right)$. This is the component of the vehicle's velocity in the iceberg reference frame in the direction of the sonar beam. An important subtlety in this measurement is that the DVL only provides the velocity \emph{as expressed in the vehicle's frame of reference.} It provides no information about vehicle attitude or attitude rates. 
-
-The function of the DVL with respect to navigation can be compared to that of a wheel encoder in terrestrial robotics: it gives a very precise measurement of the distance the robot has traveled, but cannot detect the direction in which that travel occured, nor any changes in the direction. This concept is useful, however, in that it constrains the length of the path traversed between loop closure events, and it makes the problem look like a different class of robotic mapping problems, specifically indoor wheeled robotic mappers, which has been heavily studied. 
 
 %\section{Notation}
 %
@@ -129,7 +118,7 @@ The function of the DVL with respect to navigation can be compared to that of a 
 This section develops the equations by which DVL data is incorporated into the optimization to enforce motion consistency in the mapping optimization. First, an overview of the previous method is presented. This illustrates the general approach to how DVL information is incorporated, and shows how the changes presented in this thesis provide gains in terms of speed and reduced complexity. For notation conventions, the reader should refer to the Appendix.
 
 \subsection{Overview of previous method}
-The starting point for the estimation problem is the so-called ``Loop Equation," as illustrated in Figure \ref{fig:LoopEquation}. The optimizer seeks to minimize loop closure alignment error while ensuring that the terms of this equation remain consistent with one another. 
+The previous method assumed that the vehicle's inertial trajectory was known, and attempted to estimate the iceberg's motion during the course of the mapping run. This estimate could then be subtracted from teh inertial trajectory, yielding the iceberg-relative trajectory. The starting point for the estimation problem is the so-called ``Loop Equation," as illustrated in Figure \ref{fig:LoopEquation}. The optimizer seeks to minimize loop closure alignment error while ensuring that the terms of this equation remain consistent with one another. 
 
 \begin{align}
 \vec{r}^{~\nicefrac{B_{cm}}{O}} + \vec{r}^{~\nicefrac{S_i}{B_{cm}}} &= ~\vec{r}^{~\nicefrac{V_{cm}}{O}} + \vec{r}^{~\nicefrac{S_i}{V_{cm}}}
@@ -227,7 +216,7 @@ where $[~~~]_\times$ is the matrix representation of the vector cross product, $
 
 The important thing to take from this is the estimation vector $x_{ls}$ now contains \emph{only} the points $P_x$. The ``map points" that caused the vector in Equation \ref{eqn:LeastSquares} to have high dimensionality are absent. This improves greatly the speed of the inner loop optimization, as the number of parameters to estimate is on the order of 10 instead of hundreds or thousands.
 
-This substitution can be used as a drop-in replacement to the previous method, with the values of $A$ and $b$ in Equation \ref{eqn:LeastSquares} changed only slightly. Since least squares computational complexity is proportional to the square of the number of parameters estimated, this reduction yields significant savings. However, at this point, the method still requires knowledge of the inertial position and velocity of the vehicle, which can be difficult to determine accurately while underwater. The next section performs the same calculations as above, but defined entirely with respect to the moving iceberg frame, and with all derivatives taken in that frame, to eliminate this need. 
+This substitution can be used as a replacement to the previous method, with the values of $A$ and $b$ in Equation \ref{eqn:LeastSquares} changed only slightly. Since least squares computational complexity is proportional to the square of the number of parameters estimated, this reduction yields significant savings. However, at this point, the method still requires knowledge of the inertial position and velocity of the vehicle, which can be difficult to determine accurately while underwater. The next section performs the same calculations as above, but defined entirely with respect to the moving iceberg frame, and with all derivatives taken in that frame, to eliminate this need. 
 
 %TO DO: I THINK I NEED TO BACK UP THE STATEMENT THAT THESE POINTS CAN BE ELIMINATED WITHOUT SACRIFICING ACCURACY, SINCE THEY'RE ONLY OBSERVED ONCE (EXCEPT FOR LOOP CLOSURE POINTS), AND THE COSINE-DEPENDENT RANGE-VELOCITY AMBIGUITY.
 
@@ -322,7 +311,7 @@ The mapping multibeam sonar cannot observe heading changes because it is oriente
    \label{fig:beamOrientation}
 \end{figure}
 
-The DVL can only provide heading information if strong assumptions are made about the terrain, such as planarity. Because it measures beamwise components of velocity, rotations are unobservable by Doppler shift. 
+The DVL can not provide heading information unless strong assumptions are made about the terrain. For instance, if terrain is assumed to be planar, then a plane can be fit to the beams, and heading changes can be estimated by finite differencing. However, for arbitrary geometries, this approach will not yield good results. Because the DVL measures beamwise components of velocity, rotations are unobservable by Doppler shift. 
 
 When used together, the mapping multibeam and DVL can in theory provide a small amount of heading observability. This is shown in Figure \ref{fig:headingObservability}. The signal to noise ratio of this observation is low enough that practical implementation would pose a challenge, but it is presented here for completeness.
 
@@ -353,7 +342,7 @@ There are two practical challenges to employing this approach. The first is esse
 
 For the first challenge, assume that the data correspondence can be solved. Applying some rough real-world figures, at 40m standoff distance and a forward DVL angle of $30^\circ$ from the wall, $m_2$ would coincide with $d_1$ after 23m of travel, or 15s at 1.5 m/s. If the iceberg is rotating at 20 deg/hr, which is fast for an iceberg, this would introduce about 1 mm of of translational error. Assuming that both DVL and multibeam have ranging errors of 1\% of distance traveled, the problem can be stated simply: look for an error of a fraction of a milimeter, with a sensor that returns $40m \pm 40 cm$.
 
-To make matters worse, there remains the ambiguity in data association between the DVL and multibeam returns. In reality each sonar return is a spatial and temporal average over some finite area and span. While this makes it more likely that DVL and multibeam returns have some overlap, this averaging introduces additional ambiguity into the measurement. While it may be possible to perform some iterative process to estimate heading similar to ICP, where correspondences are made and broken based on current estimate of position at each iteration, such a process would likely be very slow, and the potential gains dubious. So, while in theory it may be possible to observe the iceberg's heading rate directly, in practice, it is easier and more accurate to rely on some reasonable assumptions about the iceberg's motion, such as small, slowly-varying rates, and treat the motion as a bias to the vehicle's accurate inertial heading sensor.
+There remains the ambiguity in data association between the DVL and multibeam returns. In reality each sonar return is a spatial and temporal average over some finite area and span. While this makes it more likely that DVL and multibeam returns have some overlap, this averaging introduces additional ambiguity into the measurement. While it may be possible to perform some iterative process to estimate heading similar to ICP, where correspondences are made and broken based on current estimate of position at each iteration, such a process would likely be very slow, and the potential gains dubious. So, while in theory it may be possible to observe the iceberg's heading rate directly, in practice, it is easier and more accurate to rely on some reasonable assumptions about the iceberg's motion, such as small, slowly-varying rates, and treat the motion as a bias to the vehicle's accurate inertial heading sensor.
 
 
 %\begin{figure}[h]

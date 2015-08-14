@@ -1,0 +1,52 @@
+% !TEX root = ../thesis.tex
+
+\chapter{Loop Closure GUI}
+\label{ap.GUI}
+
+The following is a reference for the operation of the graphical user interface for detecting and encoding loop closure events in sonar data.
+
+\section{GUI Operation}
+
+The user launches the program including an argument that points to the log file including the navigation and sonar data. The vehicle path and multibeam cloud are rendered in the main window. The user can then look for areas of likely overlap and encode links incrementally.
+
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[width=\textwidth]{../graphics/guiscreenshots/GUIsim.png} % requires the graphicx package
+   \caption{Loop closure GUI being used to encode loop closures on Soquel Canyon data set }
+   \label{fig:GUI}
+\end{figure}
+
+The user drags the slider bars at the top left, labeled ``first index" and ``second index," respectively. These indices correspond to the reference time stamp of the vehicle trajectory data. In the main data window, a white line is rendered that connects these two indices, as feedback for the user. 
+
+A submap is then automatically constructed around these two indices. To do this, the sonar measurements for the $N$ preceding scans and $N$ scans to follow are concatenated into one rigid submap, based on the vehicle's estimated trajectory over that time. Thus each submap contains $2N+1$ multibeam scans, associated with $2N+1$ consecutive vehicle poses. $N$ can be changed by the user using the ``Submap width" slider. Each point cloud is transformed into its central pose's reference frame, with the central pose defined as the origin. Because the vehicle attempts to maintain a constant standoff distance from the icberg surface, this tends to provide a reasonable initialization for the point cloud registration techniques that will later be applied. An implicit assumption is that the motion of the iceberg or the inertial drift of the vehicle during such a short time is small enough that it can safely be neglected. The two submaps are displayed in the lower window of the GUI. Additionally, the extent of the two submaps is overlaid on the full data set in the top window to aid the user in selecting areas of likely overlap.
+
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.9\textwidth]{../graphics/GUIcloseup.png} % requires the graphicx package
+   \caption{Closeup of Figure \ref{fig:GUI}. A white line between the two candidate indices is rendered as visual feedback for the user Also, the extent of the submaps used for registration is overlaid on the raw data in red and yellow. The green lines are loop closure events that have already been recorded.}
+   \label{fig:GUIcloseup}
+\end{figure}
+
+Once the user determines that the two submaps likely correspond to the same terrain, he or she can click the ``ICP" button. This applies the iterative closest point algorithm to the two submaps and displays the result to the lower window. For the iceberg implementation, the depth, pitch, and roll of the vehicle is assumed to be known, allowing a reduced model to be used for point cloud registration. Only the horizontal offsets $dx$ and $dy$, and heading offset $d\psi$ are estimated by the algorithm. Extending this method to the full six degree-of-freedom case would require the full estimation model, but using the reduced model makes the algorithm more robust to bad initial alignments, and is sufficient for this application. 
+ 
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[width=\textwidth]{../graphics/guiscreenshots/misaligned.png} % requires the graphicx package
+   \caption{The bottom window of the GUI shows the two subclouds in detail. The window is fully interactive, so the user can view the clouds from any angle, zoom, etc. Before ICP, these two clouds display some misalignment.}
+   \label{fig:GUI_preicp}
+\end{figure}
+
+The user can then inspect the resulting point clouds to determine whether ICP converged to a good alignment. If it has, the user clicks the ``Accept/write" button, and the position and heading offset between the two reference indices are recorded to file immediately. Otherwise, the user can choose different map points, submap widths, etc. and try again. If a bad alignment is accidentally recorded, the ``Delete Last" button removes it. Upon acceptance, the white line connecting the two reference indices turns green, and persists in the main display until it is either deleted or the session ends. This helps the user remember which areas already have loop closure information, and which still need to be processed. These lines can be seen in Figures \ref{fig:GUI} and \ref{fig:GUIcloseup}.
+
+ \begin{figure}[htbp]
+   \centering
+   \includegraphics[width=\textwidth]{../graphics/guiscreenshots/aligned.png} % requires the graphicx package
+   \caption{After ICP is performed, the user can inspect the result to determine whether the alignment algorithm converged accurately.}
+   \label{fig:GUI_poseicp}
+\end{figure}
+
+The link will only be written to file if ICP has already been performed. The link data is recorded in human-readable CSV file format. Loop closure information from multiple sessions with the GUI can be spliced together via the ``load links" dialog. Bad links can also be removed from the file by the ``delete link" dialog. These features allow for iterative map creation, moving back and forth between optimization and loop closure detection, refining the loop closure alignments as the trajectory estimate converges. Tighter coupling of these steps is left for future work.
+
+\section{Implementation details}
+
+The loop closure GUI was designed using the open-source Qt framework. The back-end point cloud processing as well as the point cloud display window rendering was done with Point Cloud Library (PCL) \cite{PCL}.  The sonar and navigation data are stored in a CSV file after minimal pre-processing that uses some simple heuristics to remove spurious returns.

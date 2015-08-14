@@ -11,10 +11,10 @@ This chapter will give a brief overview of the mechanics of Graph SLAM, advantag
 
 \section{GraphSLAM overview}
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
    \centering
-   \includegraphics[width=.7\textwidth]{../graphics/factor_graph.png} % requires the graphicx package
-   \caption{Graph representation of mapping problem.  The poses $x_i$ and $x_{i+1}$ are linked via odometry terms. Additionally, any two poses where the same landmark was observed are linked by measurement terms through that landmark. These links represent Gaussian conditional probabilities. \emph{PLACEHOLDER GRAPHIC}}
+   \includegraphics[width=.7\textwidth]{../graphics/GraphSLAMcartoons/loopClosed.png} % requires the graphicx package
+   \caption{Graph representation of mapping problem.  The poses (circles) are linked via odometry terms. Additionally, any two poses where the same landmark was observed are linked by measurement terms through that landmark. These links represent Gaussian conditional probabilities. }
    \label{fig:GraphSLAM}
 \end{figure}
 
@@ -91,7 +91,7 @@ In this analogy, each graph link is modeled as a spring separating the nodes, as
 
 Once the nodes are all tied together with springs of appropriate length and stiffness, any deviation from the natural length will result in additional spring potential energy. The GraphSLAM solution is identical to the \emph{minimum energy} state of this system. In fact, if the nodes were modeled as masses, and viscous damping were applied, dynamic motion simulation could be used to compute the same solution as GraphSLAM. The system would ``relax" into its minimum energy state, and the steady state dynamic solution would be the GraphSLAM MLE solution. While such a method would likely be much slower than using the actual GraphSLAM solution algorithm, the idea of modeling the system as a collection of masses, springs, and dampers provides useful intuition on how the algorithm manipulates the parameters to arrive at a solution.
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
    \centering
    \includegraphics[width=.65\textwidth]{../graphics/springs.png} % requires the graphicx package
    \caption{GraphSLAM is equivalent to the minimum energy configuration of a mass-spring-damper system. Each spring's natural length and stiffness are determined by the corresponding measurement and measurement covariance, respectively.}
@@ -99,17 +99,6 @@ Once the nodes are all tied together with springs of appropriate length and stif
 \end{figure}
 
 
-\subsection{Advantages of the GraphSLAM method}
-
-GraphSLAM provides a solid theoretical framework for modeling errors associated with the mapping task, can be used to solve very large problems efficiently, and has a wide enough user base that there already exist optimized solvers, enabling fast application to the problem of profiling icebergs.
-
-The reformulation of the iceberg mapping problem detailed in Chapter \ref{ch.IcebergGeometry} can be solved using the modified form of Kimball's method, shown in Figure \ref{fig:NestedLoop2} with the deterministic inner loop. However, the elimination of the inner loop optimization carries the implicit assumption that any error comes entirely from the iceberg's rotation. In reality, there will be other errors due to measurement and odometry noise that should be considered alongside the rotational error to produce a map of the highest quality possible. 
-
-GraphSLAM provides a theoretical framework that allows the error associated with each quantity to be weighted according to its uncertainty relative to all other measurements. This serves to provide better justification for the weighting terms used in the map optimization, addressing one of the areas of future work proposed by Kimball. 
-
-Additionally, GraphSLAM scales well to large problems. For an illustration of this, Montemerlo et. al. calculated a map of Stanford's Main Quad, including $10^5$ poses and $10^8$ range measurements in roughly 30 seconds of CPU time \cite{?}. This is the same order of magnitude problem size as the iceberg profiling problem considered in this thesis. The scalability of the method lies in in the underlying representation of the problem as a sparse symmetric positive definite matrix
-
-Another attractive aspect of using GraphSLAM to solve the iceberg profiling problem is that there exist a number of efficient, optimized, and easy-to-use software libraries to solve such graph optimization problems. Of these, an open source nonlinear least-squares graph solver library called Ceres was used. This library was initially developed by Google for in-house use on Google Maps' street view feature, stitching images together into a self-consistent map. They later released it for public development, and it has been used by a number of universities and research institutions for SLAM, bundle adjustment, and a number of other robotics tasks. \cite{ceres}
 
 
 %\Omega = \left[\begin{array}{c c c c c | c c c c}
@@ -179,7 +168,7 @@ p\left(x_{t+1}~|~x_t,u_t\right) & \sim \mathcal{N}\left(g(x_t,u_t), R_t\right) \
 p\left(z^i_{t}~|~x_t,m_j\right) & \sim \mathcal{N}\left(h(x_t,u_t), Q_t\right)
 \end{align}
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
    \centering
    \includegraphics[width=.9\textwidth]{../graphics/GraphSLAMflowchart/Slide1.png} % requires the graphicx package
    \caption{Inputs and outputs of GraphSLAM.}
@@ -194,29 +183,29 @@ The state and models used in GraphSLAM depend on the modeling assumptions of bot
 \label{sec:VehicleMotion}
 The vehicle assumed in this dissertation is a Monterey Bay Aquarium Research Institute (MBARI) Dorado-class AUV. These are 21-inch diameter torpedo-shaped vehicles that range in length from 8 feet to 21 feet, depending on the specific configuration for a given mission. They are passively stabilized in roll, and control pitch and heading by vectoring the thrust from the propeller. Consequently, they must maintain forward velocity in order to maneuver. They cruise at around 1.5 m/s and have a minimum turning radius of 17 m, which equates to a maximum angular velocity in heading of 5 deg/s. \cite{?}
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
    \centering
    \includegraphics[width=.8\textwidth]{../graphics/mappingAUV.jpg} % requires the graphicx package
    \caption{A Dorado-class AUV.}
-   \label{fig:AUV}
+   \label{fig:mappingAUV}
 \end{figure}
 
 It is assumed that the vehicle can determine its depth accurately via pressure sensor, and its \emph{inertial} attitude via a combination of gyro, accelerometer, and compass measurements. These assumptions, combined with assumptions about the iceberg motion, will allow a reduction in the size of the vehicle state for the purposes of mapping, as will be shown in the following sections.
 
-The vehicle's DVL is an important input to the motion model. It is mounted on the port side of the vehicle and its four beams all nominally point at the iceberg. However, at large standoff distances from smaller icebergs, or with dynamic iceberg geometry, one or more beams of the DVL may not intersect the surface, yielding incomplete velocity information. Without at least three beams in contact with the iceberg, the full 3D velocity cannot be determined uniquely. However, these DVL dropouts are detectable. In the simulation results shown in Chapter \ref{ch.Results} such occurances were handled by interpolating between valid vehicle-frame measurements and increasing the process noise during dropouts. The implicit underlying assumption here is that changes in the vehicle's velocity are smooth, and the vehicle's velocity in the body frame does not deviate far from nominal. For the Dorado-class AUVs, which normally fly at a fixed forward velocity with little sideslip, this is generally a valid assumption. In simulation, this approach obtained good results, even with over 60\% dropout, but a more principled approach using a vehicle state that includes velocity could potentially make better use of partial DVL information, at the cost of computational speed. This is discussed briefly in Section \ref{sec.VelocityState}.
+The vehicle's DVL is an important input to the motion model. It is mounted on the port side of the vehicle and its four beams all nominally point at the iceberg. However, at large standoff distances from smaller icebergs, or with dynamic iceberg geometry, one or more beams of the DVL may not intersect the surface, yielding incomplete velocity information. Without at least three beams in contact with the iceberg, the full 3D velocity cannot be determined uniquely. However, these DVL dropouts are detectable. In the simulation results shown in Chapter \ref{ch.Results}, such occurances were handled by interpolating between valid vehicle-frame measurements and increasing the process noise during dropouts. The implicit underlying assumption here is that changes in the vehicle's velocity are smooth, and the vehicle's velocity in the body frame does not deviate far from nominal. For the Dorado-class AUVs, which normally fly at a fixed forward velocity with little sideslip, this is generally a valid assumption. In simulation, this approach obtained good results, even with over 60\% dropout, but a more principled approach using a vehicle state that includes velocity could potentially make better use of partial DVL information, at the cost of computational speed. This is discussed briefly in Section \ref{sec.VelocityState}.
 
 
 \subsubsection{Iceberg motion model}
 
-Icebergs are modeled as rigid bodies having three degrees of freedom: horizontal motion in the $xy$-plane and rotation in heading, $\psi$. In reality, icebergs are dynamic objects, subject to constant change due to melt, wave action, wind erosion, internal stresses, etc. These forces can lead to sudden, violent changes like calving, where a large portion of the iceberg separates and falls off, or ``turtling," where the iceberg rapidly flips over and settles into a new stable floating orientation. These phenomena present dangerous conditions to equipment and personnell, and are a primary driver for using robots for up-close iceberg study.  However, these classes of motion are not included in the iceberg motion model for the mapping problem, as they would likely cause any mapping mission to be aborted in the best case, and the loss of the vehicle in the worst.
+As stated in Chapter \ref{ch.ProblemStatement} and presented again here for convenience, Icebergs are modeled as rigid bodies having three degrees of freedom: horizontal motion in the $xy$-plane and rotation in heading, $\psi$. 
 
 Iceberg motion can vary by size, shape, and region in which the iceberg is found but typical figures include .03-.08 m/s in translation  and 5-10 deg/hr in heading rate. In extreme cases, translation rates of .27 m/s and rotation rates of 40 dg/hr have been recorded. \cite{?} \cite{?}. 
 
 These translational rates can be up to 20\% of the AUV's speed, which could cause extremely large apparent drift if left unaccounted for. Fortunately, the DVL provides iceberg-relative translational velocity information, and the problem formulation developed in Chapter \ref{ch.IcebergGeometry} eliminates these terms from the optimization.
 
-The rotation rates of icebergs are three orders of magnitude slower than the maximum vehicle rotation rate, even at the fast end of the spectrum. Nonetheless, the rotational motion is large enough that it must be accounted for or it will result in a warped, inconsistent map of all but the smallest of icebergs. A last, implicit assumption about icebergs is that their motion changes very slowly. Their large mass and inertia yield dynamics with very large time constants. 
+The rotational motion is large enough that it must be accounted for or it will result in a warped, inconsistent map of all but the smallest of icebergs. An implicit assumption about icebergs is that their motion changes very slowly. Their large mass and inertia yield dynamics with very large time constants. 
 
-For these reasons, lacking a means to measure directly the heading of the iceberg or the relative heding between iceberg and vehicle, the rotation rate can be modeled as a slowly-varying gyroscope bias on the vehicle heading. In other words, the iceberg's rotation rate can be modeled as constant over short periods, and much smaller than the vehicle's achievable rotation rate at all time scales.
+For these reasons, lacking a means to measure directly the heading of the iceberg or the relative heading between iceberg and vehicle, the rotation rate can be modeled as a slowly-varying gyroscope bias on the vehicle heading. In other words, the iceberg's rotation rate can be modeled as constant over short periods, and much smaller than the vehicle's achievable rotation rate at all time scales.
 
 \subsubsection{GraphSLAM state $\left[~x_t~\right]$}
 
@@ -279,7 +268,7 @@ The measurement model used in a GraphSLAM implementation depends on the sensor t
 
 Using an explicit map makes the error characterization of the measurement model straightforward, but introduces correspondence challenges when applied to the type of terrain encountered in iceberg profiling. 
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
    \centering
    \includegraphics[width=.8\textwidth]{../graphics/GraphSLAM.png} % requires the graphicx package
    \caption{Illustration of GraphSLAM with discrete features whose positions are solved for explicitly (green triangles).  }
@@ -292,7 +281,7 @@ The challenge with using an explicity map for profiling icebergs or other underw
 
 
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
    \centering
    \includegraphics[width=.9\textwidth]{../graphics/measModel.png} % requires the graphicx package
    \caption{Using an explicit map makes error characterization of the measurement model straightforward. The measured range is modeled as a Gaussian with mean $z_t^i$ and covariance $\sigma_{a}$ along the beam and $\sigma_{x}$ across the beam.}
@@ -303,7 +292,7 @@ The challenge with using an explicity map for profiling icebergs or other underw
 
 Performing GraphSLAM with an implicit map involves the abstraction of many observations of points on the iceberg surface to a single pose-to-pose ``synthetic measurement." This measurement has a form identical to that of the odometry links in the graph, in that it penalizes any deviation \emph{between two poses} from the offset calculated by the registration algorithm.  This has the advantage of being able to describe succinctly any scattered loop closure information, but makes it more difficult to characterize accurately the errors associated with the measurement. 
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
    \centering
    \includegraphics[width=.8\textwidth]{../graphics/GraphSLAMpose2pose.png} % requires the graphicx package
    \caption{The implicit map method uses terrain information to generate pose-to-pose synthetic measurements or ``pseudo-odometry" (red arcs). }

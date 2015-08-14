@@ -13,7 +13,7 @@ This section details how data were collected for use in the GraphSLAM mapping al
 
 A simulation environment was created in MATLAB to enable mapping results to be compared with known ``truth" for validation of the method. A screen capture from this envirionment is shown in Figure \ref{fig:IcebergSim}
  
- \begin{figure}[htbp]
+ \begin{figure}[!htb]
    \centering
    \includegraphics[width=.7\textwidth]{../graphics/ceresResults/SimData/RealIceberg1/SimImage1.png} % requires the graphicx package
    \caption{Screen capture from the iceberg mapping simulation environment. The model was built from data collected from a real iceberg, part of the CNRC iceberg shapes and sightings database. The yellow cylinder represents the multibeam sonar-equipped AUV. The red contour is the current multibeam scan, and the cyan portion represents past scans. Returns are recorded up to the water line. The simulation allows the iceberg to be set adrift with arbitrary motion, and allows the reconstruction to be compared to truth data.}
@@ -30,15 +30,32 @@ When simulated at higher standoff distances, around 50 meters, the two forward D
 
 \subsection{Soquel Canyon Wall Data}
 
-[Talk to Rock to get full details on the mapping vehicle (and mention iceberg AUV?)]
+Data was collected in October, 2012, from a vertical-walled portion of Soquel Canyon, an underwater canyon in Monterey Bay. The location of this canyon is shown in Figure \ref{fig:SoquelLoc}, with corresponding bathymetry shown in Figure \ref{fig:SoquelBathy}. The vehicle flew three passes next to the wall with two return legs.
+
+ \begin{figure}[!htb]
+   \centering
+   \includegraphics[width=.9\textwidth]{../graphics/SoquelLoc.png} % requires the graphicx package
+   \caption{Canyon wall test site location}
+   \label{fig:SoquelLoc}
+\end{figure}
+
+ \begin{figure}[!htb]
+   \centering
+   \includegraphics[width=.9\textwidth]{../graphics/SoquelBathymetry.jpg} % requires the graphicx package
+   \caption{Bathymetry map of Soquel and Monterey Canyon}
+   \label{fig:SoquelBathy}
+\end{figure}
 
 \section{Loop Closure}
 
+Automatic loop closure detection was performed on the field data. This detected two high-confidence loop closure events, which provided an initial course estimate of the motion-induced errors. This initial estimate aided the manual loop closure detection process greatly.
+
+The simulated iceberg model was too smooth for feature detection to be applied, so only the manual correspondence detection GUI was used for that data. 
 \subsection{Automatic Loop Closure}
 
 The automatic loop closure detection scheme detailed in Chapter \ref{ch.LoopClosure} was applied to the Soquel Canyon wall dataset. In order to avoid introducing bad correspondences into the graph optimization, conservative thresholds were used on feature matching and outlier rejection. As a result, only two loop closure events were identified with high enough confidence to add them to the optimization. One of these matches is shown in Figure \ref{fig:autoLC}.
 
- \begin{figure}[htbp]
+ \begin{figure}[!htb]
    \centering
    \includegraphics[width=.9\textwidth]{../graphics/siftMatches.png} % requires the graphicx package
    \caption{A loop closure event detected automatically by the method described in Chapter \ref{ch.LoopClosure}}
@@ -61,50 +78,54 @@ The contributions discussed in Chapter \ref{ch.IcebergGeometry} made the applica
 
 \subsection{Simulation Results}
 
+Simulations were run at 30 m and 50 m standoff distance. The latter was used to check robustness of the method to DVL dropouts, as the increased distance causes the DVL beams to fail to intersect the iceberg more frequently.
+
 \subsubsection{Thirty-meter standoff distance}
 
 The 150 meter-long simulated iceberg's keel was reconstructed to an rms accuracy of 0.8 m. To compute this, the reconstructed shape was registered against the original model via ICP. For each point in the registered, reconstructed cloud, the distance to the model's nearest surface was recorded. These results are shown in Figure \ref{fig:RMS}
 
- \begin{figure}[htbp]
+The iceberg was simulated to have a constant translational drift rate, and a slow, smoothly time-varying heading rate. Over the course of the mapping run, the rotational velocity started from zero, increased to a maximum, and returned to zero by the end of the run. The smooth curve was achieved by using one half period of a sine wave. This was done for validation purposes, to determine how well the algorithm could estimate nonuniform rotations. Results of the estimation are shown in Figure \ref{fig:PsiEst}.
+
+ \begin{figure}[!htb]
    \centering
    \includegraphics[width=.9\textwidth]{../graphics/ceresResults/SimData/RealIceberg1/RawNav.png} % requires the graphicx package
    \caption{The raw inertial navigation of the AUV during the simulated mapping run is shown by the pink contour. The iceberg's motion causes the large misalignments apparent in the projected multibeam measurements. The green line segments represent calculated loop closure events, provided in pre-processing using a semi-supervised scan matching method. In an accurate map, both ends of each segment should lie on the pink contour.}
    \label{fig:RawNav}
 \end{figure}
 
- \begin{figure}[htbp]
+ \begin{figure}[!htb]
    \centering
-   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/SimData/RealIceberg1/WithDVL1.png} % requires the graphicx package
+   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/SimData/RealIceberg1/WithDVL2.png} % requires the graphicx package
    \caption{The incorporation of iceberg-facing DVL readings corrects for iceberg translation effects, but cannot resolve changes in the iceberg's heading. This results in a ``corkscrew effect" error pattern, where the reprojected multibeam data appear to twist about the iceberg center.}
    \label{fig:WithDVL1}
 \end{figure}
 
- \begin{figure}[htbp]
-   \centering
-   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/SimData/RealIceberg1/WithDVL2.png} % requires the graphicx package
-   \caption{Top view of the map after incorporating DVL data to highlight the corkscrew error that remains due to iceberg heading change}
-   \label{fig:WithDVL2}
-\end{figure}
-
- \begin{figure}[htbp]
+ \begin{figure}[!htb]
    \centering
    \includegraphics[width=.9\textwidth]{../graphics/ceresResults/SimData/RealIceberg1/FullSolution.png} % requires the graphicx package
    \caption{After processing the data with GraphSLAM, the remaining alignment error is eliminated. In the process of aligning the point clouds, dead-reckoned DVL errors are estimated along with the errors related to iceberg heading. The output is the the map and trajectory that minimizes the odometry and alignment errors, weighted by the relative uncertainty of each. }
    \label{fig:FullSimSol}
 \end{figure}
 
- \begin{figure}[htbp]
+ \begin{figure}[!htb]
    \centering
    \includegraphics[width=.9\textwidth]{../graphics/rmspoint8.png} % requires the graphicx package
    \caption{The reconstructed keel (blue points) laid over the model. The rms error was measured to be .8m for the roughly 150 meter-long iceberg. Red points mark the center of each face of the model, used to aid the calculation.}
    \label{fig:RMS}
 \end{figure}
 
+ \begin{figure}[!htb]
+   \centering
+   \includegraphics[width=.9\textwidth]{../graphics/psiVsTimeSim.png} % requires the graphicx package
+   \caption{The dashed line is GraphSLAM's estimate of the iceberg's heading rate, $\beta$ for the data shown above. It captures well the iceberg's nonuniform behavior of the rate (smooth curve).}
+   \label{fig:PsiEst}
+\end{figure}
+
 \subsubsection{Increased Standoff distance}
 
 At an increased standoff distance of 50 meters, the DVL only remained locked in on the iceberg around 40\% of the time, yielding less precise odometry. Despite this, the mapping algorithm was able to correct for the iceberg's motion.
 
- \begin{figure}[htbp]
+ \begin{figure}[!htb]
    \centering
    \includegraphics[width=.9\textwidth]{../graphics/ceresResults/SimData/RealIceberg1/50m_standoff/reconstruction_50m_standoff.png} % requires the graphicx package
    \caption{At 50m standoff distance, the vehicle was out of DVL velocity lock roughly 60\% of the time. In spite of this, the algorithm is able to recover and produce a self-consistent map.}
@@ -113,34 +134,78 @@ At an increased standoff distance of 50 meters, the DVL only remained locked in 
 
 \subsection{Soquel Canyon Results}
 
+The initial solution generated by the two automatically-detected loop closures is given, as well as the refined map, including 22 additional loop closures detected with the GUI.
+
 \subsubsection{Automatic loop closure detection solution}
 
-\subsubsection{Manual loop closure detection solution}
+In order to prevent false matches from being detected, a high threshold was used on the automated loop closure detection algorithm. This required six additional SIFT features to agree with the four used for creating the homography used in RANSAC, for a total of 10 RANSAC inliers. These links can be seen in the red line segments at the upper left corner of Figure \ref{fig:RealDataWithDrift}.
 
- \begin{figure}[htbp]
+ \begin{figure}[!htb]
    \centering
-   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/CanyonData/BadDriftRealData.png} % requires the graphicx package
-   \caption{Data collected by an AUV in a portion of Monterey Canyon with near-vertical walls. The navigation data was corrupted with a heading error to simulate the effects of iceberg motion or faulty heading sensor. This instance corresponds to a quite aggressive iceberg drift rate or a failed heading gyro. The resulting large dead reckoned drift complicates the task of detecting loop closure.}
+   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/CanyonData/rawNav_20degPerHour.png} % requires the graphicx package
+   \caption{Data collected by an AUV in a portion of Monterey Canyon with near-vertical walls. The navigation data was corrupted with a heading error to simulate the effects of iceberg motion or faulty heading sensor. This instance corresponds to an drift rate of 20 deg/hr. The resulting large dead reckoned drift complicates the task of detecting loop closure.}
    \label{fig:RealDataWithDrift}
 \end{figure}
 
- \begin{figure}[htbp]
+Using these two links, the map shown in Figure \ref{fig:AutoSol}
+
+ \begin{figure}[!htb]
+   \centering
+   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/CanyonData/AutomatedLoopClosure/AutomatedSolution.png} % requires the graphicx package
+   \caption{Solution generated with only two loop closures, detected by the method described in Chapter \ref{ch.LoopClosure}.}
+   \label{fig:AutoSol}
+\end{figure}
+
+Near the loop closures, the map is highly self-consistent, as shown in Figure \ref{fig:AutoSol1}, but on the opposite side of the reconstruction, some inconsistencies are present. Figure \ref{fig:AutoSol2} shows an area where the data collected in two passes by a section of wall have a misalignment of several meters.
+
+ \begin{figure}[!htb]
+   \centering
+   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/CanyonData/AutomatedLoopClosure/AutomatedSolutionDetail.png} % requires the graphicx package
+   \caption{The map near the loop closure events is self-consistent.}
+   \label{fig:AutoSol1}
+\end{figure}
+
+Although there remain inconsistencies in the map, having even a rough initial alignment aids the detection of additional loop closures, which increases accuracy and self-consistency. This can be achieved by the human-aided process with Chapter \ref{ch.LoopClosure}'s GUI or through distance-based search metrics, as in traditional underwater mapping missions.
+
+ \begin{figure}[!htb]
+   \centering
+   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/CanyonData/AutomatedLoopClosure/AutomatedSolutionErrors.png} % requires the graphicx package
+   \caption{Top view of the map far from the loop closure events, hilighting inconsistencies. Here, the two passes by the wall have several meters' misalignment.}
+   \label{fig:AutoSol2}
+\end{figure}
+
+
+\subsubsection{Manual loop closure detection solution}
+
+An additional 22 loop closures were detected and encoded using the GUI. The mapping results after the incorporation of these additional loop closures is shown in Figures \label{fig:RealDataSolution1}, \label{fig:RealDataSolution2}, and \label{fig:RealDataSolution3}.
+
+ \begin{figure}[!htb]
    \centering
    \includegraphics[width=.9\textwidth]{../graphics/ceresResults/CanyonData/ThreePassConvergence.png} % requires the graphicx package
-   \caption{After processing with the Ceres solver, the large initial errors are eliminated. Three swaths of data collected at different depths are fused into one self-consistent map. }
+   \caption{After processing with additional loop closures, the inconsistencies are eliminated. Three swaths of data collected at different depths are fused into one self-consistent map. }
    \label{fig:RealDataSolution1}
 \end{figure}
 
- \begin{figure}[htbp]
+ \begin{figure}[!htb]
    \centering
    \includegraphics[width=.9\textwidth]{../graphics/ceresResults/CanyonData/ThreePassConvergence1.png} % requires the graphicx package
    \caption{Detailed view of the SLAM reconstruction, highlighting the multiple swaths of data fused into a self-consistent map. As in the simulated data, the pink contour is the AUV trajectory estimate, and the green segments show pre-processed loop closure events. }
    \label{fig:RealDataSolution2}
 \end{figure}
 
- \begin{figure}[htbp]
+ \begin{figure}[!htb]
    \centering
    \includegraphics[width=.9\textwidth]{../graphics/ceresResults/CanyonData/ThreePassConvergence2.png} % requires the graphicx package
    \caption{Detailed view of the SLAM reconstruction, highlighting the multiple swaths of data fused into a self-consistent map. }
    \label{fig:RealDataSolution3}
 \end{figure}
+
+\section{Summary}
+
+Mapping results were shown for both simulated iceberg data and field data collected in an underwater canyon with motion added to simulate that of an iceberg. 
+
+For the simulated iceberg, the human-in-the-loop loop closure detection procedure was used. GraphSLAM was then performed, and the keel was reconstructed to 0.8 meters rms accuracy, which is on the order of the ranging error of the sensors typically used to create these maps at the corresponding standoff distances. The algorithms also produced an accurate estimate of the iceberg's heading rate during the course of the mapping run. This is a valuable validation, as the true shape of the canyon measured in the experimental data was not available for comparison.
+
+For the experimental data, a combination of human-in-the-loop and automatic loop closure detection procedures was used. No truth data was available, but the map was qualitatively self-consistent. 
+
+
