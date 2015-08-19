@@ -32,20 +32,41 @@ Several efforts have investigated the use of AUVs for iceberg profiling. These h
 
 Zhou et. al. have investigated using Slocum Glider vehicles to profile icebergs between Greenland and Newfoundland and Labrador. \cite{Zhou2014}. Icebergs are prevalent there, and pose risk to offshore oil installations and shipping. Gliders show promise as a low-cost data collection platform to aid in iceberg management, but their low power and control authority constraints limit their achievable resolution. However, cooperative efforts with autonomous surface vehicles show great potential for improving this \cite{Smith2014}. The focus of this work has been developing a control strategy for the glider, given its motion constraints, that allows application to iceberg profiling. It assumes that the iceberg's motion can be adequately described purely with translation. This assumption is likely valid for the relatively small size of iceberg the researchers are interested in, and the time required to map them, but breaks down for much larger icebergs. Additionally, the vehicle dynamic, sensing, and power constraints make a difficult to perform a direct comparison between their methods and the one presented in this dissertation. 
 
- Kimball and Rock presented a method for creating high-resolution maps of free-drifting icebergs using AUVs in \cite{Kimball2011b}. The work uses offline optimization to estimate the iceberg's translation and rotation during the course of the mapping run. It models these motion parameters using B-splines \cite{} to enforce smooth, physical motion. The optimization problem is broken up into linear and nonlinear portions and solved in an iterative least squares framework, as shown in Figure \ref{fig:NestedLoopRelatedWork}. The method was demonstrated on field data from an Antarctic iceberg collected by ship-based sonar, as well as bathymetric data recorded by an AUV. While it provided accurate, self-consistent map sections based on constant depth swaths of data, the algorithm suffered from scalability issues. Multiple swaths of data were required to build up a map of the entire iceberg, and errors in the motion model between the swaths could cause map artifacts or ``seams" that could make later use for robotic navigation difficult. Additionally, the method was computationally intensive, and required subsampling of data for the optimization to converge in a reasonable amount of time. Furthermore, the method relied on having an estimate of the vehicle's inertial position, which was supplied to it via ship-based USBL link. The need to tend the vehicle to provide these navigation fixes places an operational burden on the ship, when a more autonomous solution could free it to do other science. This dissertation uses Kimball's method as a foundation, and makes a number of improvements to address these issues. 
 
-\begin{figure}[htbp]
-   \centering
-   \includegraphics[scale=.4]{../graphics/KimballIterativeOpt.png} % requires the graphicx package
-   \caption{Iterative optimization structure employed by Kimball. The nonlinear heading parameters $\psi$ are chosen in the outer loop and fed to the inner loop as constants. $\hat{\bar{x}}_{ls}$ is a vector of O(10) motion parameters and O(1000) iceberg-fixed points to be estimated at each optimization step  \emph{Graphic courtesy of Peter Kimball}}
-   \label{fig:NestedLoopRelatedWork}
-\end{figure}
+
+%\begin{figure}[!htb]
+%   \centering
+%   \includegraphics[scale=.4]{../graphics/KimballIterativeOpt.png} % requires the graphicx package
+%   \caption{Iterative optimization structure employed by Kimball. The nonlinear heading parameters $\psi$ are chosen in the outer loop and fed to the inner loop as constants. $\hat{\bar{x}}_{ls}$ is a vector of O(10) motion parameters and O(1000) iceberg-fixed points to be estimated at each optimization step  \emph{Graphic courtesy of Peter Kimball}}
+%   \label{fig:NestedLoopRelatedWork}
+%\end{figure}
 
 \section{Simultaneous Localization and Mapping}
 
-\subsection{Brief Overview of SLAM}
+Simultaneous Localization and Mapping, or SLAM, is a class of algorithms that allows a robot to reconstruct an unknown environment and localize itself within that environment simultaneously.  The common thread between all these algorithms is that they attempt to maximize measurement consistency, balancing errors in motion measurements (odometry) with map geometry errors based on repeated observations of features within the environment (measurements).
 
-As discussed in the introduction, accurate robotic mapping of an environment relies on accurate localization of the robot within that environment. Hence, robot localization and mapping are inextricably linked. A family of techniques, which has collectively come to be called Simultaneous Localization and Mapping, or SLAM, simply makes that link explicit. 
+\subsection{SLAM Overview}
+
+Most SLAM methods begin with a similar high-level problem formulation, then differ in solution technique depending on sensing, required map accuracy, computation limitations, etc. This section will present a high-level example of a simple, generic SLAM problem formulation, then discuss some of the different variants, applications, and challenges in performing SLAM. 
+
+\subsubsection{SLAM example problem}
+
+A classic SLAM problem involves a wheeled vehicle creating a map of an unknown environment as it navigates through it, as shown in Figure \ref{fig:GenericSLAM} The vehicle is outfitted with sensors that provide information about both its own motion through the environment, as well as the structure of the environment itself. For this simple example, the vehicle is assumed to have wheel encoders, a compass, and a laser range scanner to observe distance to its surroundings in all directions.
+
+ \begin{figure}[!htb]
+   \centering
+   \includegraphics[width=.7\textwidth]{../graphics/genericSLAM.png} % requires the graphicx package
+   \caption{ Generic SLAM example}
+   \label{fig:GenericSLAM}
+\end{figure}
+
+
+In this simple example, the vehicle has knowledge of its ego-motion via onboard odometry sensors: wheel encoders tell how far the robot has rolled over a given time, and a compass gives the vehicle's heading. The vehicle can combine this information to estimate its path through the environment via dead-reckoning, but over time, these integrated measurements will drift away from the true position, which will also cause the .
+
+If left unaddressed, the odometry drift would cause the projected range measurements of the environment to become inconsistent: multiple observations of the same feature or area would appear in different locations. To combat this, repeated observations of the same area are used to estimate and correct the accumulated drift, a process known as loop closure. In the example case, laser scans are aligned to produce an estimate of the translational and rotational drift that has accumulated between observations. 
+
+
+\subsubsection{SLAM variants}
 
 A wide variety of SLAM techniques have been developed and applied to mapping tasks in countless environments with all types of vehicles. A detailed enumeration of these could fill many volumes, and is well beyond the scope of this document, but for a good summary, the reader is encouraged to refer to \cite{SLAMoverview}. While each method has its own nuances, these methods can broadly be categorized along a few axes, based on data representation and solution methods. 
 
@@ -53,7 +74,7 @@ One distinguishing feature of a method is whether it runs online or offline. EKF
 
 A second difference between SLAM methods involves how the method represents the map. Some methods use a ``feature based" approach, where the map is composed of discrete, identifiable units whose positions are estimated. \cite{?}. Other methods are non-feature based, using other means to represent the map. An example of this is occupancy grid mapping, where the environment is discretized, and each discrete region is assigned a ``probability of occupancy." In other words, how likely it is that a position contains something solid, based on observations over time.  A third type of SLAM does not explicitly represent the map at all, but uses information in the environment to impose relative pose constraints between parts of the robot's trajectory. These methods are often not classified as SLAM, since the map itself is not one of the optimization variables. However, since terrain observations are used to generate localization estimate,  the localization portion and mapping portion cannot be decoupled, and these methods can indeed be thought of as SLAM. 
 
-This dissertation uses the GraphSLAM algorithm \cite{Thrun2006} to provide an offline estimate of iceberg shape. This will be developed fully in Chapter \ref{ch.GraphSLAM}. A feature-based variant as well as a mapless or implicit-map variant will be given, and it will be shown that the two are equivalent under certain assumptions. 
+This dissertation uses the GraphSLAM algorithm \cite{Thrun2006} to provide an offline estimate of iceberg shape. This will be developed fully in Chapter \ref{ch.GraphSLAM}. 
 
 \subsection{SLAM in Underwater Environments}
 
@@ -61,7 +82,7 @@ SLAM has been used in a number of underwater applications, using many different 
 
 The ``standard" method for bathymetry mapping uses submap correlation to estimate drift, and then distributes the accumulated errors evenly over the trajectory history. While not typically referred to as SLAM, the use of terrain correspondence to estimate and correct navigation errors represents essentially the same high level approach \cite{Henthorn2006}.  Roman and Singh used a delayed-state Extended Kalman Filter SLAM approach to improve map resolution over the traditional uniform smoothing approach by making explicit the position estimate uncertainty\cite{Roman2005}. This differs from the previous approach in that it does not make the assumption that the error is evenly distributed. While the delayed-state EKF implementation can be run online, the need to append states to the estimate as the mission progresses limits the maximum survey size.
 
- \begin{figure}[htbp]
+ \begin{figure}[!htb]
    \centering
    \includegraphics[width=.7\textwidth]{../graphics/NavPerformance.jpg} % requires the graphicx package
    \caption{Illustration of normal bathymetric mapping procedure (lawnmower pattern). The trajectory self-intersects a number of times. These crossings, or loop closure events, can be used to estimate navigational errors. The red path is the real-time inertial estimate and the black path is the corrected trajectory. Up to 30 meters of correction was necessary. \emph{www.mbari.org} }
@@ -69,9 +90,9 @@ The ``standard" method for bathymetry mapping uses submap correlation to estimat
 \end{figure}
 
 
-\subsection{Data Correspondence and Correlation}
+\subsection{Data Correspondence and Alignment}
 
-SLAM methods generally rely on identifying loop closure events, where an area is revisited after a long interlude. Multiple observations of recognizable features are then compared, and any discrepancy in their estimated location can be used to correct navigational error in the robot's trajectory. The first part of this process, often referred to as the \emph{correspondence} problem, involves determining that two or more measurements correspond to observations of the same feature or area in the environment. Data \emph{correlation} then aims to resolve any discrepancies between the multiple observations by modifying the trajectory estimate. Determining relative weights between odometry errors incurred by these modifications and observation discrepancies is highly application-specific, as are the methods used to solve the correspondence and correlation problems. These are separate but coupled tasks: if the method used for correlation is very robust to outliers, the correspondence problem need not be overly discriminative. However, if the correlation method is sensitive to initial conditions or false correspondences, the correspondence must to a better job of rejecting bad matches. 
+SLAM methods generally rely on identifying loop closure events, where an area is revisited after a long interlude. Multiple observations of recognizable features are then compared, and any discrepancy in their estimated location can be used to correct navigational error in the robot's trajectory. The first part of this process, often referred to as the \emph{correspondence} problem, involves determining that two or more measurements correspond to observations of the same feature or area in the environment. Data \emph{alignment} then aims to resolve any discrepancies between the multiple observations by modifying the trajectory estimate. Determining relative weights between odometry errors incurred by these modifications and observation discrepancies is highly application-specific, as are the methods used to solve the correspondence and alignment problems. These are separate but coupled tasks: if the method used for alignment is very robust to outliers, the correspondence problem need not be overly discriminative. However, if the alignment method is sensitive to initial conditions or false correspondences, the correspondence must to a better job of rejecting bad matches. 
 
 
 \subsubsection{Scan matching}
@@ -119,6 +140,20 @@ The bulk of the development work with this class of 3D feature has been in manma
 %
 %Robots performing SLAM in indoor environments do not have access to GPS signals. Because of this, they must either have very accurate odometry (like bathymetry mapping vehicles) or be able to 
 
+\section{SLAM-based Iceberg Profiling}
+
+In \cite{Kimball2011b}, Kimball and Rock presented a method for creating high-resolution maps of free-drifting icebergs using AUVs based on SLAM principles. The method considered a single, constant-depth swath of sonar data collected by circumnavigating a free-drifting iceberg. 
+
+Like the generic SLAM example presented above, Kimball's method used range scans to estimate accumulated drift. However, rather than estimating the drift of the \emph{vehicle} in the icebergs reference frame, the iceberg's drift in the inertial frame was estimated while the vehicle's inertial position was assumed to be known and kept fixed. This formulation of the problem, in which the environment's motion is mapped explicitly led Kimball to develop a custom solution framework. The framework allowed him to prove the feasibility of SLAM-based solutions for iceberg profiling, as shown in Figure \ref{fig:KimballSolution}, but the method was difficult to scale to the full-depth profiling process, with multiple data swaths and many loop closures. The reformulation of the problem presented in Chapter \ref{ch.IcebergGeometry} casts the problem entirely in iceberg-relative terms, allowing the problem to be solved more easily using generic SLAM methods that scale well to large problem sizes. This formulation, including similarities and differences to the generic case, will be developed more fully in Chapter \ref{ch.ProblemStatement}.
+
+ \begin{figure}[!htb]
+   \centering
+   \includegraphics[width=.7\textwidth]{../graphics/PeterSolution} % requires the graphicx package
+   \caption{Kimball's partial profile of an Antarctic iceberg. \emph{Graphic courtesy of Peter Kimball.}}
+   \label{fig:KimballSolution}
+\end{figure}
+
+%The work uses offline optimization to estimate the iceberg's translation and rotation during the course of the mapping run. It models these motion parameters using B-splines \cite{} to enforce smooth, physical motion. The optimization problem is broken up into linear and nonlinear portions and solved in an iterative least squares framework, as shown in Figure \ref{fig:NestedLoopRelatedWork}. The method was demonstrated on field data from an Antarctic iceberg collected by ship-based sonar, as well as bathymetric data recorded by an AUV. While it provided accurate, self-consistent map sections based on constant depth swaths of data, the algorithm suffered from scalability issues. Multiple swaths of data were required to build up a map of the entire iceberg, and errors in the motion model between the swaths could cause map artifacts or ``seams" that could make later use for robotic navigation difficult. Additionally, the method was computationally intensive, and required subsampling of data for the optimization to converge in a reasonable amount of time. Furthermore, the method relied on having an estimate of the vehicle's inertial position, which was supplied to it via ship-based USBL link. The need to tend the vehicle to provide these navigation fixes places an operational burden on the ship, when a more autonomous solution could free it to do other science. This dissertation uses Kimball's method as a foundation, and makes a number of improvements to address these issues. 
 
 \section{Summary}
 

@@ -7,13 +7,33 @@ This chapter defines the problem, and gives a description for the solution frame
 
 \section{Problem statement}
 
-This section describes the nominal vehicle configuration, sensor characteristics, mission profile,  and assumptions about the motion of the iceberg. 
+\subsection{Iceberg profiling revisited}
+
+\begin{figure}[htb]
+   \centering
+   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/images/driftNoLinks.png} % requires the graphicx package
+   \caption{Raw trajectory estimate and multibeam data showing large point cloud inconsistencies. }
+   \label{fig:DRIFT}
+\end{figure}
+
+The problem of iceberg profiling was introduced in Chapter \ref{ch.Introduction}, and is described again here for convenience. The task is to create an accurate, self-consistent three-dimensional reconstruction of a free-drifting iceberg using only the sensors that can be installed on an AUV. The task is complicated by the iceberg's freedom to translate and rotate. To accomplish this, the vehicle's trajectory relative to the iceberg must be estimated, so that its sonar measurements can be projected correctly into the iceberg's frame of reference. 
+
+\begin{figure}[htb]
+   \centering
+   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/images/goodSimAlignment.png} % requires the graphicx package
+   \caption{Point cloud of full iceberg keel with the effects due to motion removed. The gree line segments denote loop closure events, which drive the motion estimation procedure. }
+   \label{fig:SOLUTION}
+\end{figure}
+
+If the vehicle's inertial trajectory is used for mapping, neglecting the motion of the iceberg, the reprojected sonar beams will look like Figure \ref{fig:DRIFT}. The profiling algorithm must take that uncorrected point cloud, then estimate and eliminate the effects due to iceberg drift, to generate an accurate iceberg-relative trajectory and produce a self-consistent reconstruction like the one shown in Figure \ref{fig:SOLUTION}.
+
+The following sections give details on the type of vehicle that is used for this profiling mission, the sensors it carries, the nominal mission profile for collecting data, and assumptions made regarding iceberg motion.
 
 \subsection{Vehicle \& sonar configuration}
 \label{sec.VehicleSetup}
 
 \subsubsection{Vehicle configuration}
-The vehicle model used for this paper is similar to the Dorado-class AUV shown in Figure \ref{fig:AUVdorado}. This is a torpedo-shaped vessel that achieves pitch and heading control through vectored thrust. The vehicle is ballasted to be passively stable in roll, and slightly positively buoyant, so that if it stops moving forward, it will tend to float to the surface. The high-precision onboard inertial measurement unit can determine the vehicle's attitude in the inertial frame to high precision. Additionally, depth can be measured accurately using a pressure sensor. 
+The vehicle model used for this paper is similar to the Dorado-class AUV shown in Figure \ref{fig:AUVdorado}. This is a torpedo-shaped vessel that achieves pitch and heading control through vectored thrust. The vehicle is ballasted to be passively stable in roll, and slightly positively buoyant, so that if it stops moving forward, it will tend to float to the surface. The high-precision onboard inertial measurement unit can determine the vehicle's attitude \emph{in the inertial frame} to high precision. Additionally, depth can be measured accurately using a pressure sensor. 
 
 \begin{figure}[htb]
    \centering
@@ -26,13 +46,11 @@ The vehicle model used for this paper is similar to the Dorado-class AUV shown i
 
 \subsubsection{Doppler Velocity Logger (DVL)}
 
-This paper assumes that the AUV being used is equipped with a sideways-facing DVL such that all four beams are nominally incident on the side of the iceberg, shown in Figure \ref{fig:DVLandMulti}. Each of the four beams returns a range and velocity information. Specifically, it measures the frequency shift of the returned signal, which corresponds directly to the instantaneous rate of change of the length of the DVL beam $\left( \frac{d||\vec{r}^{~\nicefrac{s_i}{V_{cm}}}||}{dt}\right)$. This is the component of the vehicle's velocity in the iceberg reference frame in the direction of the sonar beam. An important subtlety in this measurement is that the DVL only provides the velocity \emph{as expressed in the vehicle's frame of reference.} It provides no information about vehicle attitude or attitude rates. 
+This paper assumes that the AUV being used is equipped with a sideways-facing DVL such that all four beams are nominally incident on the side of the iceberg, shown in Figure \ref{fig:DVLandMulti}. Each of the four beams returns a range and velocity information. Specifically, it measures the frequency shift of the returned signal, which corresponds directly to the instantaneous rate of change of the length of the DVL beam $\left( \frac{d||\vec{r}^{~\nicefrac{s_i}{V_{cm}}}||}{dt}\right)$. This is the component of the vehicle's velocity in the iceberg reference frame in the direction of the sonar beam. An important subtlety in this measurement is that the DVL doppler measurement only provides the velocity \emph{as expressed in the vehicle's frame of reference}. It does not provide any information about angular rate or attitude, and must be combined with a separate attitude and heading estimate in order to integrate the measurements to produce a trajectory estimate. 
 
-With this configuration, the AUV can maintain ``bottom lock" or ``iceberg lock" on the iceberg, meaning at least three beams intersect the iceberg, giving it a measurement of its velocity in the iceberg's reference frame. However, in order to integrate this velocity measurement to produce a trajectory estimate, the vehicle's full iceberg-relative attitude must be determined.
+With this configuration, the AUV can maintain ``bottom track" or ``iceberg iceberg" on the iceberg, meaning at least three beams intersect the iceberg, giving it a measurement of its velocity in the iceberg's reference frame. However, in order to integrate this velocity measurement to produce a trajectory estimate, the vehicle's full iceberg-relative attitude must be determined. Stated differently, the DVL gives a very precise measurement of the distance the robot has traveled, but cannot detect the direction in which that travel occured, nor any changes in the direction. This concept is useful, however, in that it constrains the length of the path traversed between loop closure events, and it makes the problem look like a different class of robotic mapping problems, specifically indoor wheeled robotic mapping, which has been heavily studied. In this way, the function of the DVL with respect to navigation can be compared to that of a wheel encoder in terrestrial robotics.
 
-The function of the DVL with respect to navigation can be compared to that of a wheel encoder in terrestrial robotics: it gives a very precise measurement of the distance the robot has traveled, but cannot detect the direction in which that travel occured, nor any changes in the direction. This concept is useful, however, in that it constrains the length of the path traversed between loop closure events, and it makes the problem look like a different class of robotic mapping problems, specifically indoor wheeled robotic mappers, which has been heavily studied. 
-
-The vehicle used to collect the data described in Chapter \ref{ch.Results} uses a Kearfott SeaDevil inertial navigation system, which includes a DVL. When operating in static environments, and with the DVL in continuous bottom lock, the systemcan achieve dead reckoning errors as low as .05\% of distance traveled. This equates to a 50-50 chance that the error is above 5 m after the vehicle travels 10 km. 
+The vehicle used to collect the data described in Chapter \ref{ch.Results} uses a Kearfott SeaDevil inertial navigation system, which includes a DVL. With the DVL in continuous bottom track, the system can measure velocity to within 1 cm/s \cite{McEwen2005}.
 
 \subsubsection{Multibeam mapping sonar}
 
@@ -51,7 +69,7 @@ The experimental data presented in Chapter \ref{ch.Results} used a Reson 7125 20
 
 \subsubsection{Obstacle avoidance multibeam sonar}
 
-A new vehicle currently under construction at Monterey Bay Aquarium Research Institute (MBARI) includes an additional multibeam sonar for obstacle avoidance purposes. This sonar is oriented at a right angle to the mapping sonar, as depicted by the blue beams in Figure \ref{ObstandMulti}. With high enough precision, a multibeam sonar configured in this direction can provide a direct measurement of iceberg-relative heading, and some simulation results are presented that show this. However, the vehicle that collected the data presented in Chapter \ref{ch.Results} did not have such a multibeam installed, so no corresponding experimental results are presented. 
+A new vehicle currently under construction at Monterey Bay Aquarium Research Institute (MBARI) includes an additional multibeam sonar for obstacle avoidance purposes. This sonar is oriented at a right angle to the mapping sonar, as depicted by the blue beams in Figure \ref{fig:ObstandMulti}. With high enough precision, a multibeam sonar configured in this direction can provide a direct measurement of iceberg-relative heading by performing scan matching. Without it, the heading must be estimated by other means.
 
 \begin{figure}[htb]
    \centering
@@ -83,31 +101,11 @@ The rotation rates of icebergs are three orders of magnitude slower than the max
 
 For these reasons, lacking a means to measure directly the heading of the iceberg or the relative heading between iceberg and vehicle, the rotation rate can be modeled as a slowly-varying gyroscope bias on the vehicle heading. In other words, the iceberg's rotation rate can be modeled as constant over short periods, and much smaller than the vehicle's achievable rotation rate at all time scales.
 
-\subsection{Summary}
-
-\begin{figure}[htb]
-   \centering
-   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/images/driftNoLinks.png} % requires the graphicx package
-   \caption{Raw trajectory estimate and multibeam data showing large point cloud inconsistencies. }
-   \label{fig:DRIFT}
-\end{figure}
-
-To summarize, the raw data with iceberg motion-induced drift errors, shown in Figure \ref{fig:DRIFT} must be corrected to produce an accurate, self-consistent point cloud, shown in Figure \ref{fig:SOLUTION}, using the resources described above. The next section describes the solution framework for accomplishing this, and the chapters to follow will go into the details of how each component of the solution is implemented.
-
-\begin{figure}[htb]
-   \centering
-   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/images/goodSimAlignment.png} % requires the graphicx package
-   \caption{Point cloud of full iceberg keel with the effects due to motion removed. The gree line segments denote loop closure events, which drive the motion estimation procedure. }
-   \label{fig:SOLUTION}
-\end{figure}
-
 \section{Solution Framework}
 
-This section describes at a high level how the problem of iceberg profiling can be expressed in the framework of SLAM. It also describes how GraphSLAM is a convenient means for solving the problem as it scales up from previous work to multiple passes of data with many loop closure events.
+This section describes at a high level how data from a vehicle like the one described above can be combined in the framework of SLAM to perform iceberg profiling. It also motivates the choice of GraphSLAM as a convenient means for solving the problem as it scales up from previous work to multiple passes of data with many loop closure events.
 
 \subsection{SLAM with icebergs}
-
-The iceberg SLAM solution framework is shown for a single circumnavigation of an iceberg in Figure \ref{fig:icebergSLAM}.
 
 \begin{figure}[htb]
    \centering
@@ -116,11 +114,11 @@ The iceberg SLAM solution framework is shown for a single circumnavigation of an
    \label{fig:icebergSLAM}
 \end{figure}
 
-At a high level, the approach is identical to that developed by Kimball \cite{?}, though the mindset and implementation of each individual component differ. It is broken up into a loop closure step and an optimization step. In the loop closure step, information within the terrain is used to detect odometry drift. This information is then fed to the optimization step to calculate the maximum likelihood estimate, i.e. the vehicle trajectory that best describes the odometry and sonar measurements.
+%The work uses offline optimization to estimate the iceberg's translation and rotation during the course of the mapping run. It models these motion parameters using B-splines \cite{} to enforce smooth, physical motion. The optimization problem is broken up into linear and nonlinear portions and solved in an iterative least squares framework, as shown in Figure \ref{fig:NestedLoopRelatedWork}. The method was demonstrated on field data from an Antarctic iceberg collected by ship-based sonar, as well as bathymetric data recorded by an AUV. While it provided accurate, self-consistent map sections based on constant depth swaths of data, the algorithm suffered from scalability issues. Multiple swaths of data were required to build up a map of the entire iceberg, and errors in the motion model between the swaths could cause map artifacts or ``seams" that could make later use for robotic navigation difficult. Additionally, the method was computationally intensive, and required subsampling of data for the optimization to converge in a reasonable amount of time. Furthermore, the method relied on having an estimate of the vehicle's inertial position, which was supplied to it via ship-based USBL link. The need to tend the vehicle to provide these navigation fixes places an operational burden on the ship, when a more autonomous solution could free it to do other science. This dissertation uses Kimball's method as a foundation, and makes a number of improvements to address these issues. 
 
-\subsubsection{Submap generation}
-\label{sec.SubmapGeneration}
-An important step for loop closure detection is the generation of submaps. The multibeam sonars used for mapping only scan in a narrow fan-shaped pattern, observing only a thin slice of the iceberg at a time. It would be difficult, given only a single slice, to be able to recognize when the vehicle is observing previously-seen terrain. To overcome this, a number of these multibeam scans are typically concatenated together to form submaps that contain enough information that they can be used to identify familiar terrain, as shown in Figure \ref{fig:SubmapGeneration}. The vehicle's motion estimate between scans is used to project each scan into a consistent reference frame. Because of this, any errors in the vehicle's motion estimate, such as inertial sensor drift, will introduce warping into the submap. Another way to think of this is that each individual scan is a rigid unit, but each scan is held together by a slightly flexible motion link. Submaps are typically sized to mitigate the effects of this sensor drift, based on the characteristics of the specific vehicle and mission.
+At a high level, the approach presented here is very similar to that developed by Kimball \cite{Kimball2011b}, though the mindset and implementation of each individual component differ. It is broken up into a loop closure step and an optimization step. In the loop closure step, information within the terrain is used to detect odometry drift. This information is then fed to the optimization step to calculate the maximum likelihood estimate, i.e. the vehicle trajectory that best describes the odometry and sonar measurements.
+
+The iceberg SLAM solution framework is shown for a single circumnavigation of an iceberg in Figure \ref{fig:icebergSLAM}.
 
  \begin{figure}[htb]
    \centering
@@ -131,13 +129,15 @@ An important step for loop closure detection is the generation of submaps. The m
 
 \subsubsection{Loop closure}
 
-Stated plainly, the loop closure process compares measurements of the same point or area, taken at different times, and calculates any difference in the point's estimated location. Any difference, can then be attributed to errors in the vehicle's estimate of its motion between those observations.
+The loop closure process compares measurements of the same point or area, taken at different times, and calculates any difference in the point's estimated location. Any difference, can then be attributed to errors in the vehicle's estimate of its motion between those observations.
 
-The loop closure process itself can be subdivided into a correspondence procedure and an alignment or offset calculation procedure. The correspondence step determines which, if any, sonar measurements correspond to the same portion of terrain. Having multiple, possibly conflicting observations of the same terrain provides an error signal that can be used to estimate the drift that accumulated between observations. This error signal, or offset, is calculated in the alignment step. 
+An important step for loop closure detection is the generation of submaps. The multibeam sonars used for mapping only scan in a narrow fan-shaped pattern, observing only a thin slice of the iceberg at a time. It would be difficult, given only a single slice, to be able to recognize when the vehicle is observing previously-seen terrain. To overcome this, a number of these multibeam scans are typically concatenated together to form submaps that contain enough information that they can be used to identify familiar terrain, as shown in Figure \ref{fig:SubmapGeneration}. The vehicle's motion estimate between scans is used to project each scan into a consistent reference frame. Because of this, any errors in the vehicle's motion estimate, such as inertial sensor drift, will introduce warping into the submap. Another way to think of this is that each individual scan is a rigid unit, but each scan is held together by a slightly flexible motion link. Submaps are typically sized to mitigate the effects of this sensor drift, based on the characteristics of the specific vehicle and mission.
+
+Once the submaps are built, the loop closure process itself can be subdivided into a correspondence procedure and an alignment or offset calculation procedure. The correspondence step determines which, if any, sonar measurements correspond to the same portion of terrain. Having multiple, possibly conflicting observations of the same terrain provides an error signal that can be used to estimate the drift that accumulated between observations. This error signal, or offset, is calculated in the alignment step. 
 
 Depending on the specifics of a problem, it may be possible to omit an explicit measurement correspondence step. For example, in static terrain mapping using vehicles with high-precision inertial navgation systems, the initial alignment can be close enough to the truth that a na\"ive correspondence hypothesis can be used to initialize the alignment algorithm. For the generic iterative closest point algorithm, this means assuming that for each point in a pointcloud, the closest point in the other cloud is the corresponding measurement. ICP then ``settles in" to the proper alignment, after which the true measurement correspondence could be determined, if it were needed. 
 
-In applications like iceberg profiling, or mapping with low-precision inertial navigation systems, this na\"ive approach can fail, since the true initial alignment may be very far from the initial estimate. ICP alignment errors due to local minima can be difficult to detect in an automated fashion, and can introduce bad information into the map. 
+In applications like iceberg profiling, or mapping with low-precision inertial navigation systems, this na\"ive approach can fail, since the true alignment may be very far from the initial estimate. ICP alignment errors due to local minima can be difficult to detect in an automated fashion, and can introduce bad information into the map. 
 
 For this reason, the approach for correspondence detection presented in this paper seeks to remove any dependence on the initial vehicle position estimate, instead solving the correspondence problem based on the measurements themselves. The alignment method used is ICP with a point-to-plane error metric \cite{?}, identical to previous versions of the problem. 
 
