@@ -50,7 +50,7 @@ Simultaneous Localization and Mapping, or SLAM, is a class of algorithms that al
 Most SLAM methods begin with a similar high-level problem formulation, then differ in solution technique depending on sensing, required map accuracy, computation limitations, etc. This section will present a high-level example of a simple, generic SLAM problem formulation, then discuss some of the different variants, applications, and challenges in performing SLAM. 
 
 \subsubsection{SLAM example problem}
-
+\label{sec:genericSLAM}
 A classic SLAM problem involves a wheeled vehicle creating a map of an unknown environment as it navigates through it, as shown in Figure \ref{fig:GenericSLAM} The vehicle is outfitted with sensors that provide information about both its own motion through the environment, as well as the structure of the environment itself. For this simple example, the vehicle is assumed to have wheel encoders, a compass, and a laser range scanner to observe distance to its surroundings in all directions.
 
  \begin{figure}[!htb]
