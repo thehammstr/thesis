@@ -3,7 +3,14 @@
 \chapter{Introduction}
 \label{ch.Introduction}
 
-The work presented in this thesis enables iceberg profiling using autonomous underwater vehicles (AUVs). Iceberg profiling is the creation of 3-D shape reconstructions of the submerged portion, or keel, of free-drifting icebergs like the one shown in Figure \ref{fig:IcebergSunset}. These accurate 3-D shape profiles, reconstructions, or simply ``maps" are useful in a number of scientific and industrial applications. They enhance understanding of scientific data collected near the iceberg, providing ``geo-tagged"\footnote{or perhaps more appropriately, ``pago-tagged", from  $\pi \acute{\alpha} \gamma o \sigma$,  the greek word for ``ice"}  measurements. These reconstructions also serve as a navigational tool, providing a means to return to sites of interest for future study using terrain-relative navigation (TRN) techniques. 3-D reconstructions also provide insight into climate science and iceberg melt patterns by allowing accurate volumetric comparison between reconstructions of the same iceberg created at different times. 
+The work presented in this thesis enables iceberg profiling using autonomous underwater vehicles (AUVs) like the one shown in Figure \ref{fig:AUVdorado1}. Iceberg profiling is the creation of 3-D shape reconstructions of the submerged portion, or keel, of free-drifting icebergs like the one shown in Figure \ref{fig:IcebergSunset}. These accurate 3-D shape profiles, reconstructions, or simply ``maps" are useful in a number of scientific and industrial applications. They enhance understanding of scientific data collected near the iceberg, providing ``geo-tagged"\footnote{or perhaps more appropriately, ``pago-tagged", from  $\pi \acute{\alpha} \gamma o \sigma$,  the greek word for ``ice"}  measurements. These reconstructions also serve as a navigational tool, providing a means to return to sites of interest for future study using terrain-relative navigation (TRN) techniques. 3-D reconstructions also provide insight into climate science and iceberg melt patterns by allowing accurate volumetric comparison between reconstructions of the same iceberg created at different times. 
+
+\begin{figure}[htb]
+   \centering
+   \includegraphics[width=.8\textwidth]{../graphics/mappingAUV.jpg} % requires the graphicx package
+   \caption{A Dorado-class AUV owned by the Monterey Bay Aquarium Research Institute (MBARI).}
+   \label{fig:AUVdorado1}
+\end{figure}
 
 In the energy industry, iceberg profiling is used as a tool to assess risk to infrastructure and other assets like underwater pipelines and oil rigs. Accurate shapes aid in drift trajectory prediction simulations that can predict collisions in time for preventative measures to be taken. 
 
@@ -17,6 +24,7 @@ In the energy industry, iceberg profiling is used as a tool to assess risk to in
 \end{figure}
 
 The primary challenge in profiling free-drifting icebergs is that the iceberg translates and rotates as the vehicle tries to measure it. The creation of accurate reconstructions using a robotic vehicle can be accomplished by accurately determining the robot's trajectory through the space being profiled. If the robot's position and orientation relative to the iceberg can be determined, then its observations can be projected to create a self-consistent point cloud reconstruction. However the iceberg's motion complicates the task of localization within the reference frame of the iceberg.
+
 
 %The iceberg's rotation and acceleration make it a non-inertial reference frame, which introduces large apparent navigation errors into the trajectory estimate, causing the projected measurements to be inconsistent. Onboard inertial navigation instruments and infrastructure-based navigation tools like GPS and Ultra-Short Baseline Interferometry (USBL) can only provide accurate navigation information \emph{in the inertial frame.} If the inertial trajectory estimate were used to generate a point cloud, neglecting any iceberg motion, the resulting point cloud would contain warping and inconsistencies. 
 

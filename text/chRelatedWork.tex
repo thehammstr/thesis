@@ -82,7 +82,7 @@ This dissertation uses the GraphSLAM algorithm \cite{Thrun2006} to provide an of
 
 SLAM has been used in a number of underwater applications, using many different sensing modalities. Fairfield et. al. mapped naturally-occuring cenotes in Mexico using an efficient occupancy-based SLAM technique \cite{Fairfield2007}. A number of efforts have aimed at performing SLAM in structured or manmade underwater environments like dams and marinas \cite{Ribas2008}. In shallow, highly textured environments like coral reefs, a number of image-based SLAM implementations have been successful \cite{Eustice2005}.
 
-The ``standard" method for bathymetry mapping uses submap correlation to estimate drift, and then distributes the accumulated errors evenly over the trajectory history. While not typically referred to as SLAM, the use of terrain correspondence to estimate and correct navigation errors represents essentially the same high level approach \cite{Henthorn2006}.  Roman and Singh used a delayed-state Extended Kalman Filter SLAM approach to improve map resolution over the traditional uniform smoothing approach by making explicit the position estimate uncertainty\cite{Roman2005}. This differs from the previous approach in that it does not make the assumption that the error is evenly distributed. While the delayed-state EKF implementation can be run online, the need to append states to the estimate as the mission progresses limits the maximum survey size.
+The ``standard" method for bathymetry mapping uses submap correlation to estimate drift, and then distributes the accumulated errors evenly over the trajectory history. An example of this is shown in Figure \ref{fig:BathyMapping}. The black lines show the vehicle's online estimate of its path as it collected data. while the red lines show the best estimate after correlating measurements during loop closure events, when the vehicle revisits previously-observed terrain. Notice how these two are nearly identical in the right of the map, where there are no self-intersections, while they differ more on the left, where the vehicle trajectory self-intersects a number of times. Without these loop closure events, there is no additional information with which to correct any accumulated drift. While not typically referred to as SLAM, the use of terrain correspondence to estimate and correct navigation errors represents essentially the same high level approach \cite{Henthorn2006}.  Roman and Singh used a delayed-state Extended Kalman Filter SLAM approach to improve map resolution over the traditional uniform smoothing approach by making explicit the position estimate uncertainty\cite{Roman2005}. This differs from the previous approach in that it does not make the assumption that the error is evenly distributed. While the delayed-state EKF implementation can be run online, the need to append states to the estimate as the mission progresses limits the maximum survey size.
 
  \begin{figure}[!htb]
    \centering
@@ -101,7 +101,45 @@ SLAM methods generally rely on identifying loop closure events, where an area is
 
 Scan matching techniques are very commonly used when a relatively good initial estimate of location is available, and onboard sensors produce dense 3-D range measurements. Rigid point clouds, or ``submaps" are created from one or more scans, and these scans are correlated to estimate rotation and translation offset. This process is illustrated in Figures \ref{fig:ScanMatch1} and \ref{fig:ScanMatch2}. These methods can be distinguished from later feature-based methods in that they do not build an abstract descriptor of an area, instead matching submaps in metric space based on the scene geometry. In the most simple implementations, the scene is assumed to be rigid, and a rigid transformation (rotation and translation) is estimated to account for misalignment between the clouds, though more advanced variants designed to deal with nonrigid bodies have also been described in the literature \cite{nonrigidICP} The correlation method most commonly uses some variant of the Iterative Closest Point algorithm (ICP) \cite(Besl1992) or grid search \cite{GridSearch}. The former method is faster than the latter, but more prone to local minima. Both methods can fail when the initialization is too far from the true offset. 
 
-These techniques have been employed successfully in the field, including underground mine mapping \cite{ATLAS}, autonomous mapping of urban environments \cite{ref:Montemerlo}, and many underwater bathymetric mapping tasks \cite{Caress}
+These techniques have been employed successfully in the field, including underground mine mapping \cite{ATLAS}, autonomous mapping of urban environments \cite{ref:Montemerlo}, and many underwater bathymetric mapping tasks \cite{}.
+
+%If the AUV were operating above water, powerful 3D laser scanners would allow a direct measurement of rotation and translation between measurements reducing or eliminating the errors associated to iceberg motion. This is shown in figure \ref{fig:ScanMatch}. These types of scanners can map and perform odometry simultaneously, and are often used on terrestrial robots and Unmanned Surface Vehicles, but do not work underwater \cite{Papadopoulos2014}. The multibeam sonars available to an AUV only scan in two dimensions. For mapping the iceberg, the sonar is oriented with the beam oriented perpindicular to the direction of travel in order to sweep out the widest area, as shown in Figure \ref{fig:beamOrientation}.  In order to perform scan matching for odometry, the sonar would need to be oriented in the horizontal plane, as in Figure \ref{fig:ScanMatchMultibeam}. This drives a need for environment-aided localization techniques, as described above. 
+%
+%\begin{figure}[!htb]
+%   \centering
+%   \includegraphics[width=.8\textwidth]{../graphics/ScanMatch4a.png} % requires the graphicx package
+%   \caption{Top view of the iceberg mapping problem. If the sensor field of view has significant extent in the direction of travel, scan matching can provide odometry}
+%   \label{fig:ScanMatch1}
+%   \end{figure}
+%    \begin{figure}[h]
+%   \centering
+%   \includegraphics[width=.8\textwidth]{../graphics/ScanMatch4b.png} % requires the graphicx package
+%   \caption{Odometry corrected by scan matching. This readily extends to the full 3d case using techniques like Iterative Closest Point.}
+%   \label{fig:ScanMatch2}
+%\end{figure}
+%
+%\begin{figure}[h]
+%   \centering
+%   \includegraphics[width=.8\textwidth]{../graphics/ScanMatch3.png} % requires the graphicx package
+%   \caption{Simulated AUV scans taken at two times, roughly 20 meters apart. The multibeam mapping sonar sweeps out a wide area when oriented perpendicular to the direction of travel. This orientation does not allow scan matching for odometry, since the beam pattern does not overlap from scan to scan, as shown in Figure \ref{fig:NoMatch}}
+%   \label{fig:beamOrientation}
+%\end{figure}
+%
+%\begin{figure}[h]
+%   \centering
+%   \includegraphics[width=.8\textwidth]{../graphics/ScanMatch3a.png} % requires the graphicx package
+%   \caption{This shows the same plot as Figure \ref{fig:ScanMatch1}, but with a vertically-oriented multibeam sonar, as used in mapping, as opposed to a horizontally-mounted multibeam or 3D range scanner. This orientation does not allow scan matching for odometry, since the beam pattern does not overlap from scan to scan.}
+%   \label{fig:NoMatch}
+%\end{figure}
+%
+%\begin{figure}[h]
+%   \centering
+%   \includegraphics[width=.8\textwidth]{../graphics/ScanMatch1.png} % requires the graphicx package
+%   \caption{A multibeam sonar could be used for odometry as in Figure \ref{fig:ScanMatch2} if mounted in the horizontal plane as shown, but only for trajectories at constant depth, as the field of view would be very narrow in the vertical direction. However, this configuration could only map a thin layer of the iceberg at a time, so it is unsuitable for the mapping mission.}
+%   \label{fig:ScanMatchMultibeam}
+%\end{figure}
+%
+
 
 \subsubsection{Robust 2D image Features}
 \label{sec.2Dfeatures}
@@ -123,7 +161,7 @@ At the time of writing, the Scale-Invariant Feature Transform (SIFT) developed b
 
 Recent advances in 3D range sensor technology have driven down the cost of these sensors and made them much more prevalent. As a result, researchers have begun to adapt many of the concepts employed in 2D image feature descriptors to 3D data. Rather than aligning entire point clouds as in scan matching, local geometry is used to describe stable keypoints within 3D data, for use in object classification and matching. 
 
-These techniques range in their computational complexity and descriptive power, from simply estimating normal vector direction and curvature at keypoints (e.g. 3D Harris Corners) to the Fast Point Feature Histogram (FPFH) descriptors developed by Rusu et. al. \cite{PFH}. These descriptors share many design principles with SIFT-like image features, such as histogramming gradient and direction information, and have been implemented in object recognition tasks with some success \cite{FPFH}. Of particular interest is work using FPFH features to supply an initial alignment estimate via RANSAC for more accurate ICP solutions. These techniques will be discussed further in Chapter \ref{ch.LoopClosure}
+These techniques range in their computational complexity and descriptive power, from simply estimating normal vector direction and curvature at keypoints (e.g. 3D Harris Corners) to the Fast Point Feature Histogram (FPFH) descriptors developed by Rusu et. al. \cite{}, and even a 3-D variant of the SIFT feature extractor \cite{}. These descriptors share many design principles with image features, such as histogramming gradient and direction information, and have been implemented in object recognition tasks with some success \cite{FPFH}. Of particular interest is work using FPFH features to supply an initial alignment estimate via RANSAC for more accurate ICP solutions. These techniques will be discussed further in Chapter \ref{ch.LoopClosure}
 
 However, these techniques are less mature than their 2D image feature counterparts. Part of this stems from the fact that they represent a newer area of study, but another part is due to the sensing modality itself. A 3D range measurement  can provide depth information that a single camera does not, but cannot necessarily observe the color changes or small textural details that 2D features cue on. Additionally, 3-Dimensional objects do not have a single well-defined normal direction upon which to reference extracted features, which can add ambiguity to the feature extraction and comparison processes. 
 
@@ -144,7 +182,7 @@ The bulk of the development work with this class of 3D feature has been in manma
 
 \section{SLAM-based Iceberg Profiling}
 
-In \cite{Kimball2011b}, Kimball and Rock presented a method for creating high-resolution maps of free-drifting icebergs using AUVs based on SLAM principles. The method considered a single, constant-depth swath of sonar data collected by circumnavigating a free-drifting iceberg. 
+In \cite{Kimball}, a method was presented for creating high-resolution maps of free-drifting icebergs using AUVs based on SLAM principles. The method considered a single, constant-depth swath of sonar data collected by circumnavigating a free-drifting iceberg. 
 
 Like the generic SLAM example presented above, Kimball's method used range scans to estimate accumulated drift. However, rather than estimating the drift of the \emph{vehicle} in the icebergs reference frame, the iceberg's drift in the inertial frame was estimated while the vehicle's inertial position was assumed to be known and kept fixed. This formulation of the problem, in which the environment's motion is mapped explicitly led Kimball to develop a custom solution framework. The framework allowed him to prove the feasibility of SLAM-based solutions for iceberg profiling, as shown in Figure \ref{fig:KimballSolution}, but the method was difficult to scale to the full-depth profiling process, with multiple data swaths and many loop closures. The reformulation of the problem presented in Chapter \ref{ch.IcebergGeometry} casts the problem entirely in iceberg-relative terms, allowing the problem to be solved more easily using generic SLAM methods that scale well to large problem sizes. This formulation, including similarities and differences to the generic case, will be developed more fully in Chapter \ref{ch.ProblemStatement}.
 
