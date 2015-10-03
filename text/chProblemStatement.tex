@@ -127,7 +127,7 @@ At a high level, the approach for iceberg profiling presented here is very simil
 \end{figure}
 
 \subsubsection{Loop closure}
-
+\label{sec:explicitDataCorr}
 The loop closure process compares measurements of the same point or area, taken at different times, and calculates any difference in the point's estimated location. Any difference can then be attributed to errors in the vehicle's estimate of its motion between those observations.
 
 An important step for loop closure detection is the generation of submaps. The multibeam sonars used for mapping only scan in a narrow fan-shaped pattern, observing only a thin slice of the iceberg at a time. It would be difficult, given only a single slice, to be able to recognize when the vehicle is observing previously-seen terrain. To overcome this, a number of these multibeam scans are typically concatenated together to form submaps that contain enough information that they can be used to identify familiar terrain, as shown in Figure \ref{fig:SubmapGeneration}. The vehicle's motion estimate between scans is used to project each scan into a consistent reference frame. Because of this, any errors in the vehicle's motion estimate, such as inertial sensor drift, will introduce warping into the submap. Another way to think of this is that each individual scan is a rigid unit, but each scan is held together by a slightly flexible motion link. Submaps are typically sized to mitigate the effects of this sensor drift, based on the characteristics of the specific vehicle and mission.
