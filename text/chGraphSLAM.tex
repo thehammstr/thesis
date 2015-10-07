@@ -5,9 +5,9 @@
 
 Chapter \ref{ch.IcebergGeometry} recast the problem of iceberg profiling in a form very similar to traditional static terrain mapping problems. The vehicle's trajectory through the iceberg frame of reference can be dead-reckoned based on the DVL measurements, and the iceberg's rotation is can be modeled as a drifting rate gyro bias or low-precision compass, both of which have been dealt with extensively in the robotics community.
 
-A number of techniques can be applied to solve this new formulation of the profiling problem. Many of these techniques have been developed extensively in the robotics community, and a number of powerful software tools are available to solve the techniques' associated optimizations. While a number of these methods could have been used for profiling icebergs, the ease of representing the problem as a pose graph, the ability to solve large optimizations efficiently, and the fact that the calculations did not need to be performed online drove the selection of GraphSLAM as a solution method. 
+A number of techniques can be applied to solve this new formulation of the profiling problem. Many of these techniques have been developed extensively in the robotics community, and a number of powerful software tools are available to solve the techniques' associated optimizations. The ease of representing the problem as a pose graph, the ability to solve large optimizations efficiently, and the fact that the calculations did not need to be performed online drove the selection of GraphSLAM as a solution method. 
 
-This chapter will give a brief overview of the mechanics of Graph SLAM, advantages of the method, and a description of how the iceberg profiling problem was framed to fit within the framework of the method. Additionally, there will be a discussion of how different sensing modalities and error modes could drive choices for alternative state definitions. However, it will not go into the low-level details of how the GraphSLAM algorithm implements its optimization. For more detail on that, the reader should refer to the sources in the related works section.
+This chapter will give a brief overview of the mechanics of GraphSLAM, advantages of the method, and a description of how the iceberg profiling problem was posed to fit within the framework of the method. Additionally, there will be a discussion of how different sensing modalities and error modes could drive choices for alternative state definitions. However, it will not go into the low-level details of how the GraphSLAM algorithm implements its optimization. For more detail on that, the reader should refer to the sources in the related works section.
 
 \section{GraphSLAM overview}
 
@@ -31,14 +31,14 @@ p\left(x_{t+1}~|~x_t,u_t\right) & \sim \mathcal{N}\left(g(x_t,u_t), R_t\right)
 
 where $R$ is the process noise covariance matrix. Note that this representation is identical to that of the Extended Kalman Filter (EKF) motion model, normally written 
 \begin{align}
-x_{t+1} &= g\left(u_t,x_t\right) + \nu_p\\
+x_{t+1} &= g\left(x_t,u_t\right) + \nu_p\\
 R &\equiv E\left(\nu_p \nu_p^\intercal\right) 
 \end{align}
 
 In GraphSLAM variants with explicit map representation, poses are connected to map nodes via measurement links. If a measurement $z^i_t$ of map feature $m_j$ is made at time $t$, then $x_t$ and $m_j$ are linked via the measurement function $h \left(x_t,m_j\right)$ such that 
 
 \begin{align}
-p\left(z^i_{t}~|~x_t,m_j\right) & \sim \mathcal{N}\left(h(x_t,u_t), Q_t\right)
+p\left(z^i_{t}~|~x_t,m_j\right) & \sim \mathcal{N}\left(h(x_t,m_j), Q_t\right)
 \label {eq:Gauss2}
 \end{align}
 
@@ -87,7 +87,7 @@ P_{\text{spring}} &= \frac{1}{2}k\left(l-l_n\right)^2
 
 Note the similarity between equation \ref{eq.spring} and the right hand side terms of equation \ref{eq.quadcost}. All of them are weighted quadratic functions.
 
-In this analogy, each graph link is modeled as a spring separating the nodes, as shown in Figure \ref{fig:springs}. The natural length $l_n$ of the spring corresponds to the mean of the conditional probability,  $g\left(u_t,x_t\right)$ for odometry, and $h\left(x_t,m_j\right)$ for measurements. The stiffness $k$ is inversely proportional the covariance $R$ or $Q$: the more certain the measurement, the stiffer the effective spring. 
+In this analogy, each graph link is modeled as a spring separating the nodes, as shown in Figure \ref{fig:springs}. The natural length $l_n$ of the spring corresponds to the mean of the conditional probability,  $g\left(u_t,x_t\right)$ for odometry, and $h\left(x_t,m_j\right)$ for measurements. The stiffness $k$ is inversely proportional the covariance $R$ or $Q$: the more certain the measurement, the stiffer the equivalent spring. 
 
 Once the nodes are all tied together with springs of appropriate length and stiffness, any deviation from the natural length will result in additional spring potential energy. The GraphSLAM solution is identical to the \emph{minimum energy} state of this system. In fact, if the nodes were modeled as masses, and viscous damping were applied, dynamic motion simulation could be used to compute the same solution as GraphSLAM. The system would ``relax" into its minimum energy state, and the steady state dynamic solution would be the GraphSLAM MLE solution. While such a method would likely be much slower than using the actual GraphSLAM solution algorithm, the idea of modeling the system as a collection of masses, springs, and dampers provides useful intuition on how the algorithm manipulates the parameters to arrive at a solution.
 
@@ -159,13 +159,13 @@ The results presented in Chapter \ref{ch.Results} were generated by a formulatio
 
 \section{Applying GraphSLAM to iceberg profiling}
 
-Thus far, a high-level overview of the GraphSLAM algorithm has been presented, along with several design considerations for its implementation. This section describes in detail how all the components of iceberg profiling, from loop closure to iceberg-relative motion, can be combined within the GraphSLAM framework to  yield an accurate reconstruction. 
+Thus far, a high-level overview of the GraphSLAM algorithm has been presented, along with several design considerations for its implementation. This section gives details on how all the components of iceberg profiling as described in Chapter \ref{ch.ProblemStatement} can be combined within the GraphSLAM framework to  yield an accurate reconstruction. 
 
 More specifically, it is now required that all the components in the conditional probability relations (restated here for convenience) be defined, all modeling assumptions be stated clearly, and choices of relative weights be justified. 
 
 \begin{align}
 p\left(x_{t+1}~|~x_t,u_t\right) & \sim \mathcal{N}\left(g(x_t,u_t), R_t\right) \\
-p\left(z^i_{t}~|~x_t,m_j\right) & \sim \mathcal{N}\left(h(x_t,u_t), Q_t\right)
+p\left(z^i_{t}~|~x_t,m_j\right) & \sim \mathcal{N}\left(h(x_t,m_j), Q_t\right)
 \end{align}
 
 \begin{figure}[htb]
@@ -174,38 +174,6 @@ p\left(z^i_{t}~|~x_t,m_j\right) & \sim \mathcal{N}\left(h(x_t,u_t), Q_t\right)
    \caption{Inputs and outputs of GraphSLAM.}
    \label{fig:GraphSLAMIO}
 \end{figure}
-
-\subsection{State and motion models}
-
-The state and models used in GraphSLAM depend on the modeling assumptions of both the vehicle and the iceberg. These are stated here, and used to create a reduced state representation and kinematic motion model to feed into GraphSLAM
-
-\subsubsection{Vehicle motion model}
-\label{sec:VehicleMotion}
-The vehicle assumed in this dissertation is a Monterey Bay Aquarium Research Institute (MBARI) Dorado-class AUV. These are 21-inch diameter torpedo-shaped vehicles that range in length from 8 feet to 21 feet, depending on the specific configuration for a given mission. They are passively stabilized in roll, and control pitch and heading by vectoring the thrust from the propeller. Consequently, they must maintain forward velocity in order to maneuver. They cruise at around 1.5 m/s and have a minimum turning radius of 17 m, which equates to a maximum angular velocity in heading of 5 deg/s. \cite{?}
-
-\begin{figure}[htb]
-   \centering
-   \includegraphics[width=.8\textwidth]{../graphics/mappingAUV.jpg} % requires the graphicx package
-   \caption{A Dorado-class AUV.}
-   \label{fig:mappingAUV}
-\end{figure}
-
-It is assumed that the vehicle can determine its depth accurately via pressure sensor, and its \emph{inertial} attitude via a combination of gyro, accelerometer, and compass measurements. These assumptions, combined with assumptions about the iceberg motion, will allow a reduction in the size of the vehicle state for the purposes of profiling, as will be shown in the following sections.
-
-The vehicle's DVL is an important input to the motion model. It is mounted on the port side of the vehicle and its four beams all nominally point at the iceberg. However, at large standoff distances from smaller icebergs, or with dynamic iceberg geometry, one or more beams of the DVL may not intersect the surface, yielding incomplete velocity information. Without at least three beams in contact with the iceberg, the full 3D velocity cannot be determined uniquely. However, these DVL dropouts are detectable. In the simulation results shown in Chapter \ref{ch.Results}, such occurances were handled by interpolating between valid vehicle-frame measurements and increasing the process noise during dropouts. The implicit underlying assumption here is that changes in the vehicle's velocity are smooth, and the vehicle's velocity in the body frame does not deviate far from nominal. For the Dorado-class AUVs, which normally fly at a fixed forward velocity with little sideslip, this is generally a valid assumption. In simulation, this approach obtained good results, even with over 60\% dropout, but a more principled approach using a vehicle state that includes velocity could potentially make better use of partial DVL information, at the cost of computational speed. This is discussed briefly in Section \ref{sec.VelocityState}.
-
-
-\subsubsection{Iceberg motion model}
-
-As stated in Chapter \ref{ch.ProblemStatement} and presented again here for convenience, Icebergs are modeled as rigid bodies having three degrees of freedom: horizontal motion in the $xy$-plane and rotation in heading, $\psi$. 
-
-Iceberg motion can vary by size, shape, and region in which the iceberg is found but typical figures include .03-.08 m/s in translation  and 5-10 deg/hr in heading rate. In extreme cases, translation rates of .27 m/s and rotation rates of 40 dg/hr have been recorded. \cite{?} \cite{?}. 
-
-These translational rates can be up to 20\% of the AUV's speed, which could cause extremely large apparent drift if left unaccounted for. Fortunately, the DVL provides iceberg-relative translational velocity information, and the problem formulation developed in Chapter \ref{ch.IcebergGeometry} eliminates these terms from the optimization.
-
-The rotational motion is large enough that it must be accounted for or it will result in a warped, inconsistent map of all but the smallest of icebergs. An implicit assumption about icebergs is that their motion changes very slowly. Their large mass and inertia yield dynamics with very large time constants. 
-
-For these reasons, lacking a means to measure directly the heading of the iceberg or the relative heading between iceberg and vehicle, the rotation rate can be modeled as a slowly-varying gyroscope bias on the vehicle heading. In other words, the iceberg's rotation rate can be modeled as constant over short periods, and much smaller than the vehicle's achievable rotation rate at all time scales.
 
 \subsubsection{GraphSLAM state $\left[~x_t~\right]$}
 
@@ -218,11 +186,11 @@ Based on the above discussion of assumptions about AUV and vehicle motions the f
                      \end{array}\right]_B
 \end{equation}
 
-This is a common 2D-planar robotic mapping state representation, augmented with a drift rate term, $\beta$ to account for the iceberg's rotational motion. Here, the subscript $B$ indicates that all parameters are written in the iceberg reference frame. That is to say, $x$, $y$, and $\psi$ denote the horizontal position and heading of the vehicle expressed \emph{in the iceberg's frame of reference}, and $\beta$ is the drift rate in the vertical direction (which is the same in both the iceberg and inertial frames, by the assumption of planar motion). 
+This is a common 2D-planar robotic mapping state representation, augmented with a drift rate term, $\beta$ to account for the iceberg's rotational motion. Here, the subscript $B$ indicates that all parameters are written in the iceberg reference frame. That is to say, $x$, $y$, and $\psi$ denote the horizontal position and heading of the vehicle expressed \emph{in the iceberg's frame of reference}, and $\beta$ is the heading drift rate of the iceberg. 
 
-As stated in Section \ref{sec:VehicleMotion}, it is assumed that the vehicle depth can be measured directly by onboard pressure sensors, reducing the problem to two dimensions in translation, denoted $x$ and $y$. This is a reasonable simplification for iceberg profiling. In mapping static terrain, low frequency tidal offset effects must often be estimated, but since an iceberg floats with the tides, this is not a concern. Large amplitude waves can also introduce depth errors, but at much higher frequencies than the tides. These effects can be mitigated by combining integrated DVL-measured vertical velocity for high frequencies and depth sensor for low frequencies in a complementary filter framework.
+As stated in Chapter \ref{ch.ProblemStatement}, it is assumed that the vehicle depth can be measured directly by onboard pressure sensors, reducing the problem to two dimensions in translation, denoted $x$ and $y$. This is a reasonable simplification for iceberg profiling. In mapping static terrain, low frequency tidal offset effects must often be estimated, but since an iceberg floats with the tides, this is not a concern. Large amplitude waves can also introduce depth errors, but at much higher frequencies than the tides. These effects can be mitigated by combining integrated DVL-measured vertical velocity for high frequencies and depth sensor for low frequencies in a complementary filter framework.
 
-Section \ref{sec.MainContrib} showed that the sideways-facing DVL could be used to directly measure the body components of the vehicle's velocity in the iceberg frame of reference. However, the vehicle's heading in the frame of reference of the iceberg, $\psi$, can not be directly measured with the assumed sensor suite, and must be estimated in the SLAM framework. The iceberg angular drift rate can be safely assumed to be relatively small, and to change slowly due to the large inertia of the iceberg, but may have nonzero mean value over the course of the profiling run. This drift is labeled $\beta$. 
+Section \ref{sec.MainContrib} showed that the sideways-facing DVL could be used to directly measure the body components of the vehicle's velocity in the iceberg frame of reference. However, the vehicle's heading in the frame of reference of the iceberg, $\psi$, can not be measured directly with the assumed sensor suite, and is therefore estimated in the SLAM framework. The iceberg angular drift rate can be safely assumed to be relatively small, and to change slowly due to the large inertia of the iceberg, but may have nonzero mean value over the course of the profiling run. This drift is labeled $\beta$. 
 
 \subsubsection{GraphSLAM motion model $\left[~g\left(x_t,u_t\right)~\right]$ }
 
@@ -247,17 +215,17 @@ The translational motion update is driven by the DVL. That is, the velocity of t
 
 The vehicle's rotational motion update is driven by the vehicle's inertial heading estimate from gyro and compass, $\psi^I$ and the estimated iceberg motion parameter, $\beta_t$.  The iceberg's large mass and inertia guarantee that its angular rate will be both small and slowly-varying. To capture this, $\beta_t$ is modeled as a random walk, driven only by noise.
 
-Each motion update also has a process noise term $\nu_i$. These are zero-mean Gaussian random variables whose covariance is tuned to reflect the uncertainty of the process. For translation, this is primarily DVL velocity measurement accuracy, for rotation, this is gyro accuracy, and for $\beta$ this is loosely related to the inertia of the iceberg. 
+Each motion update also has a process noise term $\nu_i$. These are zero-mean Gaussian random variables whose covariance is tuned to reflect the uncertainty of the process. For translation, this is primarily DVL velocity measurement accuracy, for rotation, this is compass accuracy, and for $\beta$ this is loosely related to the inertia of the iceberg. 
 
-Dropouts in the DVL velocity measurement were interpolated as described in Section \ref{sec:VehicleMotion} and the corresponding $\nu$ term was increased slightly to reflect the reduced confidence in these quantities.
+Dropouts in the DVL velocity measurement were interpolated between valid readings. Since the vehicle nominally flies a constant velocity and does not experience large accelerations, the errors introduced by interpolating over short dropouts were small. However, to account for the missing data, the corresponding $\nu$ term was increased slightly to reflect the reduced confidence in these quantities.
 
-A state representation without the drift term $\beta$ could have been used, increasing the process noise covariance on the heading to account for unmodeled drift of the iceberg. This would result in the same state representation typically used in mobile (wheeled) robotic SLAM problems, as in \cite{ProbRob}. However, the zero-mean uncorrelated process noise assumption would have biased the navigation estimate, consistently underestimating any DC-component of the angular rate of the iceberg. For this reason, explicit modeling of the rotational drift rate was selected.
+A state representation without the drift term $\beta$ could have been used, increasing the process noise covariance on the heading to account for unmodeled drift of the iceberg. This would result in the same state representation typically used in mobile (wheeled) robotic SLAM problems, as in \cite{Thrun2005}. However, the zero-mean uncorrelated process noise assumption would have biased the navigation estimate, consistently underestimating any DC-component of the angular rate of the iceberg. For this reason, explicit modeling of the rotational drift rate was selected.
 
 \subsubsection{Equivalence to compass error}
 
 The iceberg drift parameter label $\beta$ is often used to indicate sensor bias. This nomenclature was chosen to highlight the equivalence of unmodeled iceberg motion and time-varying rate gyro bias. Navigating in a non-inertial reference frame using perfect inertial sensors is equivalent to navigating in an inertial reference frame with flawed inertial sensors. 
 
-This equivalency allows the same mapping framework to be used for more traditional static mapping problems where the inertial sensing is less precise, such as a vehicle with low-cost sensors. The only underlying assumption is that the sensor bias changes on a time scale much slower than the vehicle dynamics. This holds true in the iceberg case due to the large inertia of the ice, and is also a valid assumption for many low-cost MEMs-type inertial sensors, where temperature fluctuations are the largest source of drifting biases \cite{citationneeded}. Depending on the expected error modes, other modeling considerations may be necessary. This will be discussed in section \ref{sec.DesignConsiderations}.
+This equivalency allows the same mapping framework to be used for more traditional static mapping problems where the inertial sensing is less precise, such as a vehicle with low-cost sensors. The only underlying assumption is that the sensor bias changes on a time scale much slower than the vehicle dynamics. This holds true in the iceberg case due to the large inertia of the ice, and is also a valid assumption for many low-cost MEMs-type inertial sensors, where outside factors like temperature fluctuations can cause drifting biases \cite{Keymeulen2005}. Depending on the expected error modes, other modeling considerations may be necessary. This will be discussed in section \ref{sec.DesignConsiderations}.
 
 
 \subsection{Measurement model}
@@ -277,7 +245,7 @@ Using an explicit map makes the error characterization of the measurement model 
 
 The measurement model used in the explicit map case represents the actual physics more closely than registering concatenated point clouds. Specifically, the measurement function $h\left(x_t,m_j\right)$ models the sonar beam directly, and the covariance of each individual measurement can be determined from known sensor characteristics. That information can be added directly to the information matrix used by the GraphSLAM solver. This is the matrix $Q_t$ in Equation \ref{eq.measModel}. 
 
-The challenge with using an explicity map for profiling icebergs or other underwater natural terrain is detecting robust landmarks. Manmade structures typically have sharp corners, edges, flat planes, or other distinct geometric features, while natural terrain takes on lower contrast, more organic shapes that can be difficult to distinguish from one another. Future work in detecting and characterizing such features, as described in Chapter \ref{ch.LoopClosure} may work well with an explicit map implementation, but such capability is not yet sufficiently robust for the error characterization advantages to outweigh the correspondence difficulties. For this reason, only implicit map results are given in Chapter \ref{ch.Results}.
+The challenge with using an explicit map for profiling icebergs or other underwater natural terrain is detecting robust landmarks. Manmade structures typically have sharp corners, edges, flat planes, or other distinct geometric features, while natural terrain takes on lower contrast, more organic shapes that can be difficult to distinguish from one another. Future work in detecting and characterizing such features, as described in Chapter \ref{ch.LoopClosure} may work well with an explicit map implementation, but such capability is not yet sufficiently robust for the error characterization advantages to outweigh the correspondence difficulties. For this reason, only implicit map results are given in Chapter \ref{ch.Results}.
 
 
 
@@ -302,7 +270,7 @@ Performing GraphSLAM with an implicit map involves the abstraction of many obser
 The procedure is given in Algorithm 1.
 
 
-\begin{algorithm}
+\begin{algorithm}[H]
 \DontPrintSemicolon
 \SetAlgoLined
 \SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}
@@ -341,7 +309,7 @@ The implicit map formulation also bypasses the marginalization step of the Graph
 
 There are drawbacks, however. A large one is the underlying assumption that the drift of the iceberg is negligible during the time interval whose measurements form the submap. While iceberg rotation rates are generally small, any errors due to non-zero motion will manifest as warping of the submap. This effect can introduce registration error, but can be mitigated by using as short an interval as possible while maintaining sufficient texture to register point clouds.
 
-Another difficulty is determining how synthetic measurements should be weighted in the optimization. Assigning uncertainty to the synthetic measurement becomes challenging, as the pose offsets are obtained from many aggregated measurements. The error statistics can no longer be generated from known sensor error characteristics. Some mapping implementations solve this issue by assuming that point cloud alignment is perfect, and treating the calculated offsets as constraints, rather than penalty terms. The approach presented in this dissertation uses heuristics to determine the weight to be given to these synthetic measurements based on convergence speed, general sensor characteristics, and qualitative map consistency. 
+Another difficulty is determining how synthetic measurements should be weighted in the optimization. Assigning uncertainty to the synthetic measurement becomes challenging, as the pose offsets are obtained from many aggregated measurements. The error statistics can no longer be generated simply from known sensor error characteristics. Some mapping implementations solve this issue by assuming that point cloud alignment is perfect, and treating the calculated offsets as constraints, rather than penalty terms. The approach presented in this dissertation uses heuristics to determine the weight to be given to these synthetic measurements based on convergence speed, general sensor characteristics, and qualitative map consistency. A more rigorous analysis on how to determine weights for loop closure events based on motion and measurement uncertainty during submap creation is left for future work.
 
 
 

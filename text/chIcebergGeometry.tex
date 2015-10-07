@@ -19,11 +19,11 @@ Chapter \ref{ch.LoopClosure} described the process of loop closure detection. Th
    \label{fig:icebergSLAMmotion}
 \end{figure}
 
-This chapter presents improvements on the method for estimating the vehicle's iceberg-relative trajectory between loop closure events using available sensors, developed by Kimball and Rock \cite{}. Generating an accurate, self-consistent iceberg map requires accurate determination of the vehicle's pose \emph{within the frame of reference of the iceberg.} At a high level, Kimball's method assumed that the vehicle's pose in the \emph{inertial} frame could be determined, and estimated the motion of the iceberg based on the measurements. The vector difference between these two quantities is the pose in the iceberg frame. The method presented here estimates the vehicle pose in the iceberg frame directly. In doing so, it reduces the number of estimation parameters by several orders of magnitude, yielding corresponding speed increases. It also increases autonomy by removing the need for inertial position fixes, and puts the problem into a form that facilitates the use of pre-existing, highly-optimized solvers.
+This chapter presents improvements on the method for estimating the vehicle's iceberg-relative trajectory between loop closure events using available sensors, developed in \cite{Kimball2011b}. Generating an accurate, self-consistent iceberg map  At a high level, the method revolves around accurate determination of the vehicle's pose \emph{within the frame of reference of the iceberg,} as described in Chapter \ref{ch.ProblemStatement}. The method in \cite{Kimball2011b} assumed that the vehicle's pose in the \emph{inertial} frame could be determined, and estimated the motion of the iceberg based on the measurements. The vector difference between these two quantities is the pose in the iceberg frame. The method presented here estimates the vehicle pose in the iceberg frame directly. In doing so, it reduces the number of estimation parameters by several orders of magnitude, yielding corresponding speed increases. In doing so, it also puts the problem into a form that facilitates the use of pre-existing, highly-optimized solvers.
 
 The method uses the same basic geometric relations as a starting point, and improves on them in two key regards. First, several mathematical substitutions are made to reduce the number of parameters to be estimated, and eliminate inertial terms from the optimization. Second, all derivatives are taken in the moving reference frame. These changes yield a smaller estimation problem with no sacrifice in accuracy, and remove the need for the vehicle to be supplied with inertial navigation fixes, which is an operational benefit.
 
-Kimball's method had the structure shown in Figure \ref{fig:NestedLoop}. The optimization is split into linear and nonlinear parts. The inner loop estimation vector $\hat{\bar{x}}_{ls}$ comprises $O(10)$ iceberg motion spline control points $P_x$ and $O(100)$ - $O(1000)$ iceberg-fixed points, denoted $S_i$ in Figure \ref{fig:LoopEquation}.
+The optimization framework presented in \cite{Kimball2011b} had the structure shown in Figure \ref{fig:NestedLoop}. The optimization is split into linear and nonlinear parts. The inner loop estimation vector $\hat{\bar{x}}_{ls}$ comprises $O(10)$ iceberg motion spline control points $P_x$ and $O(100)$ - $O(1000)$ iceberg-fixed points, denoted $S_i$ in Figure \ref{fig:LoopEquation}.
 
 \begin{align}
 \hat{\bar{x}}_{ls} &= 
@@ -41,14 +41,14 @@ Although the inner loop is a linear operation, the number of parameters to be es
 \begin{figure}[htbp]
    \centering
    \includegraphics[scale=.4]{../graphics/KimballIterativeOpt.png} % requires the graphicx package
-   \caption{Iterative optimization structure employed by Kimball. The nonlinear heading parameters $\psi$ are chosen in the outer loop and fed to the inner loop as constants. $\hat{\bar{x}}_{ls}$ is a vector of O(10) motion parameters and O(1000) iceberg-fixed points to be estimated at each optimization step  \emph{Graphic courtesy of Peter Kimball}}
+   \caption{Iterative optimization structure employed in \cite{Kimball2011b}. The nonlinear heading parameters $\psi$ are chosen in the outer loop and fed to the inner loop as constants. $\hat{\bar{x}}_{ls}$ is a vector of O(10) motion parameters and O(1000) iceberg-fixed points to be estimated at each optimization step  \emph{Graphic courtesy of Peter Kimball}}
    \label{fig:NestedLoop}
 \end{figure}
 
 \begin{figure}[htbp]
    \centering
    \includegraphics[scale=.4]{../graphics/HammondIterativeOpt.png} % requires the graphicx package
-   \caption{Modification of the optimization employed by this Kimball. The inner loop optimization has been replaced by a deterministic loop closure evaluation based on inertial navigation and DVL. The resulting optimization can be run several orders of magnitude faster than prior art, and does not suffer the same scalability issues.}
+   \caption{Modification of the optimization framework. The inner loop optimization has been replaced by a deterministic loop closure evaluation based on inertial navigation and DVL. The resulting optimization can be run several orders of magnitude faster than prior art, and does not suffer the same scalability issues.}
    \label{fig:NestedLoop2}
 \end{figure}
 
@@ -118,7 +118,7 @@ Although the inner loop is a linear operation, the number of parameters to be es
 This section develops the equations by which DVL data is incorporated into the optimization to enforce motion consistency in the mapping optimization. First, an overview of the previous method is presented. This illustrates the general approach to how DVL information is incorporated, and shows how the changes presented in this thesis provide gains in terms of speed and reduced complexity. For notation conventions, the reader should refer to the Appendix.
 
 \subsection{Overview of previous method}
-The previous method assumed that the vehicle's inertial trajectory was known, and attempted to estimate the iceberg's motion during the course of the mapping run. This estimate could then be subtracted from teh inertial trajectory, yielding the iceberg-relative trajectory. The starting point for the estimation problem is the so-called ``Loop Equation," as illustrated in Figure \ref{fig:LoopEquation}. The optimizer seeks to minimize loop closure alignment error while ensuring that the terms of this equation remain consistent with one another. 
+The previous method assumed that the vehicle's inertial trajectory was known, and attempted to estimate the iceberg's motion during the course of the mapping run. This estimate could then be subtracted from teh inertial trajectory, yielding the iceberg-relative trajectory. The starting point for the estimation problem is the ``loop equation," as illustrated in Figure \ref{fig:LoopEquation}. The optimizer seeks to minimize alignment error while ensuring that the terms of this equation remain consistent with one another. 
 
 \begin{align}
 \vec{r}^{~\nicefrac{B_{cm}}{O}} + \vec{r}^{~\nicefrac{S_i}{B_{cm}}} &= ~\vec{r}^{~\nicefrac{V_{cm}}{O}} + \vec{r}^{~\nicefrac{S_i}{V_{cm}}}
@@ -134,7 +134,7 @@ The previous method assumed that the vehicle's inertial trajectory was known, an
 
 The loop equation gets its name from the fact that the two paths to get from $O$ to $S_i$ are equivalent, and define a ``loop."
 
-In Kimball's method, this equation is differentiated in the inertial frame
+In \cite{Kimball2011b}, this equation is differentiated in the inertial frame
 
 \begin{equation} % requires amsmath; align for no eq. number
    \frac{~^Id}{~dt}(\vec{r}^{~~\nicefrac{V_{cm}}{O}} + \vec{r}^{~~\nicefrac{S_i}{V_{cm}}} = ~ \vec{r}^{~~\nicefrac{B_{cm}}{O}} + \vec{r}^{~~\nicefrac{S_i}{B_{cm}}})\\
@@ -166,7 +166,7 @@ Taking the dot product of this equation with $\hat{d}_{i} $ yields,
          \label{eqn:expensive2}
 \end{align}
 
-Kimball arranged the terms of Equation \ref{eqn:expensive} within the nested loop optimization shown in Figure \ref{fig:NestedLoop}. The terms that are assumed known or are estimated in the outer loop make up the rows of the matrix $A$. The $\frac{~dr_{i,t}}{~dt}$ term is measured directly by the DVL, and corresponds to entries of the vector $b$. The remaining parameters to be estimated are concatenated in the vector $x_{ls}$ and solved via linear least squares in the inner loop optimization. 
+The previous method arranged the terms of Equation \ref{eqn:expensive} within the nested loop optimization shown in Figure \ref{fig:NestedLoop}. The terms that are assumed known or are estimated in the outer loop make up the rows of the matrix $A$. The $\frac{~dr_{i,t}}{~dt}$ term is measured directly by the DVL, and corresponds to entries of the vector $b$. The remaining parameters to be estimated are concatenated in the vector $x_{ls}$ and solved via linear least squares in the inner loop optimization. 
 
 \begin{equation}
     \hat{\bar{x}}_{ls} = A^{\dagger} b
@@ -176,7 +176,7 @@ Kimball arranged the terms of Equation \ref{eqn:expensive} within the nested loo
 where $\hat{\bar{x}}_{ls}  \in \mathbb{R}^{ 2P_x + 2N_{s_i}}$. $P_x$ is the number of spline control points used to estimate the iceberg's translation and inertial velocity, and $N_{S_i}$ is the number of iceberg-fixed ``map points," $S_i$.
 
 
-Note that the math here differs slightly from that presented by Kimball in that the four DVL beams are not abstracted to a single point before optimizing. However, the fundamental concept and mechanics of the solution method remain the same.
+Note that the math here differs slightly from \cite{Kimball2011b} in that the four DVL beams are not abstracted to a single point before optimizing. However, the fundamental concept and mechanics of the solution method remain the same.
 
 
 
