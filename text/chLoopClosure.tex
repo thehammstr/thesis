@@ -47,7 +47,7 @@ In order to detect overlap in the face of large motion-induced odometry errors, 
    \label{fig:BathyMapping3}
 \end{figure}
 
-The second complication arises from the ICP alignment algorithm's implicit assumption of submap rigidity. The submap creation assumes that the inertial guidance of the vehicle is accurate over the short time it takes to build a submap, as described in Section \ref{sec.SubmapGeneration}. Any navigation errors during that time will introduce warping to the submap, which can cause the registration method to fail or worse: create a positive match on different terrain. This warping effect makes the comparison of ever-larger submaps problematic, as the alignment accuracy will degrade as the submap shape diverges from its true geometry.
+The second complication arises from the ICP alignment algorithm's implicit assumption of submap rigidity. The submap creation assumes that the inertial guidance of the vehicle is accurate over the short time it takes to build a submap, as described in Chapter \ref{ch.ProblemStatement}. Any navigation errors during that time will introduce warping to the submap, which can cause the registration method to fail or worse: create a positive match on different terrain. This warping effect makes the comparison of ever-larger submaps problematic, as the alignment accuracy will degrade as the submap shape diverges from its true geometry.
 
 For reference, on a typical iceberg mapping mission, the warping effect would become noticeable after about 100m. At 40m standoff distance from the wall, assuming ranging error of 1\% of distance traveled, a submap's shape would be accurate to roughly $\pm$ 40cm. This serves as a benchmark for quantifying the warping due to odometry errors caused by iceberg motion. To consider the worst-case scenario, assume a relatively fast-rotating iceberg motion of 20 deg/hr. This motion, if not accounted for will manifest as a heading gyro bias. The vehicle travels at 1.5 m/s. If the vehicle is actually moving in a straight line, the 20 deg/hr bias will cause the odometry estimate to move along 15 km radius circular arc. After 100 m of travel, the difference between the true path and the estimated path will be comparable to the 40 cm sonar range error. If the submap remains shorter than this, any motion-induced warping will remain below the noise. Above it, and warping becomes a noticeable effect.
 
@@ -146,7 +146,7 @@ The second step restores the pixels that began with valid data to their original
    \label{fig:rangeImage}
 \end{figure}
 
-The last step in creating a SIFT-ready image is Contrast-Limited Adaptive Histogram Equalization (CLAHE). Algorithms like SIFT and SURF use gradient information in images to extract the features. The CLAHE process attempts to enhance details without skewing the overall contrast level of the image. \cite{clahe?}
+The last step in creating a SIFT-ready image is Contrast-Limited Adaptive Histogram Equalization (CLAHE). Algorithms like SIFT and SURF use gradient information in images to extract the features. The CLAHE process attempts to enhance details without skewing the overall contrast level of the image. \cite{Reza2004}
 
 \begin{figure}[htb]
    \centering
@@ -177,12 +177,12 @@ Robust image features can be extracted from the resulting image and used to look
 
 The matching techniques described above treat the features as if they lie in a plane, which is not necessarily a valid assumption. The same terrain, when projected in different directions can change appearance drastically. Using the average normal of the point cloud data as the projection direction for the range image, as described above, is a simple heuristic. While this method has produced good results in the datasets used in this research, some geometries could prove challenging. For instance, terrain with highly nonplanar geometry or multiple major planar regions could make choosing a single direction in which to project the data difficult.  
 
-Figure \ref{ref:rangeImageLighting} shows the images resulting from projecting the same range data in a number of directions. The central image uses the average normal plane. Above and below it represent $\pm 15$deg of elevation and left and right $\pm 15$ deg of azimuth, relative to neutral. While the images remain qualitatively similar, the ability to detect the same SIFT keypoints reliably falls off between 5 and 10 degrees off-nominal.
+Figure \ref{fig:lighting} shows the images resulting from projecting the same range data in a number of directions. The central image uses the average normal plane. Above and below it represent $\pm 15$deg of elevation and left and right $\pm 15$ deg of azimuth, relative to neutral. While the images remain qualitatively similar, the ability to detect the same SIFT keypoints reliably falls off between 5 and 10 degrees off-nominal.
 
 \begin{figure}[htb]
    \centering
    \includegraphics[width=.8\textwidth]{../graphics/rangeImageLighting.png} % requires the graphicx package
-   \caption{The range image remains relatively consistent over $\pm 15$deg of azimuth and elevation change in projection direction. Qualitatively, it looks like changes in lighting over the terrain, for which image features like SIFT and SURF claim some robustness \cite{ }}
+   \caption{The range image remains relatively consistent over $\pm 15$deg of azimuth and elevation change in projection direction. Qualitatively, it looks like changes in lighting over the terrain, for which image features like SIFT and SURF claim some robustness \cite{Lowe2004} }
    \label{fig:lighting}
 \end{figure}
 

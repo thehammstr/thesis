@@ -144,11 +144,11 @@ Based on its ability to work in terrain with diffuse data, the implicit map form
 
 \subsubsection{Explicit map} 
 
-In the explicit map variant of GraphSLAM, the locations of features within the map are solved alonside the vehicle trajectory. This is often used when the map consists primarily of discrete features, such as passive beacons \cite{?}, trees or pilings \cite{Langellaan}, or robust image features \cite{Augenstein}.
+In the explicit map variant of GraphSLAM, the locations of features within the map are solved alonside the vehicle trajectory. This is often used when the map consists primarily of discrete features, such as beacons \cite{Olson2006}, trees or pilings \cite{Langelaan2005}, or robust image features \cite{Augenstein2011a}.
 
 This method circumvents the problem of submap warping by distilling the information contained in the terrain to a single point. Since no point cloud registration is used, there is no need to make a small motion assumption for the iceberg, which  would be advantageous for fast-moving objects. However, there must be enough local information to form a discrete, recognizable feature. Doing this with range data alone in natural terrain can be challenging. 
 
-In underwater mapping of natural terrain, including icebergs, it can be difficult to identify individual features with enough distinctiveness that they can be reliably used for mapping. However, early work published by the author has made some advances into leveraging understanding about the terrain to make features in sonar data more distinctive. \cite{me!} Future work in this area, including the use of sonar intensity return, may eventually make this representation more attractive.
+In underwater mapping of natural terrain, including icebergs, it can be difficult to identify individual features with enough distinctiveness that they can be reliably used for mapping. However, early work published by the author has made some advances into leveraging understanding about the terrain to make features in sonar data more distinctive. \cite{Hammond2014b} Future work in this area, including the use of sonar intensity return, may eventually make this representation more attractive.
 
 
 \subsection{Known vs. unknown correspondence}
