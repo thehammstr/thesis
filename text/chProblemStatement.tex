@@ -9,13 +9,6 @@ This chapter defines the problem, and gives a description for the solution frame
 
 \subsection{Iceberg profiling revisited}
 
-\begin{figure}[htb]
-   \centering
-   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/images/driftNoLinks.png} % requires the graphicx package
-   \caption{Raw trajectory estimate and multibeam data showing large point cloud inconsistencies. }
-   \label{fig:DRIFT}
-\end{figure}
-
 The problem of iceberg profiling was introduced in Chapter \ref{ch.Introduction}, and is described again here for convenience. The task is to create an accurate, self-consistent three-dimensional reconstruction of a free-drifting iceberg using only the sensors that can be installed on an AUV. The task is complicated by the iceberg's freedom to translate and rotate. To accomplish this, the method presented here extends traditional AUV-based underwater mapping techniques to generate an estimate of the vehicle's trajectory relative to the iceberg, so that its sonar measurements can be projected correctly into the iceberg's frame of reference. 
 
 \begin{figure}[htb]
@@ -25,7 +18,7 @@ The problem of iceberg profiling was introduced in Chapter \ref{ch.Introduction}
    \label{fig:SOLUTION}
 \end{figure}
 
-If the vehicle's inertial trajectory is used for this method of profiling, neglecting the motion of the iceberg, the reprojected sonar beams will look like Figure \ref{fig:DRIFT}. The profiling algorithm must take that uncorrected point cloud, then estimate and eliminate the effects due to iceberg drift, to generate an accurate iceberg-relative trajectory and produce a self-consistent reconstruction like the one shown in Figure \ref{fig:SOLUTION}.
+If the vehicle's inertial trajectory is used for this method of profiling, neglecting the motion of the iceberg, the reprojected sonar beams will look like Figure \ref{fig:Challenge}. The profiling algorithm must take that uncorrected point cloud, then estimate and eliminate the effects due to iceberg drift, to generate an accurate iceberg-relative trajectory and produce a self-consistent reconstruction like the one shown in Figure \ref{fig:SOLUTION}.
 
 The following sections give details on the type of vehicle that is used for this profiling mission, the sensors it carries, the nominal mission profile for collecting data, and assumptions made regarding iceberg motion. 
 
@@ -33,7 +26,7 @@ The following sections give details on the type of vehicle that is used for this
 \label{sec.VehicleSetup}
 
 \subsubsection{Vehicle configuration}
-The vehicle model used for this paper is similar to the Dorado-class AUV shown in Figure \ref{fig:AUVdorado}. This is a torpedo-shaped vessel that achieves pitch and heading control through vectored thrust. The vehicle is ballasted to be passively stable in roll, and slightly positively buoyant, so that if it stops moving forward, it will tend to float to the surface. The high-precision onboard inertial measurement unit can determine the vehicle's attitude \emph{in the inertial frame} to high precision. Additionally, depth can be measured accurately using a pressure sensor. 
+The vehicle model used for this paper is similar to the Dorado-class AUV shown in Figure \ref{fig:AUVdorado}. This is a 21 inch diameter torpedo-shaped vessel that achieves pitch and heading control through vectored thrust. It cruises at 1.5 m/s and is rated to 600m depth The vehicle is ballasted to be passively stable in roll, and slightly positively buoyant, so that if it stops moving forward, it will tend to float to the surface. The high-precision onboard inertial measurement unit can determine the vehicle's attitude \emph{in the inertial frame} to high precision. Additionally, depth can be measured accurately using a pressure sensor. 
 
 \begin{figure}[htb]
    \centering
@@ -46,9 +39,9 @@ The vehicle model used for this paper is similar to the Dorado-class AUV shown i
 
 \subsubsection{Doppler Velocity Logger (DVL)}
 
-The Doppler Velocity Logger (DVL) is a valuable tool in underwater robotic navigation. In normal operation, an AUV is equipped with a downward-facing DVL (or upward-facing, for under-ice operation), giving it a direct measurement of its true velocity over the terrain, even in the presence of currents. This paper assumes that the AUV being used is equipped with a sideways-facing DVL such that all four beams are nominally incident on the side of the iceberg, shown in Figure \ref{fig:DVLandMulti}. Each of the four beams returns a single range, along with partial velocity information. Specifically, it measures the frequency shift of the returned signal, which corresponds directly to the instantaneous rate of change of the length of the DVL beam $\left( \frac{d||\vec{r}^{~\nicefrac{s_i}{V_{cm}}}||}{dt}\right)$. This is the component of the vehicle's velocity in the iceberg reference frame in the direction of the sonar beam. An important subtlety in this measurement is that the DVL doppler measurement only provides the velocity \emph{as expressed in the vehicle's frame of reference}. It does not provide any information about angular rate or attitude, and must be combined with a separate attitude and heading estimate in order to integrate the measurements to produce a trajectory estimate. 
+The Doppler Velocity Logger (DVL) is a valuable tool in underwater robotic navigation. It emits pulses of acoustic energy and can record range and velocity information from the pulses' reflections' time-of-flight and doppler shift. In normal operation, an AUV is equipped with a downward-facing DVL (or upward-facing, for under-ice operation), giving it a direct measurement of its true velocity over the terrain, even in the presence of currents. This paper assumes that the AUV being used is equipped with a sideways-facing DVL such that all four beams are nominally incident on the side of the iceberg, shown in Figure \ref{fig:DVLandMulti}. Each of the four beams returns a single range, along with partial velocity information. Specifically, it measures the frequency shift of the returned signal, which corresponds directly to the instantaneous rate of change of the length of the DVL beam $\left( \frac{d||\vec{r}^{~\nicefrac{s_i}{V_{cm}}}||}{dt}\right)$. This is the component of the vehicle's velocity in the iceberg reference frame in the direction of the sonar beam. An important subtlety in this measurement is that the DVL doppler measurement only provides the velocity \emph{as expressed in the vehicle's frame of reference}. It does not provide any information about angular rate or attitude, and must be combined with a separate attitude and heading estimate in order to integrate the measurements to produce a trajectory estimate. 
 
-With this configuration, the AUV can maintain ``bottom track" or ``iceberg iceberg" on the iceberg, meaning at least three beams intersect the iceberg, giving it a measurement of its velocity in the iceberg's reference frame. However, in order to integrate this velocity measurement to produce a trajectory estimate, the vehicle's full iceberg-relative attitude must be determined. Stated differently, the DVL gives a very precise measurement of the distance the robot has traveled, but cannot directly detect the direction in which that travel occured, nor any changes in the direction. This concept is useful, however, in that it constrains the length of the path traversed between loop closure events, and it makes the problem look like a different class of robotic mapping problems, specifically indoor wheeled robotic mapping, which has been heavily studied. In this way, the function of the DVL with respect to navigation can be compared to that of a wheel encoder in terrestrial robotics.
+With this configuration, the AUV can maintain ``bottom track" or ``iceberg track" on the iceberg, meaning at least three beams intersect the iceberg, giving it a measurement of its velocity in the iceberg's reference frame. However, in order to integrate this velocity measurement to produce a trajectory estimate, the vehicle's full iceberg-relative attitude must be determined. Stated differently, the DVL gives a very precise measurement of the distance the robot has traveled, but cannot directly detect the direction in which that travel occured, nor any changes in the direction. This information is useful, however, in that it constrains the length of the path traversed between loop closure events, and it makes the problem similar to a different class of robotic mapping problems, specifically indoor wheeled robotic mapping, which has been heavily studied. In this way, the function of the DVL with respect to navigation can be compared to that of a wheel encoder in terrestrial robotics.
 
 The vehicle used to collect the data described in Chapter \ref{ch.Results} uses a Kearfott SeaDevil inertial navigation system, which includes a DVL. With the DVL in continuous bottom track, the system can measure velocity to within 1 cm/s \cite{McEwen2005}.
 
@@ -80,7 +73,7 @@ A new vehicle currently under construction at Monterey Bay Aquarium Research Ins
 
 \subsection{Nominal mission profile}
 
-The profiling process begins aboard a research vessel by locating a suitable iceberg and approaching to minimum safe distance. The AUV is then deployed in a direction to intercept the iceberg. Upon interception, the vehicle circumnavigates the iceberg in counter-clockwise direction. It does this reactively, flying at a constant nominal speed, and using its obstacle avoidance sonar or DVL to maintain a constant standoff distance. In order to image the entire iceberg (or iceberg surrogate) the vehicle must fly at multiple depths. In the simulated data, this is achieved with a small constant downward velocity, resulting in a helical trajectory. The data collected in Soquel Canyon flew three constant-altitude passes by the near-vertical canyon wall with each pass roughly 15 meters higher than the previous. 
+The profiling process begins aboard a research vessel by locating a suitable iceberg and approaching to minimum safe distance. The AUV is then deployed in a direction to intercept the iceberg. Upon interception, the vehicle circumnavigates the iceberg in a counter-clockwise direction. It does this reactively, flying at a constant nominal speed, and using its obstacle avoidance sonar or DVL to maintain a constant standoff distance. In order to image the entire iceberg (or iceberg surrogate) the vehicle must fly at multiple depths. In the simulated data, this is achieved with a small constant downward velocity, resulting in a helical trajectory. The data collected in Soquel Canyon flew three constant-altitude passes by the near-vertical canyon wall with each pass roughly 15 meters higher than the previous. 
 
 \begin{figure}[htb]
    \centering
@@ -97,7 +90,7 @@ An iceberg's motion can vary by size, shape, and region in which it is found, bu
 
 These translational rates can be up to 20\% of the AUV's speed, which could cause extremely large apparent drift if not accounted for. Fortunately, the DVL provides iceberg-relative translational velocity information, and the problem formulation developed in Chapter \ref{ch.IcebergGeometry} eliminates these terms from the optimization.
 
-The rotation rates of icebergs are three orders of magnitude slower than the maximum vehicle rotation rate, even at the fast end of the spectrum. Nonetheless, the rotational motion is large enough that it must be accounted for or it will result in a warped, inconsistent map of all but the smallest of icebergs. A last, implicit assumption about icebergs is that their motion changes very slowly. Their large mass and inertia yield dynamics with very large time constants. 
+The rotation rates of icebergs are three orders of magnitude slower than the maximum vehicle rotation rate, even at the fast end of the spectrum. Nonetheless, if it is not accounted for, it can result in a warped, inconsistent map of all but the smallest of icebergs. A last, implicit assumption about icebergs is that their motion changes slowly. Their large mass and inertia yield dynamics with very large time constants. 
 
 For these reasons, lacking a means to measure directly the heading of the iceberg or the relative heading between iceberg and vehicle, the rotation rate can be modeled as a slowly-varying gyroscope bias on the vehicle heading. In other words, the iceberg's rotation rate can be modeled as constant over short periods, and much smaller than the vehicle's achievable rotation rate at all time scales.
 
@@ -138,13 +131,13 @@ Depending on the specifics of a problem, it may be possible to omit an explicit 
 
 In applications like iceberg profiling, or mapping with low-precision inertial navigation systems, this na\"ive approach can fail, since the true alignment may be very far from the initial estimate. ICP alignment errors due to local minima can be difficult to detect in an automated fashion, and can introduce bad information into the map. 
 
-For this reason, the approach for correspondence detection presented in this paper seeks to remove any dependence on the initial vehicle position estimate, instead solving the correspondence problem based on the measurements themselves. The alignment method used is ICP with a point-to-plane error metric \cite{Gutmann1996}, identical to previous versions of the profiling method. 
+For this reason, the approach for correspondence detection presented here seeks to remove any dependence on the initial vehicle position estimate, instead solving the correspondence problem based on the measurements themselves. The alignment method used is ICP with a point-to-plane error metric \cite{Gutmann1996}, identical to previous versions of the profiling method. 
 
 \subsubsection{Trajectory estimate optimization}
 
 The offset information determined in the loop closure step is then used to determine the trajectory that minimizes measurement inconsistencies. 
 
-The approach presented in \cite{Kimball2011b} considers the case of a single circumnavigation with one loop closure.  The method estimates the iceberg's motion through inertial space rather than the vehicle's motion through the iceberg. In order to incorporate the doppler data from the DVL, a large number of intermediate variables was introduced to the motion estimation optimization. These variables corresponded to discrete points fixed within the iceberg's frame of reference, whose velocities would be compared with the DVL measurements. The inclusion of these points drove up the optimization cost and made the solution difficult to scale to larger problem sizes. Additionally, in order to allow for nonuniform motion estimates with only a single loop closure, a novel optimization framework was developed that decomposed the problem into a linear least squares optimization within a nonlinear search over heading parameters.
+The approach presented in \cite{Kimball2011b} considers the case of a single circumnavigation with one loop closure.  The method estimates the iceberg's motion through inertial space rather than the vehicle's motion through the iceberg reference frame. In order to incorporate the doppler data from the DVL, a large number of intermediate variables was introduced to the motion estimation optimization. These variables corresponded to discrete points fixed within the iceberg's frame of reference, whose velocities would be compared with the DVL measurements. The inclusion of these points drove up the optimization cost and made the solution difficult to scale to larger problem sizes. Additionally, in order to allow for nonuniform motion estimates with only a single loop closure, a novel optimization framework was developed that decomposed the problem into a linear least squares optimization within a nonlinear search over heading parameters.
 
 The method developed in this document does not attempt to model iceberg motion explicitly. Instead it estimates the vehicle's motion through the iceberg frame of reference directly, treating any apparent odometry errors due to the iceberg's motion as one would a motion sensor bias. This reformulation carries two major advantages. First, it obviates the need for the introduction of intermediate variables to incorporate DVL data, as the velocity of iceberg-fixed points within the iceberg frame of reference is identically zero. Second, it makes the problem essentially identical to the generic SLAM example presented in Section \ref{sec:genericSLAM}, which opens up a wide array of highly-optimized generic SLAM solvers for use in icberg profiling. This will be described in more detail in Chapter \ref{ch.IcebergGeometry}.
 
@@ -164,11 +157,11 @@ Additionally, GraphSLAM scales well to large problems. For an illustration of th
 
 Another attractive aspect of using GraphSLAM to solve the iceberg profiling problem is that there exist a number of efficient, optimized, and easy-to-use software libraries to solve such graph optimization problems. Of these, an open source nonlinear least-squares graph solver library called Ceres was used. This library was initially developed by Google for in-house use on Google Maps' street view feature, stitching images together into a self-consistent map. They later released it for public development, and it has been used by a number of universities and research institutions for SLAM, bundle adjustment, and a number of other robotics tasks. \cite{Agarwal2012}
 
-\subsection{Overview of contribution areas of this thesis}
-
-Chapter \ref{ch.LoopClosure} details the approach to correspondence detection developed during the course of this research. Given this initial correspondence detection, point cloud alignment is calculated via ICP and is unchanged from previous work.
-
-Chapter \ref{ch.IcebergGeometry} reformulates the problem in the moving iceberg's frame of reference, which eliminates the need for inertial position updates and makes it straightforward to apply pre-existing solvers to the problem.
-
-Finally, Chapter \ref{ch.GraphSLAM} shows how the GraphSLAM framework can be used as a scalable and efficient way to both express and solve the iceberg profiling problem with multiple swaths of data containing many loop closures.
+%\subsection{Overview of contribution areas of this thesis}
+%
+%Chapter \ref{ch.LoopClosure} details the approach to correspondence detection developed during the course of this research. Given this initial correspondence detection, point cloud alignment is calculated via ICP and is unchanged from previous work.
+%
+%Chapter \ref{ch.IcebergGeometry} reformulates the problem in the moving iceberg's frame of reference, which eliminates the need for inertial position updates and makes it straightforward to apply pre-existing solvers to the problem.
+%
+%Finally, Chapter \ref{ch.GraphSLAM} shows how the GraphSLAM framework can be used as a scalable and efficient way to both express and solve the iceberg profiling problem with multiple swaths of data containing many loop closures.
 
