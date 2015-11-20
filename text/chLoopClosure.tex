@@ -1,6 +1,6 @@
 % !TEX root = ../Thesis.tex
 
-\chapter{Data Correspondence and Alignment for Loop Closure}
+\chapter{Data Correspondence and Alignment}
 \label{ch.LoopClosure}
 
 SLAM methods like the the one described in Chapter \ref{ch.ProblemStatement} gain information about their accumulated navigational drift by making repeated observations of the same features or areas of the environment. Implicit in this task is the necessity to identify measurements as having come from observations of the same feature or terrain. This is the problem of data correspondence. 
@@ -111,13 +111,13 @@ The amount and type of information that can be extracted from terrain varies wid
 
 \subsection{Applying 2D image features to 3D terrain}
 
-A wealth of research has been conducted in extracting robust, identifiable features from 2D imagery. The following section details work that leverages this well-established technology for the problem of recognizing 3D terrain. It was hypothesized that since many image processing techniques convert images to a format identical to DEMs, the techniques developed for imagery may be useful when dealing with actual maps of terrain.   Although this work is still in its early stages, the hypothesis appears to be supported by data from an underwater canyon mapping mission.
+%A wealth of research has been conducted in extracting robust, identifiable features from 2D imagery. The following section details work that leverages this well-established technology for the problem of recognizing 3D terrain. It was hypothesized that since many image processing techniques convert images to a format identical to DEMs, the techniques developed for imagery may be useful when dealing with actual maps of terrain.   Although this work is still in its early stages, the hypothesis appears to be supported by data from an underwater canyon mapping mission.
 
-\subsubsection{Creating images from terrain}
+%\subsubsection{Creating images from terrain}
 
 The genesis of this idea came from the observation that it was difficult to identify patterns by eye from raw sonar point cloud data, but that it became easier to recognize patterns when the data was projected onto a plane and colored by ``height." Essentially, converting raw submap point clouds to a format similar to topographic charts facilitated pattern recognition for human users.
 
-Many standard algorithms for extracting robust image feature descriptors only consider image intensity, discarding any color information. The resulting grayscale images are identical in form to digital elevation maps (DEMs), with pixel intensity being the ``height" of the map above that location in the image. This representation is shown in Figure \ref{fig:imAsSurf}. 
+Many standard algorithms (e.g. SIFT and SURF) for extracting robust image feature descriptors only consider image intensity, discarding any color information. The resulting grayscale images are identical in form to digital elevation maps (DEMs), with pixel intensity being the ``height" of the map above that location in the image. This representation is shown in Figure \ref{fig:imAsSurf}. 
 
 \begin{figure}[htb]
    \centering
