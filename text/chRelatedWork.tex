@@ -42,7 +42,7 @@ Zhou et. al. have investigated using Slocum Glider vehicles to profile icebergs 
 %\end{figure}
 
 \section{Simultaneous Localization and Mapping}
-
+\label{sec.SLAM}
 The method for iceberg profiling employed in this thesis extends traditional infrastructure-free, AUV-based bathymetry mapping techniques to the moving iceberg reference frame. This method seeks to generate an accurate trajectory estimate and reproject the measurements to create a self-consistent point cloud.To account for the potentialy large errors introduced by the iceberg's motion, it correlates measurements taken of the same area of the iceberg at different times, to estimate the accumulated drift. Since this method uses terrain information to generate an accurate trajectory estimate, while at the same time using its trajectory estimate to build a map of the terrain, it falls within a class of algorithms known as Simultaneous Localization and Mapping, or SLAM.
 
 SLAM allows a robot to reconstruct an unknown environment and localize itself within that environment simultaneously.  The common thread between all these algorithms is that they attempt to maximize measurement consistency, balancing errors in motion measurements (odometry) with map geometry errors based on repeated observations of features within the environment (measurements).

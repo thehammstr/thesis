@@ -3,11 +3,11 @@
 \chapter{Fusing Multiple Data Swaths via GraphSLAM}
 \label{ch.GraphSLAM}
 
-Chapter \ref{ch.IcebergGeometry} recast the problem of iceberg profiling in a form very similar to traditional static terrain mapping problems. The vehicle's trajectory through the iceberg frame of reference can be dead-reckoned based on the DVL measurements, and the iceberg's rotation is can be modeled as a drifting rate gyro bias or low-precision compass, both of which have been dealt with extensively in the robotics community.
+Chapter \ref{ch.IcebergGeometry} recast the problem of iceberg profiling in a form very similar to traditional static terrain mapping problems. The vehicle's trajectory through the iceberg frame of reference can be dead-reckoned based on the DVL measurements, and the iceberg's rotation is modeled as a drifting rate gyro bias or low-precision compass, both of which have been dealt with extensively in the robotics community.
 
 A number of techniques can be applied to solve this new formulation of the profiling problem. Many of these techniques have been developed extensively in the robotics community, and a number of powerful software tools are available to solve the techniques' associated optimizations. The ease of representing the problem as a pose graph, the ability to solve large optimizations efficiently, and the fact that the calculations did not need to be performed online drove the selection of GraphSLAM as a solution method. 
 
-This chapter will give a brief overview of the mechanics of GraphSLAM, advantages of the method, and a description of how the iceberg profiling problem was posed to fit within the framework of the method. Additionally, there will be a discussion of how different sensing modalities and error modes could drive choices for alternative state definitions. However, it will not go into the low-level details of how the GraphSLAM algorithm implements its optimization. For more detail on that, the reader should refer to the sources in the related works section.
+This chapter will give a brief overview of the mechanics of GraphSLAM, advantages of the method, and a description of how the iceberg profiling problem was posed to fit within the framework of the method. Additionally, there will be a discussion of how different sensing modalities and error modes could drive choices for alternative state definitions. However, it will not go into the low-level details of how the GraphSLAM algorithm implements its optimization. For more detail, refer to the sources cited in Section \ref{sec.SLAM}.
 
 \section{GraphSLAM overview}
 
@@ -20,9 +20,9 @@ This chapter will give a brief overview of the mechanics of GraphSLAM, advantage
 
 \subsection{Iceberg Profiling as a probabilistic graph}
 
-GraphSLAM represents the iceberg profiling problem as a probabilistic graph. This can be visualized as a collection of connected nodes, as in Figure \ref{fig:GraphSLAM}. Some nodes represent vehicle poses, $x_t$, while others [optionally] represent locations and characteristics of features in the map, $m_j$. 
+GraphSLAM represents the iceberg profiling problem as a probabilistic graph. This can be visualized as a collection of connected nodes, as in Figure \ref{fig:GraphSLAM}. Some nodes represent vehicle poses, $x_t$, while others represent locations and characteristics of features in the map, $m_j$. 
 
-The links between the nodes encode pairwise information about how nodes are related to each other, either through odometry or measurement of the environment. Specifically, the algorithm models each link as giving the conditional probabibility distribution of a node given its linked node, and models this distribution as a Gaussian. For example, consier two pose estimates $x_t$ and  $x_{t+1}$ and nonlinear motion model $g(x_t,u_t)$, where $u_t$ is the control input at time $t$. The graphical link between $x_t$ and  $x_{t+1}$ represents the probability distribution: 
+The links between the nodes encode pairwise information about how nodes are related to each other, either through odometry or measurement of the environment. Specifically, the algorithm models each link as giving the conditional probability distribution of a node given its linked node, and models this distribution as a Gaussian. For example, consider two pose estimates $x_t$ and  $x_{t+1}$ and nonlinear motion model $g(x_t,u_t)$, where $u_t$ is the control input at time $t$. The graphical link between $x_t$ and  $x_{t+1}$ represents the probability distribution: 
 
 \begin{align}
 p\left(x_{t+1}~|~x_t,u_t\right) & \sim \mathcal{N}\left(g(x_t,u_t), R_t\right)
@@ -50,6 +50,8 @@ Q &\equiv E\left(\nu_m \nu_m^\intercal\right)
 \end{align}
 
 The full posterior probability of the graph is then given by the product of all these conditional terms. Solving for the maximum likelihood estimate requires finding the combination of free parameters (nodes) that maximizes this posterior probability. 
+
+It is interesting to note that the similarity between the GraphSLAM and the EKF is not coincidental: GraphSLAM and the EKF solve the same nonlinear weighted least squares problem, but whereas the EKF solves it online, recursively, GraphSLAM solves the problem offline in a batch process. 
 
 \subsection{GraphSLAM as nonlinear least squares}
 
@@ -89,7 +91,7 @@ Note the similarity between equation \ref{eq.spring} and the right hand side ter
 
 In this analogy, each graph link is modeled as a spring separating the nodes, as shown in Figure \ref{fig:springs}. The natural length $l_n$ of the spring corresponds to the mean of the conditional probability,  $g\left(u_t,x_t\right)$ for odometry, and $h\left(x_t,m_j\right)$ for measurements. The stiffness $k$ is inversely proportional the covariance $R$ or $Q$: the more certain the measurement, the stiffer the equivalent spring. 
 
-Once the nodes are all tied together with springs of appropriate length and stiffness, any deviation from the natural length will result in additional spring potential energy. The GraphSLAM solution is identical to the \emph{minimum energy} state of this system. In fact, if the nodes were modeled as masses, and viscous damping were applied, dynamic motion simulation could be used to compute the same solution as GraphSLAM. The system would ``relax" into its minimum energy state, and the steady state dynamic solution would be the GraphSLAM MLE solution. While such a method would likely be much slower than using the actual GraphSLAM solution algorithm, the idea of modeling the system as a collection of masses, springs, and dampers provides useful intuition on how the algorithm manipulates the parameters to arrive at a solution.
+Once the nodes are all tied together with springs of appropriate length and stiffness, any deviation from the natural length will result in additional spring potential energy. The GraphSLAM solution is identical to the \emph{minimum energy} state of this system. In fact, if the nodes were modeled as masses, and viscous damping were applied, dynamic motion simulation could be used to compute the same solution as GraphSLAM. The system would relax into its minimum energy state, and the steady state dynamic solution would be the GraphSLAM MLE solution. While such a method would likely be much slower than using the actual GraphSLAM solution algorithm, the idea of modeling the system as a collection of masses, springs, and dampers provides useful intuition on how the algorithm manipulates the parameters to arrive at a solution.
 
 \begin{figure}[htb]
    \centering
@@ -133,7 +135,7 @@ GraphSLAM can be implemented with either explicit or implicit map representation
 \subsubsection{Implicit map}
 The implicit map representation uses information in terrain that has been viewed multiple times, but encodes that information directly in pose-to-pose constraints, effectively creating a ``pseudo-odometry" link. By correlating submaps built from concatenated measurements, translational and rotational offsets between poses can be estimated and enforced directly between pose nodes. 
 
-This approach is useful when the information in the terrain is dispersed throughout, as opposed to being concentrated in well-localized recognizable landmarks. This is often the case when the vehicle navigates through natural terrain using a range scanner with a wide field of view. In these scenarios, larger scale correlation may provide better offset data than local features. 
+This approach is useful when the information in the terrain is dispersed throughout, as opposed to being concentrated in well-localized recognizable landmarks. This is often the case when the vehicle navigates through natural terrain using a range scanner with a wide field of view, as in the iceberg profiling problem. In these scenarios, larger scale correlation may provide better offset data than local features. 
 
 One downside of using this method with the sensors available onboard is that it can fall prey to the submap warping described in Chapter \ref{ch.LoopClosure}, as many planar scans must be concatenated together over time, assuming that the vehicle's motion through the iceberg's reference frame is well modeled. If this assumption is not valid, the point cloud registration techniques that drive this approach can suffer from reduced accuracy or fail altogether, yielding map inconsistencies. 
 
@@ -161,7 +163,7 @@ The results presented in Chapter \ref{ch.Results} were generated by a formulatio
 
 Thus far, a high-level overview of the GraphSLAM algorithm has been presented, along with several design considerations for its implementation. This section gives details on how all the components of iceberg profiling as described in Chapter \ref{ch.ProblemStatement} can be combined within the GraphSLAM framework to  yield an accurate reconstruction. 
 
-More specifically, it is now required that all the components in the conditional probability relations (restated here for convenience) be defined, all modeling assumptions be stated clearly, and choices of relative weights be justified. 
+Below, the components in the conditional probability relations (restated here for convenience) will be defined, along with all modeling assumptions and choices of relative weights for the specific application of iceberg profiling. 
 
 \begin{align}
 p\left(x_{t+1}~|~x_t,u_t\right) & \sim \mathcal{N}\left(g(x_t,u_t), R_t\right) \\
@@ -190,7 +192,7 @@ This is a common 2D-planar robotic mapping state representation, augmented with 
 
 As stated in Chapter \ref{ch.ProblemStatement}, it is assumed that the vehicle depth can be measured directly by onboard pressure sensors, reducing the problem to two dimensions in translation, denoted $x$ and $y$. This is a reasonable simplification for iceberg profiling. In mapping static terrain, low frequency tidal offset effects must often be estimated, but since an iceberg floats with the tides, this is not a concern. Large amplitude waves can also introduce depth errors, but at much higher frequencies than the tides. These effects can be mitigated by combining integrated DVL-measured vertical velocity for high frequencies and depth sensor for low frequencies in a complementary filter framework.
 
-Section \ref{sec.MainContrib} showed that the sideways-facing DVL could be used to directly measure the body components of the vehicle's velocity in the iceberg frame of reference. However, the vehicle's heading in the frame of reference of the iceberg, $\psi$, can not be measured directly with the assumed sensor suite, and is therefore estimated in the SLAM framework. The iceberg angular drift rate can be safely assumed to be relatively small, and to change slowly due to the large inertia of the iceberg, but may have nonzero mean value over the course of the profiling run. This drift is labeled $\beta$. 
+Section \ref{sec.MainContrib} showed that the sideways-facing DVL could be used to measure directly the body components of the vehicle's velocity in the iceberg frame of reference. However, the vehicle's heading in the frame of reference of the iceberg, $\psi$, can not be measured directly with the available onboard sensing, and is therefore estimated in the SLAM framework. The iceberg's angular drift rate is assumed to fall within the range of motions presented in  \cite{Gladstone2002,Wadhams1983}, and to change slowly due to the large inertia of the iceberg, but may have nonzero mean value over the course of the profiling run. This drift is labeled $\beta$. 
 
 \subsubsection{GraphSLAM motion model $\left[~g\left(x_t,u_t\right)~\right]$ }
 
@@ -213,11 +215,11 @@ The translational motion update is driven by the DVL. That is, the velocity of t
                      \end{array}\right]_V
 \end{equation}
 
-The vehicle's rotational motion update is driven by the vehicle's inertial heading estimate from gyro and compass, $\psi^I$ and the estimated iceberg motion parameter, $\beta_t$.  The iceberg's large mass and inertia guarantee that its angular rate will be both small and slowly-varying. To capture this, $\beta_t$ is modeled as a random walk, driven only by noise.
+The vehicle's rotational motion update is driven by the vehicle's inertial heading estimate from gyro and compass, $\psi^I$ and the estimated iceberg motion parameter, $\beta_t$.  The iceberg's angular rate is assumed to vary slowly, due to its large inertia. To capture this, $\beta_t$ is modeled as a random walk, driven only by noise.
 
 Each motion update also has a process noise term $\nu_i$. These are zero-mean Gaussian random variables whose covariance is tuned to reflect the uncertainty of the process. For translation, this is primarily DVL velocity measurement accuracy, for rotation, this is compass accuracy, and for $\beta$ this is loosely related to the inertia of the iceberg. 
 
-Dropouts in the DVL velocity measurement were interpolated between valid readings. Since the vehicle nominally flies a constant velocity and does not experience large accelerations, the errors introduced by interpolating over short dropouts were small. However, to account for the missing data, the corresponding $\nu$ term was increased slightly to reflect the reduced confidence in these quantities.
+Dropouts in the DVL velocity measurement are interpolated between valid readings. Since the vehicle nominally flies a constant velocity and does not experience large accelerations, the errors introduced by interpolating over short dropouts were small. However, to account for the missing data, the corresponding $\nu$ term is increased slightly to reflect the reduced confidence in these quantities.
 
 A state representation without the drift term $\beta$ could have been used, increasing the process noise covariance on the heading to account for unmodeled drift of the iceberg. This would result in the same state representation typically used in mobile (wheeled) robotic SLAM problems, as in \cite{Thrun2005}. However, the zero-mean uncorrelated process noise assumption would have biased the navigation estimate, consistently underestimating any DC-component of the angular rate of the iceberg. For this reason, explicit modeling of the rotational drift rate was selected.
 
