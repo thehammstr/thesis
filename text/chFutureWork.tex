@@ -8,6 +8,54 @@
 
 \section{Future Work}
 
+\subsection{Application-specific GraphSLAM implementations}
+
+\subsubsection{Explicit map representation}
+
+Chapter \ref{ch.GraphSLAM} laid out a method that used an implicit map representation for GraphSLAM, justified by the difficulty in obtaining highly recognizable discrete features for loop closure detection. However, if such features were available, an \emph{explicit} map representation could provide some advantages. 
+
+Using an explicit map makes the error characterization of the measurement model straightforward. The measurement model used in the explicit map case represents the actual physics more closely than registering concatenated point clouds. Specifically, the measurement function $h\left(x_t,m_j\right)$ models the sonar beam directly, and the covariance of each individual measurement can be determined from known sensor characteristics. That information can be added directly to the information matrix used by the GraphSLAM solver. This is the matrix $Q_t$ in Equation \ref{eq.measModel}. Although the feature-based techniques described in Chapter \ref{ch.LoopClosure} are not yet sufficiently robust for the error characterization advantages to outweigh the correspondence difficulties, future work in detecting and characterizing such features may provide more accurate results, with less susceptibility to submap warping, and could aid in online automated loop closure detection. 
+
+\subsubsection{DVL as measurement instead of input}
+\label{sec.VelocityState}
+
+The state representation presented above made the implicit assumption that the DVL remained in ``bottom lock" on the iceberg the majority of the time. At higher standoff distances, this may not be the case. In such instances, it may be advantageous to model the velocity as well as the position of the vehicle, and treat the DVL as a measurement (which it is, in reality) as opposed to an input.
+
+\begin{equation}
+\label{eq.altState}
+\vec{x}= \left[\begin{array}{c}
+                     x \\ y \\ u \\ v \\ \psi \\ \beta 
+                     \end{array}\right]
+\end{equation}
+
+\begin{align}
+\vec{v}_{t+1} &= \vec{v}_t + \left( \vec{a}_t + \vec{\omega}_t \times \vec{v}_t \right)dT\\
+\end{align}
+
+where $\vec{v}_t$ is the velocity of the vehicle in the iceberg frame, expressed in body coordinates, and $\vec{a}_t$ is the measured acceleration.
+ 
+\begin{align}
+\vec{v}_{t} &=  \left[\begin{array}{c}
+                     u_t \\ v_t \\ w_t
+                     \end{array}\right]_V
+\end{align}
+
+This state representation would enforce continuity in the velocity, and enable any and all DVL information to be incorporated, even if there are not enough beams in contact with the iceberg to measure full 3D velocity.
+
+\subsubsection{Sensor pitch and roll bias}
+
+Sometimes, a vehicle is assembled with a constant rotational misalignment or translational error between sensors. This can introduce systematic errors to the optimization.
+
+If it is believed that such constant errors are present and large enough to corrupt the final map, an additional node corresponding to this constant vehicle state can be introduced, and estimated alongside the dynamic parameters. The difference between this and the situation considered in the previous section is that the error term is assumed to be constant throughout the profiling run. 
+
+A link is drawn between every pose node and the node representing constant vehicle offsets. For very large problem size, this increase in connectivity of the graph can slow the optimization. In such cases it may be advantageous to calibrate the data using a subset of the measurements, and fix the calibrated parameters for the overall optimization. 
+
+\subsubsection{Other sources of error}
+
+Low-cost vehicles may lack DVL entirely, in which case it would be essential to estimate velocity as part of the state. In addition, any time-varying sensor biases can be incorporated in similar fashion to the iceberg's rotation bias term. This is often done on all axes of low-cost MEMs rate gyros, where bias varies with ambient temperature. 
+
+More error states can be appended to the state to estimate such additional errors, but not without risk. Higher dimension state spaces increase the size of the optimization, but more importantly, can give optimizers more places to ``hide" errors. Care must be taken to avoid having the optimizer exploit such state augmentations and produce nonphysical results, unless the plant model is known to a high degree of accuracy.
+
 \subsection{Automated Loop Closure Detection}
 - Chapter \ref{ch.Results} presented iceberg mapping results using a SLAM implementation where the correspondences were provided by a user. Humans are exceedingly good at recognizing patterns in noisy data. We are able to focus on important parts of images, point clouds etc. while rejecting clutter. To further automate the iceberg mapping process, a robust means for automatically detecting loop closure events is required. 
 -For future work, it would be good to integrate these processes more tightly.
