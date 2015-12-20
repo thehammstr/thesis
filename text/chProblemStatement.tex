@@ -3,29 +3,29 @@
 \chapter{Problem Statement \& Solution Framework}
 \label{ch.ProblemStatement}
 
-This chapter defines the problem, and gives a description for the solution framework. The problem definition includes the vehicle configuration and sensor characteristics, mission profile, and assumptions about the motion of the iceberg. The solution framework describes the SLAM approach as it pertains to iceberg profiling, and motivates the use of GraphSLAM for fusing multiple swaths of data with many loop closures. 
+Chapter \ref{ch.Introduction}  described and motivated the task of robotic iceberg profiling. Chapter \ref{ch.RelatedWork} spoke in broad terms about other methods that have been used to solve the problem of iceberg profiling and other mapping tasks. This chapter deals in specifics, describing resources, constraints, and assumptions involved in this effort to create an accurate iceberg profile. This includes the vehicle configuration and sensor characteristics, mission profile, and assumptions about the motion of the iceberg that will be made for the rest of the work. It also details the SLAM approach as it pertains to iceberg profiling, and motivates the use of GraphSLAM for fusing multiple swaths of data with many loop closures. 
 
-\section{Problem statement}
+%\section{Problem statement}
 
-\subsection{Iceberg profiling revisited}
+%\subsection{Iceberg profiling revisited}
+%
+%The problem of iceberg profiling was introduced in Chapter \ref{ch.Introduction}, and is described again here for convenience. The task is to create an accurate, self-consistent three-dimensional reconstruction of a free-drifting iceberg using only the sensors that can be installed on an AUV. The task is complicated by the iceberg's freedom to translate and rotate. To accomplish this, the method presented here extends traditional AUV-based underwater mapping techniques to generate an estimate of the vehicle's trajectory relative to the iceberg, so that its sonar measurements can be projected correctly into the iceberg's frame of reference. 
+%
+%\begin{figure}[htb]
+%   \centering
+%   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/images/goodSimAlignment.png} % requires the graphicx package
+%   \caption{Point cloud of full iceberg keel with the effects due to motion removed. The gree line segments denote loop closure events, which drive the motion estimation procedure. }
+%   \label{fig:SOLUTION}
+%\end{figure}
+%
+%If the vehicle's inertial trajectory is used for this method of profiling, neglecting the motion of the iceberg, the reprojected sonar beams will look like Figure \ref{fig:Challenge}. The profiling algorithm must take that uncorrected point cloud, then estimate and eliminate the effects due to iceberg drift, to generate an accurate iceberg-relative trajectory and produce a self-consistent reconstruction like the one shown in Figure \ref{fig:SOLUTION}.
 
-The problem of iceberg profiling was introduced in Chapter \ref{ch.Introduction}, and is described again here for convenience. The task is to create an accurate, self-consistent three-dimensional reconstruction of a free-drifting iceberg using only the sensors that can be installed on an AUV. The task is complicated by the iceberg's freedom to translate and rotate. To accomplish this, the method presented here extends traditional AUV-based underwater mapping techniques to generate an estimate of the vehicle's trajectory relative to the iceberg, so that its sonar measurements can be projected correctly into the iceberg's frame of reference. 
-
-\begin{figure}[htb]
-   \centering
-   \includegraphics[width=.9\textwidth]{../graphics/ceresResults/images/goodSimAlignment.png} % requires the graphicx package
-   \caption{Point cloud of full iceberg keel with the effects due to motion removed. The gree line segments denote loop closure events, which drive the motion estimation procedure. }
-   \label{fig:SOLUTION}
-\end{figure}
-
-If the vehicle's inertial trajectory is used for this method of profiling, neglecting the motion of the iceberg, the reprojected sonar beams will look like Figure \ref{fig:Challenge}. The profiling algorithm must take that uncorrected point cloud, then estimate and eliminate the effects due to iceberg drift, to generate an accurate iceberg-relative trajectory and produce a self-consistent reconstruction like the one shown in Figure \ref{fig:SOLUTION}.
-
-The following sections give details on the type of vehicle that is used for this profiling mission, the sensors it carries, the nominal mission profile for collecting data, and assumptions made regarding iceberg motion. 
-
-\subsection{Vehicle \& sonar configuration}
+\section{Vehicle \& sonar configuration}
 \label{sec.VehicleSetup}
 
-\subsubsection{Vehicle configuration}
+Until now, discussions of the robotic vehicle and sensor configuration have been relatively generic. In this section, the specific assumptions about the type of vehicle to be used and the capabilities and limitations of its sensors will be given.
+
+\subsection{Vehicle configuration}
 The vehicle model used for this paper is similar to the Dorado-class AUV shown in Figure \ref{fig:AUVdorado}. This is a 21 inch diameter torpedo-shaped vessel that achieves pitch and heading control through vectored thrust. It cruises at 1.5 m/s and is rated to 600m depth The vehicle is ballasted to be passively stable in roll, and slightly positively buoyant, so that if it stops moving forward, it will tend to float to the surface. The high-precision onboard inertial measurement unit can determine the vehicle's attitude \emph{in the inertial frame} to high precision. Additionally, depth can be measured accurately using a pressure sensor. 
 
 \begin{figure}[htb]
@@ -37,7 +37,7 @@ The vehicle model used for this paper is similar to the Dorado-class AUV shown i
 
 
 
-\subsubsection{Doppler Velocity Logger (DVL)}
+\subsection{Doppler Velocity Logger (DVL)}
 
 The Doppler Velocity Logger (DVL) is a valuable tool in underwater robotic navigation. It emits pulses of acoustic energy and can record range and velocity information from the pulses' reflections' time-of-flight and doppler shift. In normal operation, an AUV is equipped with a downward-facing DVL (or upward-facing, for under-ice operation), giving it a direct measurement of its true velocity over the terrain, even in the presence of currents. This paper assumes that the AUV being used is equipped with a sideways-facing DVL such that all four beams are nominally incident on the side of the iceberg, shown in Figure \ref{fig:DVLandMulti}. Each of the four beams returns a single range, along with partial velocity information. Specifically, it measures the frequency shift of the returned signal, which corresponds directly to the instantaneous rate of change of the length of the DVL beam $\left( \frac{d||\vec{r}^{~\nicefrac{s_i}{V_{cm}}}||}{dt}\right)$. This is the component of the vehicle's velocity in the iceberg reference frame in the direction of the sonar beam. An important subtlety in this measurement is that the DVL doppler measurement only provides the velocity \emph{as expressed in the vehicle's frame of reference}. It does not provide any information about angular rate or attitude, and must be combined with a separate attitude and heading estimate in order to integrate the measurements to produce a trajectory estimate. 
 
@@ -45,7 +45,7 @@ With this configuration, the AUV can maintain ``bottom track" or ``iceberg track
 
 The vehicle used to collect the data described in Chapter \ref{ch.Results} uses a Kearfott SeaDevil inertial navigation system, which includes a DVL. With the DVL in continuous bottom track, the system can measure velocity to within 1 cm/s \cite{McEwen2005}.
 
-\subsubsection{Multibeam mapping sonar}
+\subsection{Multibeam mapping sonar}
 
 A downward-facing high-precision multibeam sonar array is another standard mapping tool in bathymetric mapping. Similar to the DVL, the AUV is assumed to have a high-precision multibeam sonar aligned with the scan plane perpendicular to the vehicle's nominal velocity, rotated ninety degrees so that it nominally faces the iceberg. For each sonar sounding from the multibeam, a number of discrete ranges are returned in a fan-shaped pattern. This is depicted by the red lines in Figure \ref{fig:DVLandMulti}. This is the primary sonar used for map creation, and is oriented in this way in order to sweep out the widest swath of data possible. 
 
@@ -60,7 +60,7 @@ The experimental data presented in Chapter \ref{ch.Results} used a Reson 7125 20
    \label{fig:DVLandMulti}
 \end{figure}
 
-\subsubsection{Obstacle avoidance multibeam sonar}
+\subsection{Obstacle avoidance multibeam sonar}
 
 A new vehicle currently under construction at Monterey Bay Aquarium Research Institute (MBARI) includes an additional multibeam sonar for obstacle avoidance purposes. This sonar is oriented at a right angle to the mapping sonar, as depicted by the blue beams in Figure \ref{fig:ObstandMulti}. With high enough precision, a multibeam sonar configured in this direction can provide a direct measurement of iceberg-relative heading by performing scan matching, as described in previous chapters. This could be of benefit, reducing errors associated with having to estimate the effects of the iceberg's motion. However, even without this additional sensor, accurate profiles can be produced by making only minor assumptions about iceberg motion, as shown in Chapter \ref{ch.Results}.
 
@@ -71,7 +71,7 @@ A new vehicle currently under construction at Monterey Bay Aquarium Research Ins
    \label{fig:ObstandMulti}
 \end{figure}
 
-\subsection{Nominal mission profile}
+\section{Nominal mission profile}
 
 The profiling process begins aboard a research vessel by locating a suitable iceberg and approaching to minimum safe distance. The AUV is then deployed in a direction to intercept the iceberg. Upon interception, the vehicle circumnavigates the iceberg in a counter-clockwise direction. It does this reactively, flying at a constant nominal speed, and using its obstacle avoidance sonar or DVL to maintain a constant standoff distance. In order to image the entire iceberg (or iceberg surrogate) the vehicle must fly at multiple depths. In the simulated data, this is achieved with a small constant downward velocity, resulting in a helical trajectory. The data collected in Soquel Canyon flew three constant-altitude passes by the near-vertical canyon wall with each pass roughly 15 meters higher than the previous. 
 
@@ -82,7 +82,7 @@ The profiling process begins aboard a research vessel by locating a suitable ice
    \label{fig:NominalProfile}
 \end{figure}
 
-\subsection{Iceberg motion assumptions}
+\section{Iceberg motion assumptions}
 
 Icebergs are modeled as rigid bodies having three degrees of freedom: horizontal motion in the $xy$-plane and rotation in heading, $\psi$. In reality, icebergs are dynamic objects, subject to constant change due to melt, wave action, wind erosion, internal stresses, etc. These forces can lead to sudden, violent changes like calving, where a large portion of the iceberg separates and falls off, or ``turtling," where the iceberg rapidly flips over and settles into a new stable floating orientation. These phenomena present dangerous conditions to equipment and personnel, and are a primary driver for using robots for up-close iceberg study.  However, these classes of motion are not included in the iceberg motion model for the mapping problem, as they would likely cause any mapping mission to be aborted in the best case, and the loss of the vehicle in the worst.
 
