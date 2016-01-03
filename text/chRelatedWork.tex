@@ -9,28 +9,10 @@ Additionally, a section is dedicated to methods currently used for solving the d
 
 \section{Iceberg Profiling}
 
-A number of methods exist for generating shape estimates of free-drifting icebergs. They can be broken down roughly by the type of data used: aerial measurements, ship-based measurements including tethered vehicles, and untethered underwater vehicle (UUV) based measurements.
-
-\subsection{Aerial Iceberg Profiling}
-
-Aircraft are used extensively in tracking and managing icebergs. Coast Guards and Navies of several nations regularly patrol Arctic and Antarctic waters to detect and track icebergs that might pose a threat to infrastructure or shipping. While this provides an effective means of tracking icebergs' positions over time, it says relatively little about the iceberg's structure. The aircraft are sometimes equipped with LIDAR range scanners \cite{Bunkin2012}, but most often the only measurements available are photographs. From this, rough classification of iceberg type based on sail shape (such as ``drydock," ``pinnacle," or ``blocky" ) is possible. Additionally, keel depth can be estimated heuristically based on maximum waterline length, and decay rate can be inferred from repeated sightings, as shown in \cite{Barker2004}. However, all of these are only first-order approximations of shape; aerial imagery cannot provide detailed iceberg shape profiles. 
-
-\subsection{Ship-based Iceberg Profiling}
-
-A number of companies use ship-based measurement to profile icebergs. These methods comprise both above-water and below-water observations, yielding a full shape reconstruction of both the sail and keel of the iceberg. 
-
-Above-water measurements include radar, lidar, and image-based photogrammetry techniques. Lidar-based approaches can provide dense point cloud measurements of the iceberg's sail, yielding a very high resolution reconstruction. An added benefit of this sensing method is that the lidar point clouds have sufficient overlap in the ship's direction of travel to directly measure the iceberg's motion, as shown in Figure \ref{fig:ScanMatch2}. This method is also used in ship-hull inspection, as in \cite{Papadopoulos2014} where the scan matching provided such accurate hull-relative odometry that the inertial measurements were essentially ignored, and the position estimate from the lidar was used to project sonar measurements to create the keel portion of the map.
-
-To map the keel, multibeam or sidescan sonar is typically used. For very large icebergs, surface-based observation can be insufficient to measure deeper portions of the keel. Tethered ROVs or tow bodies outfitted with sonar can be used to access the lower parts, and even the bottom of the keel, but drive up the cost and complexity of the operation, and can put expensive assets at risk. 
-
-The ability to make simultaneous observations of the iceberg both above and below the surface allows the iceberg motion to be measured directly. This takes advantage of the wider variety of sensing methods available above water, such as optical cameras and lidar, which simplifies the task of resolving the data into the moving reference frame. This is the chief advantage of surface-based measurement techniques. Disadvantages include high cost, risks involved in operating close to icebergs, and the inability to profile deep portions of the iceberg. Using a sonar-equipped tow body or ROV can allow access to deep portions of the keel, but can drive up cost and complexity of the operation. 
 
 
-\subsection{AUV-based Iceberg Profiling}
 
-Several efforts have investigated the use of AUVs for iceberg profiling. These have been motivated in large part by AUVs' low operational cost relative to ROVs and ship-based methods. Additionally, AUVs could enable some missions that would simply be infeasible for ROVs, such as mapping very large icebergs, or ice islands. 
 
-Zhou et. al. have investigated using Slocum Glider vehicles to profile icebergs between Greenland and Newfoundland and Labrador. \cite{Zhou2014}. Icebergs are prevalent there, and pose risk to offshore oil installations and shipping. Gliders show promise as a low-cost data collection platform to aid in iceberg management, but their low power and control authority constraints limit their achievable resolution. However, cooperative efforts with autonomous surface vehicles show great potential for improving the profile resolution \cite{Smith2014}. The focus of this work has been developing a control strategy for the glider, given its motion constraints, that allows application to iceberg profiling. It assumes that the iceberg's motion can be adequately described purely with translation. This assumption is likely valid for small icebergs, which do not take long to profile, but breaks down for much larger icebergs, where drift has longer to accumulate. Additionally, the vehicle dynamic, sensing, and power constraints make it difficult to perform a direct comparison between their methods and the one presented in this dissertation. 
 
 
 
