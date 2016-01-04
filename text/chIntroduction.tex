@@ -89,7 +89,7 @@ One challenge in the study of these environments is the lack of navigational inf
 
 If the shape of the body is known, terrain-relative navigation techniques can be used to localize relative to it, regardless of how it may be moving. Additionally, a shape reconstruction is a valuable scientific tool unto itself, allowing other data to be location-referenced and enabling longitudinal studies in the evolution of a body's shape. However, generating a 3-D reconstruction of a body that is moving relative to the inertial reference frame presents several challenges.
 
-\section{Background: current methods for iceberg profiling}
+\section{Background: methods for iceberg profiling}
 
 A number of methods exist for generating shape estimates of free-drifting icebergs. They can be broken down roughly by the type of data used: aerial measurements, ship-based measurements including tethered vehicles, and untethered underwater vehicle (UUV) based measurements.
 
@@ -142,7 +142,6 @@ Unmodeled accelerations and rotations of the iceberg are indiscernible from navi
 \subsection{Prior work in AUV-based profiling}
 
 Several previous efforts have investigated the use of AUVs for iceberg profiling. 
-
 Zhou et. al. investigated using Slocum Glider vehicles to profile icebergs between Greenland and Newfoundland and Labrador in \cite{Zhou2014}. Icebergs are prevalent there, and pose risk to offshore oil installations and shipping. Gliders show promise as a low-cost data collection platform to aid in iceberg management, but their low power and control authority constraints limit their achievable resolution. However, cooperative efforts with autonomous surface vehicles show great potential for improving the profile resolution \cite{Smith2014}. The focus of this work has been developing a control strategy for the glider, given its motion constraints, that allows application to iceberg profiling. It assumes that the iceberg's motion can be adequately described purely with translation. This assumption is likely valid for small icebergs, which do not take long to profile, but breaks down for much larger icebergs, where drift has longer to accumulate. Additionally, the vehicle dynamic, sensing, and power constraints make it difficult to perform a direct comparison between their methods and the one presented in this dissertation. 
 
 In \cite{Kimball2011b}, Kimball presented a method for creating high-resolution maps of free-drifting icebergs using AUVs based on SLAM principles. The method considered a single, constant-depth swath of sonar data collected by circumnavigating a free-drifting iceberg. It used measurements of the same area of the iceberg made at different times, often referred to as  ``loop closure" events, to estimate the iceberg's trajectory through inertial space during the course of the profiling mission and then subtract its motion from the reprojected data. 
