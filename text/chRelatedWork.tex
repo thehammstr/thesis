@@ -3,16 +3,14 @@
 \chapter{Related Work}
 \label{ch.RelatedWork}
 
-This chapter gives an overview of a class of algorithms known as Simultaneous Localization and Mapping, or SLAM, that will serve as the framework for creating an accurate iceberg profile. SLAM has been applied  in a wide range of robotic mapping tasks, from aerial reconnaissance to exploring abandoned mines deep under ground. The particulars vary between applications, but these methods all use information contained within a previously unexplored environment to create a map of that environment, and at the same time determine the robot's location within that map. Particular attention will be paid to SLAM applications in underwater environments, and their associated challenges, most importantly, the difficulty in performing data association between individual sonar measurements. 
+In this chapter, an overview of a class of algorithms known as Simultaneous Localization and Mapping, or SLAM, is presented. SLAM will serve as the framework for creating an accurate iceberg profile. SLAM has been applied  in a wide range of robotic mapping tasks, from aerial reconnaissance to exploring abandoned mines deep under ground. The details vary between applications, but these methods all use information contained within a previously unexplored environment to create a map of that environment, and at the same time determine the robot's location within that map. Particular attention will be paid to SLAM applications in underwater environments, and their associated challenges, most importantly, the difficulty in performing data association between individual sonar measurements. 
 
 \section{Simultaneous Localization and Mapping}
 \label{sec.SLAM}
 
-SLAM allows a robot to reconstruct an unknown environment and localize itself within that environment simultaneously.  The common thread between all these algorithms is that they attempt to maximize measurement consistency, balancing errors in motion measurements (odometry) with map geometry errors based on repeated observations of features within the environment (measurements).
+SLAM allows a robot to reconstruct an unknown environment and localize itself within that environment simultaneously.  The common thread between all of these algorithms is that they attempt to maximize measurement consistency, balancing errors in motion measurements (odometry) with map geometry errors based on repeated observations of features within the environment (measurements). The details of implementation differ depending on the environment, sensor type, and operational constraints. However, all implementations must address the topics of data correspondence, state representation, and solution method. The following sections expand on what is meant by this, and Chapters \ref{ch.LoopClosure}, \ref{ch.IcebergGeometry}, and \ref{ch.GraphSLAM} show how each of these topics was addressed for SLAM-based iceberg profiling.
 
 \subsection{SLAM Overview}
-
-Most SLAM methods begin with a similar high-level problem formulation, then differ in solution technique depending on sensing, required map accuracy, computation limitations, etc. This section will present a high-level example of a simple, generic SLAM problem formulation, then discuss some of the different variants, applications, and challenges in performing SLAM. 
 
 \label{sec:genericSLAM}
 A classic SLAM problem involves a wheeled vehicle creating a map of an unknown environment as it navigates through it, as shown in Figure \ref{fig:GenericSLAM} The vehicle is outfitted with sensors that provide information about both its own motion through the environment, as well as the structure of the environment itself. For this simple example, the vehicle is assumed to have wheel encoders, a compass, and a laser range scanner to observe distance to its surroundings in all directions.
@@ -25,117 +23,32 @@ A classic SLAM problem involves a wheeled vehicle creating a map of an unknown e
 \end{figure}
 
 
-In this simple example, the vehicle has knowledge of its ego-motion via onboard odometry sensors: wheel encoders tell how far the robot has rolled over a given time, and a compass gives the vehicle's heading. The vehicle can combine this information to estimate its path through the environment via dead-reckoning, but over time, these integrated measurements will drift away from the true position.
+In this example, the vehicle has knowledge of its ego-motion via onboard odometry sensors: wheel encoders tell how far the robot has rolled over a given time, and a compass gives the vehicle's heading. The vehicle can combine this information to estimate its path through the environment via dead-reckoning, but over time, these integrated measurements will drift away from the true position.
 
-If left unaddressed, the odometry drift would cause the projected range measurements of the environment to become inconsistent: multiple observations of the same feature or area would appear in different locations. To combat this, repeated observations of the same area are used to estimate and correct the accumulated drift, a process known as loop closure. In the example case, laser scans are aligned to produce an estimate of the translational and rotational drift that has accumulated between observations. 
+If left unaddressed, the odometry drift would cause the projected range measurements of the environment to become inconsistent: multiple observations of the same feature or area would appear in different locations. To combat this, repeated observations of the same area are used to estimate and correct the accumulated drift, a process known as loop closure. This crucial step relies on the ability to identify that two or more measurements correspond to the same feature in the environment. In this example case, laser scans are aligned to produce an estimate of the translational and rotational drift that has accumulated between observations. 
 
 
 \subsection{SLAM variants}
 
-A wide variety of SLAM techniques have been developed and applied to mapping tasks in many different environments with vehicles ranging from submersibles to boats, to wheeled robots to unmanned aerial vehicles. A detailed enumeration of these methods is well beyond the scope of this document, but a good summary, is presented in \cite{SLAMoverview}. While each method has its own nuances, these methods can broadly be categorized along a few axes, based on data representation and solution methods. 
+A wide variety of SLAM techniques have been developed and applied to mapping tasks in many different environments with vehicles ranging from submersibles to boats, to wheeled robots to unmanned aerial vehicles. A summary of many specific methods is presented in \cite{SLAMoverview}. 
 
-One distinguishing feature of a method is whether it runs online or offline. EKF SLAM uses a Gaussian representation to run online, while GraphSLAM is applied after all data has been collected to solve for trajectory and map in one large batch process \cite{Thrun2005}. Some methods, such as FastSLAM, can be applied both online and offline \cite{Montemerlo2002}.
+One distinguishing feature of a method is whether it runs online or offline. As examples, EKF SLAM uses a Gaussian representation to run online, while GraphSLAM is applied after all data has been collected to solve for trajectory and map in one large batch process \cite{Thrun2005}. Some methods, such as FastSLAM, can be applied both online and offline \cite{Montemerlo2002}.
 
 A second difference between SLAM methods involves how the method represents the map. Some methods use a ``feature based" approach, where the map is composed of discrete, identifiable units whose positions are estimated \cite{Durrant2006}. Other methods are non-feature based, using other means to represent the map. An example of this is occupancy grid mapping, where the environment is discretized, and each discrete region is assigned a ``probability of occupancy." In other words, how likely it is that a position contains something solid, based on observations over time \cite{Fairfield2007}.  A third type of SLAM does not explicitly represent the map at all, but uses information in the environment to impose relative pose constraints between parts of the robot's trajectory. These methods are often not classified as SLAM, since the map itself is not one of the optimization variables. However, since terrain observations are used to generate localization estimate,  the localization portion and mapping portion cannot be decoupled, and these methods can indeed be thought of as SLAM \cite{Caress2008}. 
 
 This dissertation uses the GraphSLAM algorithm \cite{Thrun2006} to provide an offline estimate of iceberg shape. This will be developed fully in Chapter \ref{ch.GraphSLAM}. 
 
 
-
-
-
-
-\section{SLAM in Underwater Environments}
-
-
-SLAM has been used in a number of underwater applications, using many different sensing modalities. Fairfield et. al. mapped naturally-occuring cenotes in Mexico using an efficient occupancy-based SLAM technique \cite{Fairfield2007}. A number of research efforts have performed SLAM in structured or manmade underwater environments like dams and marinas \cite{Ribas2008}. In shallow, highly textured environments like coral reefs, a number of image-based SLAM implementations have been successful \cite{Eustice2005}.
-
-The ``standard" method for bathymetry mapping uses submap correlation to estimate drift, and then distributes the accumulated errors evenly over the trajectory history. An example of this is shown in Figure \ref{fig:BathyMapping}. The black lines show the vehicle's online estimate of its path as it collected data. The red lines show the best estimate after correlating measurements during loop closure events, when the vehicle revisits previously-observed terrain. These two are nearly identical in the right side of the map, where there are no self-intersections, while they differ more on the left, where the vehicle trajectory self-intersects a number of times. Without these loop closure events, there is no additional information with which to correct any accumulated drift. While not typically referred to as SLAM, the use of terrain correspondence to estimate and correct navigation errors represents essentially the same high level approach \cite{Henthorn2006}.  Roman and Singh used a delayed-state Extended Kalman Filter SLAM approach to improve map resolution over the traditional uniform smoothing approach by making explicit the position estimate uncertainty\cite{Roman2005}. This differs from the previous approach in that it does not make the assumption that the error is evenly distributed. While the delayed-state EKF implementation can be run online, the need to append states to the estimate as the mission progresses limits the maximum survey size.
-
- \begin{figure}[!htb]
-   \centering
-   \includegraphics[width=.7\textwidth]{../graphics/NavPerformance.jpg} % requires the graphicx package
-   \caption{Illustration of normal bathymetric mapping procedure (lawnmower pattern). The trajectory self-intersects a number of times. These crossings, or loop closure events, can be used to estimate navigational errors. The red path is the real-time inertial estimate and the black path is the corrected trajectory. Up to 30 meters of correction was necessary. \emph{www.mbari.org} }
-   \label{fig:BathyMapping}
-\end{figure}
-
-
-%\section{Robotic Mapping of Static Terrain}
-%
-%Robots are useful tools for exploring and creating maps of environments that are too remote or dangerous for manned exploration. This section describes some of the methods that have been devised to perform these mapping tasks, with a special focus on applications in underwater enviroments.
-
-%\subsection{Bathymetry mapping in underwater environments}
-%
-%AUVs are commonly used to generate bathymetry maps of underwater terrain. These maps provide 3-D terrain information, and are typically generated from multibeam sonar data, as depicted in Figure \ref{fig:AUVbathyMapping}. An approach commonly adopted in these tasks is to estimate the trajectory of the mapping vehicle to high precision, including both position and orientation, and then to project the vehicle's body-fixed sensor readings into the world reference frame. Taken together, position and orientation are commonly referred to as \emph{pose}. If the robot's pose can be determined at each time a measurement was made, an accurate map can be generated. 
-%
-%Some components of the vehicle's pose history are easier to estimate than others. When operating in static environments, the vehicle's pitch, and roll, can be estimated to high precision using rate gyros and accelerometers. Heading can also be estimated with gyros and magnetometers. Depth and altitude can be measured by pressure sensors and downward-facing sonar, respectively. 
-%
-%The most challenging quantities to estimate are the vehicle's horizontal position components, $x$ and $y$. A few commonly-used means for horizontal localization of underwater robots are discussed below.
-%
-%\begin{figure}[!htb]
-%   \centering
-%   \includegraphics[width=0.8\textwidth]{../graphics/AUVMapping.JPG} % requires the graphicx package
-%   \caption{Mapping AUVs typically carry downward-oriented multibeam sonars oriented to sweep over a wide swath of terrain as they move. They generally traverse large areas in a ``lawnmower pattern" and use overlapping observations to correct for any accumulated navigation drift in post-processing. \emph{www.mbari.org} }
-%   \label{fig:AUVbathyMapping}
-%\end{figure}
-%
-%\subsubsection{Infrastructure-based localization}
-%
-%Infrastructure-based localization works by employing equipment in the environment that can determine the position of a vehicle or provide sufficient information to the vehicle that it can determine its own position. GPS is currently the most well-known such system: a constellation of satellites provides GPS receivers with the satellites' positions and range information, which allows the receiver to infer its own position. Infrastructure-based systems can have one-way communication (like GPS) or two way communication, and many different principles of operation, but all methods are in some way \emph{cooperative} with the vehicle. 
-%
-%GPS signals do not penetrate the ocean, so for underwater vehicles to use it, they must surface periodically for position updates to correct their accumulated drift. If it is impossible or impractical to surface for position fixes, such as deep water or under-ice operations, two other methods are commonly used: Long-Baseline Interferometry (LBL) and Ultra-Short Baseline Interferometry (USBL). In LBL, an array of sonar beacons are deployed on the seafloor or other fixed structure, and surveyed for calibration. After that, the vehicle can use time-of-flight sonar signals to find its range to each, and calculate its position within the surveyed area. This is essentially the same principle of operation as GPS, but using sound waves instead of radio. In USBL, a ship-based transducer can calculate range and azimuth to the vehicle again based on sonar flight time, and using geometry and its own GPS-location, determine the robot's position. This method reduces in positional accuracy with increased distance from the ship. 
-%
-%\begin{figure}[!htb]
-%   \centering
-%   \includegraphics[width=.8\textwidth]{../graphics/LBL.png} % requires the graphicx package
-%   \caption{Long-Baseline Interferometry provides position fixes to the vehicle, limiting drift. \emph{Graphic courtesy of Peter Kimball}}
-%   \label{fig:LBL}
-%\end{figure}
-%
-%\subsubsection{Inertial navigation}
-%
-%Inertial navigation is the use of self-contained highly-precise acceleration and angular rate measurements, integrated over time, to provide an estimate of pose. Though magnetometers do not, strictly speaking, provide inertial measurements, they are often also used to aid in attitude determination. This mode of navigation is often referred to as ``dead reckoning."
-%
-%\begin{figure}[!htb]
-%   \centering
-%   \includegraphics[width=.8\textwidth]{../graphics/DeadReckoning.png} % requires the graphicx package
-%   \caption{Inertial navigation, or dead reckoning, requires no external infrastructure but will drift over time without bound. \emph{Graphic courtesy of Peter Kimball}}
-%   \label{fig:inertialNav}
-%\end{figure}
-%
-%Any errors in the measurement or integration of these quantities will cause a drift in the estimated pose that will grow without bound over time. The growth rate of this drift can be decreased by either obtaining better measurements, or using measurements that will allow fewer integrations. For example, if a direct measurement of velocity can be obtained, only one integration must be performed to estimate position, generally yielding a slower drift rate than integrating accelerations twice. However, \emph{any} system that relies only on integrated measurements to provide an estimate of position \emph{will} drift over time, and the drift will be unbounded. 
-%
-%\subsubsection{Environment-aided localization}
-%
-%Environment-aided localization refers broadly to the use of information within the environment to prevent unbounded localization error. This differs from infrastructure-based methods in that it is assumed that the environment is not actively cooperating with the vehicle. The vehicle must use ``information of opportunity" to aid in its localization. 
-%
-%\begin{figure}[!htb]
-%   \centering
-%   \includegraphics[width=.8\textwidth]{../graphics/TRN.png} % requires the graphicx package
-%   \caption{The vehicle can extract information from the terrain. If it traverses the same area more than once it can use the information to calculate an offset and eliminate any inertial drift that occurred between traversals. \emph{Graphic courtesy of Peter Kimball}}
-%   \label{fig:TRN}
-%\end{figure}
-%
-%The type of environmental information used varies widely by application and available sensing, but the common thread is that if a vehicle can identify a landmark, feature, or area that it has traversed before, it can make a direct measurement of the magnitude and direction of drift it has accrued in the elapsed time, and account for that drift, bounding its magnitude in time. This has two parts: ``correspondence:" or identifying these loop-closure events, and ``alignment:" estimating bias based on correspondence. 
-%
-%In practice, nearly every mapping application uses some degree of environment-aided methods to achieve precise, self-consistent maps. In underwater mapping, self-intersecting trajectories are typically designed into a mission, and submaps from the beginning and end of the run are correlated to eliminate inertial drift. This technique is often referred to as ``scan matching" in the terrestrial robotics community, and is often used even when GPS is available to refine position estimates and produce maps of high precision. A similar strategy is used when creating mosaic images, such as aerial maps or panorama photos.  Keypoints, or distinctive image features, are extracted from each image and compared to keypoints from other images. After matches are identified ( solving the correspondence problem) the images are distorted to produce a self-consistent map, free of seams at the borders between images. The sensor modality is very different from a ranging sensor like sonar, but the principle is identical. 
-%
-%
-
-
-
-%The work uses offline optimization to estimate the iceberg's translation and rotation during the course of the mapping run. It models these motion parameters using B-splines \cite{} to enforce smooth, physical motion. The optimization problem is broken up into linear and nonlinear portions and solved in an iterative least squares framework, as shown in Figure \ref{fig:NestedLoopRelatedWork}. The method was demonstrated on field data from an Antarctic iceberg collected by ship-based sonar, as well as bathymetric data recorded by an AUV. While it provided accurate, self-consistent map sections based on constant depth swaths of data, the algorithm suffered from scalability issues. Multiple swaths of data were required to build up a map of the entire iceberg, and errors in the motion model between the swaths could cause map artifacts or ``seams" that could make later use for robotic navigation difficult. Additionally, the method was computationally intensive, and required subsampling of data for the optimization to converge in a reasonable amount of time. Furthermore, the method relied on having an estimate of the vehicle's inertial position, which was supplied to it via ship-based USBL link. The need to tend the vehicle to provide these navigation fixes places an operational burden on the ship, when a more autonomous solution could free it to do other science. This dissertation uses Kimball's method as a foundation, and makes a number of improvements to address these issues. 
-
 \section{Data Correspondence and Alignment}
 
 SLAM methods generally rely on identifying loop closure events, where an area is revisited after a long interlude. Multiple observations of recognizable features are then compared, and any discrepancy in their estimated location can be used to correct navigational error in the robot's trajectory. The first part of this process, often referred to as the \emph{correspondence} problem, involves determining that two or more measurements correspond to observations of the same feature or area in the environment. Data \emph{alignment} then aims to resolve any discrepancies between the multiple observations. These are separate but coupled tasks: if the method used for alignment is very robust to outliers, the correspondence problem need not be overly discriminative. However, if the alignment method is sensitive to initial conditions or false correspondences, the correspondence must do a better job of rejecting bad matches. 
 
-The following sections describe some of the most common methods for data correspondence, and highlight where the difficulties arise when trying to correlate sonar data. This will be developed further in chapter \ref{ch.LoopClosure}.
+The following sections describe some of the most common methods for data correspondence, and highlight where the difficulties arise when trying to correlate sonar data. This will be developed further in Chapter \ref{ch.LoopClosure}.
 
 
 \subsection{Scan matching}
 
-Scan matching techniques are very commonly used when a relatively good initial estimate of location is available, and onboard sensors produce dense 3-D range measurements. Rigid point clouds, or ``submaps" are created from one or more scans, and these scans are correlated to estimate rotation and translation offset. This process is illustrated in Figures \ref{fig:ScanMatch1} and \ref{fig:ScanMatch2}. These methods can be distinguished from later feature-based methods in that they do not build an abstract descriptor of an area, instead matching submaps in metric space based on the scene geometry. In the most simple implementations, the scene is assumed to be rigid, and a rigid transformation (rotation and translation) is estimated to account for misalignment between the clouds, though more advanced variants designed to deal with nonrigid bodies have also been described in the literature \cite{Amberg2007, Feldmar1996,Haehnel2003} The correlation method most commonly uses some variant of the Iterative Closest Point algorithm (ICP) \cite{Besl1992} or grid search \cite{Miller2013}. The former method is faster than the latter, but more prone to local minima. Both methods can fail when the initialization is too far from the true offset. 
+Scan matching techniques are very commonly used when a relatively good initial estimate of location is available, and onboard sensors produce dense 3-D range measurements. Rigid point clouds, or ``submaps" are created from one or more scans, and these scans are correlated to estimate rotation and translation offsets. This process is illustrated in Figures \ref{fig:ScanMatch1} and \ref{fig:ScanMatch2}. These methods can be distinguished from later feature-based methods in that they do not build an abstract descriptor of an area, instead matching submaps in metric space based on the scene geometry. In the most simple implementations, the scene is assumed to be rigid, and a rigid transformation (rotation and translation) is estimated to account for misalignment between the clouds, though more advanced variants designed to deal with nonrigid bodies have also been described in the literature \cite{Amberg2007, Feldmar1996,Haehnel2003} The correlation method most commonly uses some variant of the Iterative Closest Point algorithm (ICP) \cite{Besl1992} or grid search \cite{Miller2013}. The former method is faster than the latter, but more prone to local minima. Both methods can fail when the initialization is too far from the true offset. 
 
 These techniques have been employed successfully in the field, including underground mine mapping \cite{Bosse2003}, autonomous mapping of urban environments \cite{Thrun2006}, and many underwater bathymetric mapping tasks \cite{Caress2008}.
 
@@ -150,43 +63,43 @@ These techniques have been employed successfully in the field, including undergr
     \begin{figure}[h]
    \centering
    \includegraphics[width=.8\textwidth]{../graphics/ScanMatch4b.png} % requires the graphicx package
-   \caption{Odometry corrected by scan matching. This readily extends to the full 3d case using techniques like Iterative Closest Point.}
+   \caption{Odometry corrected by scan matching. This readily extends to the full 3D case using techniques like Iterative Closest Point.}
    \label{fig:ScanMatch2}
 \end{figure}
 
-\begin{figure}[h]
-   \centering
-   \includegraphics[width=.8\textwidth]{../graphics/ScanMatch3.png} % requires the graphicx package
-   \caption{Simulated AUV scans taken at two times, roughly 20 meters apart. The multibeam mapping sonar sweeps out a wide area when oriented perpendicular to the direction of travel. This orientation does not allow scan matching for odometry, since the beam pattern does not overlap from scan to scan, as shown in Figure \ref{fig:NoMatch}}
-   \label{fig:beamOrientation}
-\end{figure}
-
-\begin{figure}[h]
-   \centering
-   \includegraphics[width=.8\textwidth]{../graphics/ScanMatch3a.png} % requires the graphicx package
-   \caption{This shows the same plot as Figure \ref{fig:ScanMatch1}, but with a vertically-oriented multibeam sonar, as used in mapping, as opposed to a horizontally-mounted multibeam or 3D range scanner. This orientation does not allow scan matching for odometry, since the beam pattern does not overlap from scan to scan.}
-   \label{fig:NoMatch}
-\end{figure}
-
-\begin{figure}[h]
-   \centering
-   \includegraphics[width=.8\textwidth]{../graphics/ScanMatch1.png} % requires the graphicx package
-   \caption{A multibeam sonar could be used for odometry as in Figure \ref{fig:ScanMatch2} if mounted in the horizontal plane as shown, but only for trajectories at constant depth, as the field of view would be very narrow in the vertical direction. However, this configuration could only map a thin layer of the iceberg at a time, so it is unsuitable for the mapping mission.}
-   \label{fig:ScanMatchMultibeam}
-\end{figure}
+%\begin{figure}[h]
+%   \centering
+%   \includegraphics[width=.8\textwidth]{../graphics/ScanMatch3.png} % requires the graphicx package
+%   \caption{Simulated AUV scans taken at two times, roughly 20 meters apart. The multibeam mapping sonar sweeps out a wide area when oriented perpendicular to the direction of travel. This orientation does not allow scan matching for odometry, since the beam pattern does not overlap from scan to scan, as shown in Figure \ref{fig:NoMatch}}
+%   \label{fig:beamOrientation}
+%\end{figure}
+%
+%\begin{figure}[h]
+%   \centering
+%   \includegraphics[width=.8\textwidth]{../graphics/ScanMatch3a.png} % requires the graphicx package
+%   \caption{This shows the same plot as Figure \ref{fig:ScanMatch1}, but with a vertically-oriented multibeam sonar, as used in mapping, as opposed to a horizontally-mounted multibeam or 3D range scanner. This orientation does not allow scan matching for odometry, since the beam pattern does not overlap from scan to scan.}
+%   \label{fig:NoMatch}
+%\end{figure}
+%
+%\begin{figure}[h]
+%   \centering
+%   \includegraphics[width=.8\textwidth]{../graphics/ScanMatch1.png} % requires the graphicx package
+%   \caption{A multibeam sonar could be used for odometry as in Figure \ref{fig:ScanMatch2} if mounted in the horizontal plane as shown, but only for trajectories at constant depth, as the field of view would be very narrow in the vertical direction. However, this configuration could only map a thin layer of the iceberg at a time, so it is unsuitable for the mapping mission.}
+%   \label{fig:ScanMatchMultibeam}
+%\end{figure}
 %
 
 
 \subsection{Robust 2D image Features}
 \label{sec.2Dfeatures}
 
-A wealth of literature exists on the detection and description of robust features from 2-D images. These include Harris Corners \cite{Harris1988}, SIFT and SURF features \cite{Lowe2004} \cite{Bay2006}, ORB features \cite{Rublee2011} Histogram of Gradients (HoG) \cite{Dalal2005}, to name only a few. The different types of features generally employ a number of useful heuristics to detect well-localized keypoints in an image and build a descriptor based on the information contained near that keypoint that can be used to compare it with keypoints extracted from other images. 
+A wealth of literature exists on the detection and description of robust features from 2-D images. These include Harris Corners \cite{Harris1988}, SIFT and SURF features \cite{Lowe2004} \cite{Bay2006}, ORB features \cite{Rublee2011} Histogram of Gradients (HoG) \cite{Dalal2005}. The different types of features generally employ a number of useful heuristics to detect well-localized keypoints in an image and build a descriptor based on the information contained near that keypoint that can be used to compare it with keypoints extracted from other images. 
 
 The performance under various metrics depends on the specific task for which the feature was developed, e.g. human detection \cite{Dalal2005}. An additional differentiator between methods is the amount and type of invariances a descriptor has, such as lighting, translation, scale, and rotation. For instance, a rotation-invariant feature produces the same descriptor for a keypoint regardless of the rotation angle of the original image. These invariances are useful at identifying features when the viewpoint differs greatly, but can obscure information when parts of the viewpoint are known, and often carry computational burden. 
 
 Although the specific implementation details of each feature type differ, they all share some general characteristics:
 
-First, they extract \emph{keypoints} from an image. The keypoints should be well-localized within the image. For instance, a sharp corner or discrete spot is well-localized in two dimensions, while edges and patches of uniform color or intensity are not. To determine these keypoints, gradient information is extracted from the image, and points having high gradients in multiple directions are considered stable enough to be used as a keypoint. 
+First, they extract \emph{keypoints} from an image. The keypoints should be well-localized within the image. For instance, a sharp corner or discrete spot is well-localized in two dimensions, while edges and patches of uniform color or intensity are not. To determine these keypoints, pixel intensity gradient information is extracted from the image, and points having high gradients in multiple directions are considered stable enough to be used as a keypoint. 
 
 Second, information in the local neighborhood of the extracted keypoint is used to create a descriptor for later comparison. Again, the details of these descriptor methods vary, but they often include histogrammed gradient information in many directions for robustness. 
 
@@ -198,27 +111,36 @@ At the time of writing, the Scale-Invariant Feature Transform (SIFT) developed b
 
 Recent advances in 3D range sensor technology have driven down the cost of these sensors and made them much more prevalent. As a result, researchers have begun to adapt many of the concepts employed in 2D image feature descriptors to 3D data. Rather than aligning entire point clouds as in scan matching, local geometry is used to describe stable keypoints within 3D data, for use in object classification and matching. 
 
-These techniques range in their computational complexity and descriptive power, from simply estimating normal vector direction and curvature at keypoints (e.g. 3D Harris Corners) to the Fast Point Feature Histogram (FPFH) descriptors developed by Rusu et. al. \cite{Rusu2009}, and even a 3-D variant of the SIFT feature extractor \cite{Scovanner2007}. These descriptors share many design principles with image features, such as histogramming gradient and direction information, and have been implemented in object recognition tasks with some success \cite{Rusu2009}. Of particular interest is work using FPFH features to supply an initial alignment estimate via RANSAC for more accurate ICP solutions. These techniques will be discussed further in Chapter \ref{ch.LoopClosure}
+These techniques range in their computational complexity and descriptive power, from simply estimating normal vector direction and curvature at keypoints (e.g. 3D Harris Corners) to the Fast Point Feature Histogram (FPFH) descriptors developed by Rusu et. al. \cite{Rusu2009}, and even a 3-D variant of the SIFT feature extractor \cite{Scovanner2007}. These descriptors share many design principles with image features, such as histogramming gradient and direction information, and have been implemented in object recognition tasks with some success \cite{Rusu2009}. Of particular interest is work using FPFH features to supply an initial alignment estimate via RANSAC for more accurate ICP solutions. These techniques will be discussed further in Chapter \ref{ch.LoopClosure}.
 
 However, these techniques are less mature than their 2D image feature counterparts. Part of this stems from the fact that they represent a newer area of study, but another part is due to the sensing modality itself. A 3D range measurement  can provide depth information that a single camera does not, but cannot necessarily observe the color changes or small textural details that 2D features cue on. Additionally, 3-Dimensional objects do not have a single well-defined normal direction upon which to reference extracted features, which can add ambiguity to the feature extraction and comparison processes. 
 
 Much of the recent work done with this class of 3D feature has been in manmade environments or with manmade object detection \cite{Rusu2008,Rusu2011,Koppula2011} However, research in extracting natural terrain features for AUV navigation is not new. In 1987, Orser and Roche investigated extracting topographic features from sonar data of a lake bed for use as a navigational aid \cite{Orser1987}. To do so, they identified features such as ridges, ravines, peaks, and saddle points using a watershed method \cite{Sonka2014}. Kweon and Kanade performed a similar method, finding peaks and pits in elevation maps, and storing them in a tree structure. \cite{Kweon1994}. Both of these efforts used terrain with a clearly-defined ``up" direction, used as a reference for feature extraction. In 2000, Johnson published a method for localization with respect to a known surface mesh that used a modified form of spin images \cite{Johnson1999,Johnson2000}. Using spin images allowed the method to perform relative to to arbitrary orientations. The paper's example application was motivated by enabling autonomous landing on comets and asteroids. Future work may attempt to determine whether the method works on the types of geometry normally encountered in icebergs, and whether it can be adapted to point clouds, as opposed to connected meshes. 
 
-%The methods vary in the amount of human involvement required, the quality of sensing ava as well as how coupled the loop closure detection is from the solution method. At one extreme is SLAM with known correspondence, either from hand-labeled data or by having a ``map" comprising highly distinguishable features, such a the coded transponder beacons used int \cite{xponderslam?}. At the other end of the spectrum is fully unsupervised SLAM, where raw data is fed to the algorithm, and loop closure is detected automatically. This class of solution is desirable from an automation standpoint, as hand-labeling data or verifying corresondences can be a tedious and cumbersome task. However, without supervision, more sophisticated error checking and outlier rejection is required during optimization, which can increase computational complexity greatly. The ability to perform automatic loop closure detection can also rely heavily on the type and quality of sensing available.
-%
-%SLAM with known correspondence or ``supervised SLAM,"   The algorithm does not care how the correspondence was obtained and does not perform error checking to detect false matches. Humans are very good at outlier rejection, so this class of SLAM solution often depends on hand-labeled correspondence, or at least human verification of automatic correspondence, to eliminate false matches before optimizing. Another way to guard against false correspondence is to use highly identifiable ``map features," such as cooperative transponders that report their identity, as in \cite{?} 
-%
-%semi-supervised examples
-%
-%unknown correspondence examples
-%
-%As discussed above, traditional underwater bathymetric mapping tasks rely on having accurate enough inertial navigation that the correspondence problem is simply not an issue. Similarly, outdoor robotic mapping missions typically use GPS to provide an initial estimate of position, which is close enough to the true position for accurate (but sometimes brittle) scan registration techniques [\cite{OriginalGraphSLAM?} \cite{stanley?} \cite{ICP}].
-%
-%Robots performing SLAM in indoor environments do not have access to GPS signals. Because of this, they must either have very accurate odometry (like bathymetry mapping vehicles) or be able to 
+
+
+\section{SLAM in Underwater Environments}
+
+
+SLAM has been used in a number of underwater applications, using cameras and several types of sonar. The requirements and constraints of each application determined how the data association was performed, how the problem would be represented, and what method would be used to solve it.
+
+Fairfield et. al. mapped naturally-occuring cenotes in Mexico using an efficient occupancy-based SLAM technique \cite{Fairfield2007}. In this work, the robot's motion was constrained to move along a vertical path down a deep sink hole. A particle filter, along with an efficient octree-based map were used to represent data and determine correspondence.
+
+A number of research efforts have performed SLAM in structured or manmade underwater environments like dams and marinas \cite{Ribas2008}. Manmade features like dock pilings, pipelines, or edges aids in the data correspondence process by providing areas of high contrast in sonar data. Similarly, in shallow, highly textured environments like coral reefs, a number of image-based SLAM implementations have been successful \cite{Eustice2005}.
+
+The ``standard" method for bathymetric mapping in natural, unstructured terrain uses submap correlation to estimate drift, and then distributes the accumulated errors evenly over the trajectory history. The lack of highly-distinguishable features in the natural terrain drives this method to rely more heavily on odometry than some other SLAM methods. However, this is not typically a problem with the availability of high-precision inertial measurement units. An example of this is shown in Figure \ref{fig:BathyMapping}. The black lines show the vehicle's online estimate of its path as it collected data. The red lines show the best estimate after correlating measurements during loop closure events, when the vehicle revisits previously-observed terrain. These two are nearly identical in the right side of the map, where there are no self-intersections, while they differ more on the left, where the vehicle trajectory self-intersects a number of times. Without these loop closure events, there is no additional information with which to correct any accumulated drift. These methods were developed independently of much of the work in terrestrial SLAM, but the use of terrain correspondence to estimate and correct navigation errors represents essentially the same high level approach \cite{Henthorn2006}.  Roman and Singh used a delayed-state Extended Kalman Filter SLAM approach to improve map resolution over the traditional uniform smoothing approach by making explicit the position estimate uncertainty\cite{Roman2005}. This differs from the previous approach in that it does not make the assumption that the error is evenly distributed. While the delayed-state EKF implementation can be run online, the need to append states to the estimate as the mission progresses limits the maximum survey size.
+
+ \begin{figure}[!htb]
+   \centering
+   \includegraphics[width=.7\textwidth]{../graphics/NavPerformance.jpg} % requires the graphicx package
+   \caption{Illustration of normal bathymetric mapping procedure (lawnmower pattern). The trajectory self-intersects a number of times. These crossings, or loop closure events, can be used to estimate navigational errors. The red path is the real-time inertial estimate and the black path is the corrected trajectory. Up to 30 meters of correction was necessary. \emph{www.mbari.org} }
+   \label{fig:BathyMapping}
+\end{figure}
+
 
 \section{SLAM-based Iceberg Profiling}
 
-In \cite{Kimball2011b}, Kimball presented a method for creating high-resolution maps of free-drifting icebergs using AUVs based on SLAM principles. The method considered a single, constant-depth swath of sonar data collected by circumnavigating a free-drifting iceberg. Corresponding data were selected by hand and ICP was used to align them. The calculated offset was used to drive the trajectory optimization.
+Some work applying SLAM techniques to iceberg profiling has been done. As previously noted in \cite{Kimball2011b}, Kimball presented a method for creating high-resolution maps of free-drifting icebergs using AUVs based on SLAM. The method considered a single, constant-depth swath of sonar data collected by circumnavigating a free-drifting iceberg. Corresponding data were selected by hand and ICP was used to align them. The calculated offset was used to drive the trajectory optimization.
 
 Like the generic SLAM example presented above, Kimball's method used range scans to estimate accumulated drift. However, rather than estimating the drift of the \emph{vehicle} in the iceberg's reference frame, the iceberg's drift in the inertial frame was estimated and it is assumed that the vehicle's position could be determined by independent means.  
 
@@ -233,7 +155,11 @@ This formulation of the problem, in which the environment's motion is mapped exp
 
 \section{Summary}
 
-SLAM techniques require recognizing when an area has been traversed before. This correspondence problem can be solved by manually labeling the data, or the correspondences can be discovered by the algorithm autonomously. Generally the more information the robot is able to gather from the environment, the more this process can be automated. Much work has been done in the robotics and computer vision communities to extract robust, identifiable features from range and image data. These features can be used by the robot to identify loop closure events.
+SLAM techniques require recognizing when an area has been traversed before. This correspondence problem can be solved by manually labeling the data, or the correspondences can be discovered by the algorithm autonomously. Generally the more information the robot is able to gather from the environment, the more this process can be automated. Much work has been done in the robotics and computer vision communities to extract robust, identifiable features from range and image data. These features can be used by the robot to identify loop closure events. 
 
-The work presented in this dissertation builds on one of these efforts, developed by Kimball in \cite{Kimball2011b}. Its contributions address issues with speed, scalability, and operational constraints of the prior method. To make these improvements, the problem is reformulated to fit within the framework of well-developed SLAM techniques. 
+The framework in which the vehicle state and data are represented has large implications regarding accuracy and efficiency. Many different frameworks are presented in the literature, each with advantages and disadvantages. The way a problem is expressed is also coupled with the technique used to perform the optimization that yields the best map and trajectory.
+
+The work presented in this dissertation builds on one a previous effort to profile icebergs using SLAM, developed by Kimball in \cite{Kimball2011b}. Its contributions address issues with speed, scalability, and operational constraints of the prior method. To make these improvements, the problem is reformulated to fit within the framework of a well-developed SLAM technique called GraphSLAM. 
+
+Chapter \ref{ch.LoopClosure} details how loop closure was performed in this work, Chapter \ref{ch.IcebergGeometry} reformulates the problem into the moving reference frame, and Chapter  \ref{ch.GraphSLAM} solves the problem using the GraphSLAM technique.
 
