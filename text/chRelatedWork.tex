@@ -144,12 +144,19 @@ Some work applying SLAM techniques to iceberg profiling has been done. As previo
 
 Like the generic SLAM example presented above, Kimball's method used range scans to estimate accumulated drift. However, rather than estimating the drift of the \emph{vehicle} in the iceberg's reference frame, the iceberg's drift in the inertial frame was estimated and it is assumed that the vehicle's position could be determined by independent means.  
 
-This formulation of the problem, in which the environment's motion is mapped explicitly led Kimball to develop a custom solution framework. The framework allowed him to prove the feasibility of SLAM-based solutions for iceberg profiling, as shown in Figure \ref{fig:KimballSolution}, but the method was difficult to scale to the full-depth profiling process, with multiple data swaths and many loop closures. The reformulation of the problem presented in Chapter \ref{ch.IcebergGeometry} casts the problem entirely in iceberg-relative terms, allowing the problem to be solved more easily using generic SLAM methods that scale well to large problem sizes. This formulation, including similarities and differences to the generic case, will be developed more fully in Chapter \ref{ch.ProblemStatement}.
+This formulation of the problem, in which the environment's motion is mapped explicitly led Kimball to develop a custom solution framework. The framework allowed him to prove the feasibility of SLAM-based solutions for iceberg profiling, as shown in Figures \ref{fig:KimballPreSolution} and \ref{fig:KimballSolution}, but the method was difficult to scale to the full-depth profiling process, with multiple data swaths and many loop closures. The reformulation of the problem presented in Chapter \ref{ch.IcebergGeometry} casts the problem entirely in iceberg-relative terms, allowing the problem to be solved more easily using generic SLAM methods that scale well to large problem sizes. This formulation, including similarities and differences to the generic case, will be developed more fully in Chapter \ref{ch.ProblemStatement}.
+
+ \begin{figure}[!htb]
+   \centering
+   \includegraphics[width=.7\textwidth]{../graphics/UncorrectedPeterIceberg.png} % requires the graphicx package
+   \caption{Sonar data taken from ship-based multibeam sonar. The iceberg's motion has not been accounted for, yielding inconsistency in the data. \emph{Graphic courtesy of Peter Kimball.}}
+   \label{fig:KimballPreSolution}
+\end{figure}
 
  \begin{figure}[!htb]
    \centering
    \includegraphics[width=.7\textwidth]{../graphics/PeterSolution} % requires the graphicx package
-   \caption{Kimball's partial profile of an Antarctic iceberg. \emph{Graphic courtesy of Peter Kimball.}}
+   \caption{Kimball's corrected partial profile of an Antarctic iceberg. \emph{Graphic courtesy of Peter Kimball.}}
    \label{fig:KimballSolution}
 \end{figure}
 

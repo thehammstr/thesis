@@ -9,11 +9,11 @@ The methods for solving the correspondence problem, the ease with which it can b
 
 The method presented in this chapter is derived from a form of loop closure detection commonly used in underwater sonar range-based mapping. Because of the difficulty in extracting distinct, discrete features from the sonar data, the method instead aligns aggregated submaps of data. This method can be split into two steps. First, there is a ``correspondence" step that hypothesizes that two submaps should have some degree of overlap (without explicitly assigning correspondence between any discrete points in the map). Second, the maps are aligned by some method to produce a relative position between the two submaps that is used to correct for drift in the SLAM optimization. 
 
-This chapter looks more closely at how the iceberg's motion complicates this method for detecting and encoding loop closures, and proposes two methods for solving it. The first method is a graphical interface that allows a human to direct the search for loop closure events. An automated algorithm then operates on a reduced search space to perform precise alignment, and the user decides whether the alignment is good enough to include in the mapping optimization. This prevents the inclusion of false correspondences that result from becoming trapped in local minima, a common failure mode for distance-based registration algorithms like ICP.
+This chapter examines how the iceberg's motion complicates this method for detecting and encoding loop closures, and proposes two methods for solving it. The first method is a graphical interface that allows a human to direct the search for loop closure events. An automated algorithm then operates on a reduced search space to perform precise alignment, and the user decides whether the alignment is good enough to include in the mapping optimization. This prevents the inclusion of false correspondences that result from becoming trapped in local minima, a common failure mode for distance-based registration algorithms like ICP.
 
-The second method comprises early work toward full automation of the loop closure detection process and also serves as an additional human aid for detecting loop closure events. It borrows heavily from computer vision and image processing literature, applying robust image feature extraction techniques to sonar range data in order to detect loop closure. In essence, this methods seeks to identify and describe ``landmarks" in the data that can be used to detect when an area has been visited before. 
+The second method comprises early work toward full automation of the loop closure detection process and also serves as an additional human aid for detecting loop closure events. It borrows heavily from computer vision and image processing literature, applying robust image feature extraction techniques to sonar range data in order to detect loop closure. In essence, this method seeks to identify and describe ``landmarks" in the data that can be used to detect when an area has been visited before. 
 
- While the feature extraction and matching technique presented here was used only as an aid for the initialization of the submap alignment process, it shows potential for use in more discrete feature-based mapping techniques. With additional research, it could overcome some of the challenges for submap alignment caused by iceberg motion. These extensions will be discussed further in the future work chapter.
+ While the feature extraction and matching technique presented here was used only as an aid for the initialization of the submap alignment process, it shows potential for use in more discrete feature-based mapping techniques. With additional research, it could overcome some of the challenges for submap alignment caused by iceberg motion. These extensions will be discussed further in Chapter \ref{ch.FutureWork}.
 
 \begin{figure}[htb]
    \centering
@@ -28,11 +28,9 @@ Inertial navigation errors, whether introduced by moving terrain or poor sensing
 
 \subsection{Data Correspondence for Iceberg Profiling}
 
-Mapping icebergs presents some challenges compared with static mapping, but also allows for some simplifications. This section explores these differences.
-
 \subsubsection{Iceberg-specific simplifications}
 
-In some ways, the data correspondence problem is simplified when mapping icebergs. This is because the iceberg can be thought of as a cyclical environment: assuming the vehicle maintains a constant depth and distance from the iceberg (both of which can be done with onboard sensors), if it swims for long enough, it is \emph{guaranteed} to revisit the same portion of the iceberg multiple times. The positional uncertainty is effectively reduced to a 1-dimensional periodic problem. This is not true in general for traditional bathymetric mapping tasks, where a vehicle with sufficiently large drift could completely miss all previously observed terrain. 
+In some ways, the data correspondence problem is simplified when mapping icebergs. This is because the iceberg can be thought of as a cyclical environment: assuming the vehicle maintains a constant depth and distance from the iceberg (both of which can be done with onboard sensors), if travels for long enough, it is \emph{guaranteed} to revisit the same portion of the iceberg multiple times. The positional uncertainty is effectively reduced to a 1-dimensional periodic problem. This is not true in general for traditional bathymetric mapping tasks, where a vehicle with sufficiently large drift could completely miss all previously observed terrain. 
 
 This fact simplifies the data correspondence problem significantly. Given enough data, the problem statement becomes ``which of these data correspond to each other," as opposed to the harder question of ``do any of these data correspond to each other." Additionally, after the first circumnavigation has been completed, side-to-side overlaps provide many additional loop closures that increase the eventual map's accuracy, and for online implementations, can help keep the current position estimate converged within the current best estimate of the map.
 
@@ -40,7 +38,7 @@ This fact simplifies the data correspondence problem significantly. Given enough
 
 \subsubsection{Complications due to motion} 
 
-While the cyclical nature of iceberg mapping simplifies the problem, the fact that is in motion makes it more complicated. The iceberg motion introduces larger apparent odometry errors, which complicates the loop closure detection process in two ways: first, a larger area must be searched in order to guarantee overlap, and second, the submaps themselves can become warped relative to the true terrain shape, making correlation techniques less accurate and reliable.
+While the cyclical nature of iceberg mapping simplifies the problem, the iceberg's motion makes it more complicated. The iceberg motion introduces larger apparent odometry errors, which complicates the loop closure detection process in two ways: first, a larger area must be searched in order to guarantee overlap, and second, the submaps themselves can become warped relative to the true terrain shape, making correlation techniques less accurate and reliable.
 
 %All inertial navigation systems drift over time without bound. This is a fundamental limitation of obtaining a position estimate solely by integrating noisy velocity and acceleration measurements. A modern state-of-the art INS can provide drift rates as low as 0.01\% of the distance traveled, but even this low a drift rate will eventually grow large enough to introduce substantial map error.  
 
@@ -83,17 +81,15 @@ The second method works toward removing the need for human intervention entirely
 \section{Loop Closure GUI}
 \label{sec:GUI}
 
-This section describes the graphical user interface designed to allow a user to identify and encode loop closures quickly and easily. 
-
 \subsection{GUI Operation}
 
-As a general rule, the more loop closures that are incorporated into the optimization, the more accurately the iceberg motion can be accounted for, yielding a more accurate and self-consistent map. The GUI allows dozens of matches to be detected and encoded in a matter of minutes. Figure \ref{fig:GUI} shows the general interface, and detailed instructions on use can be found in Appendix \ref{ap.GUI}.
+This section describes the graphical user interface that was designed as a tool to allow a user to identify and encode loop closures quickly and easily. As a general rule, the more loop closures that are incorporated into the optimization, the more accurately the iceberg motion can be accounted for, yielding a more accurate and self-consistent map. The GUI allows dozens of matches to be detected and encoded in a matter of minutes. Figure \ref{fig:GUI1} shows the general interface, and detailed instructions on use can be found in Appendix \ref{ap.GUI}.
 
  \begin{figure}[ht]
    \centering
    \includegraphics[width=.9\textwidth]{../graphics/guiscreenshots/GUIsim.png} % requires the graphicx package
    \caption{Loop closure GUI being used to encode loop closures on Soquel Canyon data set }
-   \label{fig:GUI}
+   \label{fig:GUI1}
 \end{figure}
 
 The user loads a file consisting of raw navigation data and sonar range returns into the program, and the data is used to produce a trajectory estimate and point cloud of the ensonified terrain. Any odometry errors or unmodeled iceberg motion will introduce inconsistency into the point cloud. 
@@ -107,7 +103,7 @@ At this point the user can launch GraphSLAM or continue to encode more loop clos
 
 \section{Toward loop closure automation}
 
-The amount and type of information that can be extracted from terrain varies widely by the sensing modality. For multibeam sonar, only range and intensity (effectively reflectivity) are returned by the sensor. This dissertation only considers information that can be obtained from the range information, though future work may investigate the value of intensity for loop closure detection purposes.
+%The amount and type of information that can be extracted from terrain varies widely by the sensing modality. For multibeam sonar, only range and intensity (effectively reflectivity) are returned by the sensor. This dissertation only considers information that can be obtained from the range information, though future work may investigate the value of intensity for loop closure detection purposes.
 
 \subsection{Applying 2D image features to 3D terrain}
 
@@ -115,7 +111,7 @@ The amount and type of information that can be extracted from terrain varies wid
 
 %\subsubsection{Creating images from terrain}
 
-The genesis of this idea came from the observation that it was difficult to identify patterns by eye from raw sonar point cloud data, but that it became easier to recognize patterns when the data was projected onto a plane and colored by ``height." Essentially, converting raw submap point clouds to a format similar to topographic charts facilitated pattern recognition for human users.
+Feature extraction techniques initially developed for image analysis can provide a means to automate the detection of loop closure events in sonar data. The genesis of this idea came from the observation that it was difficult to identify patterns by eye from raw sonar point cloud data, but that it became easier to recognize patterns when the data was projected onto a plane and false-colored by height above the plane. Essentially, converting raw submap point clouds to a format similar to topographic charts facilitated pattern recognition for human users.
 
 Many standard algorithms (e.g. SIFT and SURF) for extracting robust image feature descriptors only consider image intensity, discarding any color information. The resulting grayscale images are identical in form to digital elevation maps (DEMs), with pixel intensity being the ``height" of the map above that location in the image. This representation is shown in Figure \ref{fig:imAsSurf}. 
 
@@ -159,7 +155,7 @@ The second step restores the pixels that began with valid data to their original
    \label{fig:rangeImage}
 \end{figure}
 
-The last step in creating a SIFT-ready image is Contrast-Limited Adaptive Histogram Equalization (CLAHE). Algorithms like SIFT and SURF use gradient information in images to extract the features. The CLAHE process attempts to enhance details without skewing the overall contrast level of the image. \cite{Reza2004}
+The last step in creating a high-contrast image for feature detection is to apply Contrast-Limited Adaptive Histogram Equalization (CLAHE). Algorithms like SIFT and SURF use gradient information in images to extract the features. The CLAHE process attempts to enhance details without skewing the overall contrast level of the image. \cite{Reza2004}
 
 \begin{figure}[htb]
    \centering
@@ -168,7 +164,7 @@ The last step in creating a SIFT-ready image is Contrast-Limited Adaptive Histog
    \label{fig:rangeImageHC}
 \end{figure}
 
-Robust image features can be extracted from the resulting image and used to look for loop closure events. The work presented here uses SIFT features, though other feature classes could be used. Figure \ref{fig:SIFTrangeImage} shows some features extracted from such an image, and Figure \ref{fig:matches} shows how these features can be matched. Upon reimaging a portion of terrain and extracting a second set of features, matching is performed. Techniques like RANSAC can be used to screen for false matches by enforcing geometric consistency between the matches. If a consistent model can be found using a sufficient number of matches, there is a high likelihood that the two submaps correspond to the same terrain, and precision alignment can be performed using ICP with reduced risk of false alignment. 
+Robust image features can be extracted from the resulting image and used to look for loop closure events. The work presented here uses SIFT features, though other feature classes could be used. Figure \ref{fig:SIFTrangeImage} shows some features extracted from such an image, and Figure \ref{fig:matches} shows how these features can be matched. Upon reimaging a portion of terrain and extracting a second set of features, matching is performed. Random Sample Consensus (RANSAC) \cite{Fischler1981} is used to screen for false matches by enforcing geometric consistency between the matches. If a consistent model can be found using a sufficient number of matches, there is a high likelihood that the two submaps correspond to the same terrain, and precision alignment can be performed using ICP with reduced risk of false alignment. 
 
 \begin{figure}[htb]
    \centering

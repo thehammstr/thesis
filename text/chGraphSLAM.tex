@@ -3,15 +3,13 @@
 \chapter{Fusing Multiple Data Swaths via GraphSLAM}
 \label{ch.GraphSLAM}
 
-Chapter \ref{ch.IcebergGeometry} recast the problem of iceberg profiling in a form very similar to traditional static terrain mapping problems. The vehicle's trajectory through the iceberg frame of reference can be dead-reckoned based on the DVL measurements, and the iceberg's rotation is modeled as a drifting rate gyro bias or low-precision compass, both of which have been dealt with extensively in the robotics community.
+Chapter \ref{ch.IcebergGeometry} recast the problem of iceberg profiling in a form very similar to traditional static terrain mapping problems. The vehicle's trajectory through the iceberg frame of reference can be dead-reckoned based on the DVL measurements, and the iceberg's rotation is modeled as a drifting rate gyro bias or low-precision compass.
 
-A number of techniques can be applied to solve this new formulation of the profiling problem. Many of these techniques have been developed extensively in the robotics community, and a number of powerful software tools are available to solve the techniques' associated optimizations. The ease of representing the problem as a pose graph, the ability to solve large optimizations efficiently, and the fact that the calculations did not need to be performed online drove the selection of GraphSLAM as a solution method. 
+A number of techniques can be applied to solve this new formulation of the profiling problem, and a number of powerful software tools are available to solve the techniques' associated optimizations. The ease of representing the problem as a pose graph, the ability to solve large optimizations efficiently, and the fact that the calculations did not need to be performed online drove the selection of GraphSLAM as a solution method. 
 
-This chapter will describe how the iceberg profiling problem was posed in the framework of GraphSLAM in order to allow the reader to reproduce the mapping results presented in Chapter \ref{ch.Results}. To provide context, it will give a brief overview of some key components of the method. However, it will not go into the low-level details of how the GraphSLAM algorithm implements its optimization. For more information, refer to the sources cited in Section \ref{sec.SLAM}.
+This chapter describes how the iceberg profiling problem is posed in the framework of GraphSLAM. To provide context, it will give a brief overview of some key components of the method. However, it will not go into the low-level details of how the GraphSLAM algorithm implements its optimization. For more information, refer to the sources cited in Section \ref{sec.SLAM}.
 
 \section{GraphSLAM overview}
-
-This section presents the key components of the GraphSLAM algorithm to provide sufficient context for understanding its application to iceberg profiling. It introduces the state $x_t$, input $u_t$, motion model $g()$, and measurement model $h()$, and defines how they all interact to produce a result. The following section will then detail how each of these is defined for application to iceberg profiling.
 
 \begin{figure}[htb]
    \centering
@@ -31,7 +29,7 @@ p\left(x_{t+1}~|~x_t,u_t\right) & \sim \mathcal{N}\left(g(x_t,u_t), R_t\right)
 \label {eq:Gauss1}
 \end{align}
 
-where $R$ is the process noise covariance matrix. Note that this representation is identical to that of the Extended Kalman Filter (EKF) motion model, normally written 
+\noindent where$R$ is the process noise covariance matrix. Note that this representation is identical to that of the Extended Kalman Filter (EKF) motion model, normally written 
 \begin{align}
 x_{t+1} &= g\left(x_t,u_t\right) + \nu_p\\
 R &\equiv E\left(\nu_p \nu_p^\intercal\right) 
@@ -53,7 +51,7 @@ Q &\equiv E\left(\nu_m \nu_m^\intercal\right)
 
 The full posterior probability of the graph is then given by the product of all these conditional terms. Solving for the maximum likelihood estimate requires finding the combination of free parameters (nodes) that maximizes this posterior probability. 
 
-It is interesting to note that the similarity between the GraphSLAM and the EKF is not coincidental: GraphSLAM and the EKF solve the same nonlinear weighted least squares problem, but whereas the EKF solves it online, recursively, GraphSLAM solves the problem offline in a batch process. 
+The similarity between the GraphSLAM and the EKF is not coincidental: GraphSLAM and the EKF solve the same nonlinear weighted least squares problem, but whereas the EKF solves it online, recursively, GraphSLAM solves the problem offline in a batch process. 
 
 \subsection{Graph marginalization}
 \label{sec.marginalization}
@@ -61,7 +59,7 @@ For large problems with many observed features, the optimization step can be spe
 
 This step can be visualized in Figures \ref{fig:GraphSLAM} and \ref{fig:RelativePoses}. Any two poses in Figure \ref{fig:GraphSLAM} that observed the same feature now have a direct link between them in Figure \ref{fig:RelativePoses}, and the map feature nodes are absent. All information is still used, so this marginalization is lossless, but can result in much smaller optimization size. In effect, multiple observations of the same feature are abstracted into relative pose offsets.
 
-This step has important implications with respect to the solution method presented in this chapter. Due to the difficulty of determining correspondence based on single features in the data, the ICP point cloud registration technique is used, the output of which is a relative pose offset. This makes it possible to skip  the marginalization step entirely and solve the problem using only pose-to-pose links. This is referred to here as the ``implicit map" method.
+This step has important implications with respect to the solution method presented in this chapter. It is difficult to establish correspondence based on single features in the data. Therefore, the ICP point cloud registration technique is used, the output of which is a relative pose offset. This makes it possible to skip  the marginalization step entirely and solve the problem using only pose-to-pose links. This is referred to here as the ``implicit map" method.
 
 
 \begin{figure}[htb]
@@ -73,7 +71,7 @@ This step has important implications with respect to the solution method present
 
 \subsection{Solution via nonlinear least squares}
 
-Once the graph has been built, it can be optimized via a generic nonlinear least squares approach. To see this, Equations \ref{eq:Gauss1} and \ref{eq:Gauss2} are expanded by the definition of the Normal distribution.
+Once the graph has been built, it can be optimized via a generic nonlinear least squares approach. Specifically, Equations \ref{eq:Gauss1} and \ref{eq:Gauss2} are expanded by the definition of the Normal distribution.
 
 \begin{equation}
 p\left(x_{t+1}~|~x_t,u_t\right) = \eta~ exp\left(-\frac{1}{2}\left[x_{t+1} - g\left(u_t,x_t\right)\right]^{\intercal}R_t^{-1}\left[x_{t+1} - g\left(u_t,x_t\right)\right]\right)
@@ -98,7 +96,7 @@ The maximum likelihood estimates for all free parameters $x_t$ and $m_j$ in the 
 
 \subsection{Minimum spring energy analogy}
 
-A useful analogy for gaining intuition into how the GraphSLAM solver works uses the concept of spring potential energy. 
+An analogy for how the GraphSLAM solver works uses the concept of spring potential energy. 
 
 \begin{align}
 P_{\text{spring}} &= \frac{1}{2}k\left(l-l_n\right)^2
@@ -179,8 +177,6 @@ Once the nodes are all tied together with springs of appropriate length and stif
 
 \section{Applying GraphSLAM to iceberg profiling}
 
-This section gives details on how all the components of iceberg profiling as described in Chapter \ref{ch.ProblemStatement} can be combined within the GraphSLAM framework to  yield an accurate reconstruction. 
-
 Below, the components in the conditional probability relations (restated here for convenience) will be defined, along with all modeling assumptions and choices of relative weights for the specific application of iceberg profiling. 
 
 \begin{align}
@@ -208,7 +204,9 @@ Based on the above discussion of assumptions about AUV and vehicle motions the f
 
 This is a common 2D-planar robotic mapping state representation, augmented with a drift rate term, $\beta$ to account for the iceberg's rotational motion. Here, the subscript $B$ indicates that all parameters are written in the iceberg reference frame. That is to say, $x$, $y$, and $\psi$ denote the horizontal position and heading of the vehicle expressed \emph{in the iceberg's frame of reference}, and $\beta$ is the heading drift rate of the iceberg. 
 
-As stated in Chapter \ref{ch.ProblemStatement}, it is assumed that the vehicle depth can be measured directly by onboard pressure sensors, reducing the problem to two dimensions in translation, denoted $x$ and $y$. This is a reasonable simplification for iceberg profiling. In mapping static terrain, low frequency tidal offset effects must often be estimated, but since an iceberg floats with the tides, this is not a concern. Large amplitude waves can also introduce depth errors, but at much higher frequencies than the tides. These effects can be mitigated by combining integrated DVL-measured vertical velocity for high frequencies and depth sensor for low frequencies in a complementary filter framework.
+As stated in Chapter \ref{ch.ProblemStatement}, it is assumed that the vehicle depth can be measured directly by onboard pressure sensors. Because the iceberg floats, it is not necessary to account for tidal offsets. High frequency surface wave effects are mitigated by combining integrated DVL-measured vertical velocity. This reduces the problem to two dimensions in translation, denoted $x$ and $y$. 
+
+%This is a reasonable simplification for iceberg profiling. In mapping static terrain, low frequency tidal offset effects must often be estimated, but since an iceberg floats with the tides, this is not a concern. Large amplitude waves can also introduce depth errors, but at much higher frequencies than the tides. These effects can be mitigated by combining integrated DVL-measured vertical velocity for high frequencies and depth sensor for low frequencies in a complementary filter framework.
 
 Section \ref{sec.MainContrib} showed that the sideways-facing DVL could be used to measure directly the body components of the vehicle's velocity in the iceberg frame of reference. However, the vehicle's heading in the frame of reference of the iceberg, $\psi$, can not be measured directly with the available onboard sensing, and is therefore estimated in the SLAM framework. The iceberg's angular drift rate is assumed to fall within the range of motions presented in  \cite{Gladstone2002,Wadhams1983}, and to change slowly due to the large inertia of the iceberg, but may have nonzero mean value over the course of the profiling run. This drift is labeled $\beta$. 
 
@@ -303,9 +301,9 @@ Add projected measurements to subcloud \;
 \end{algorithm}
 ~\\
 
-Map registration algorithms like Iterative Closest Point vary in their implementation, computational complexity, and robustness to bad initializations. Improving on these techniques is a major area for future improvement, as validation of ICP alignments is the part of the data pipeline requiring greatest human oversight in the current implementation.
+%Map registration algorithms like Iterative Closest Point vary in their implementation, computational complexity, and robustness to bad initializations. Improving on these techniques is a major area for future improvement, as validation of ICP alignments is the part of the data pipeline requiring greatest human oversight in the current implementation.
 
-Using this implicit map formulation has several advantages. Point cloud registration, or ``scan matching," performs well when there are not many strong, highly recognizable features in the data, but many weaker ones. This is the case when mapping natural terrain: there are not generally straight lines or sharp corners, but many gentle curves and ripples. Taken individually, these features are not very discernable from one another, but when considered as a collection, including their locations relative to one another, they can create a unique signature that can be recognized. Point cloud registration essentially does this automatically, by matching entire pointclouds to one another based on geometry, rather than attempting to match individual points within the clouds.
+Using this implicit map formulation has several advantages. Point cloud registration, or ``scan matching," performs well when there are not many strong, highly recognizable features in the data, but many weaker ones. This is the case when mapping natural terrain: there are not generally straight lines or sharp corners, but many gentle curves and ripples. Taken individually, these features are not very discernible from one another, but when considered as a collection, including their locations relative to one another, they can create a unique signature that can be recognized. Point cloud registration essentially does this automatically, by matching entire point clouds to one another based on geometry, rather than attempting to match individual points within the clouds.
 
 The implicit map formulation also bypasses the marginalization step of the GraphSLAM optimization, solving a smaller problem per iteration and converging more quickly. 
 
