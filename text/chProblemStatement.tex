@@ -3,7 +3,7 @@
 \chapter{Problem Statement \& Solution Framework}
 \label{ch.ProblemStatement}
 
-Chapter \ref{ch.Introduction}  introduced and motivated the task of robotic iceberg profiling. Chapter \ref{ch.RelatedWork} described in broad terms other methods that have been used to solve the problem of iceberg profiling and other mapping tasks. This chapter describes the specific resources, constraints, and assumptions involved in this effort to create an accurate iceberg profile. This includes the vehicle configuration and sensor characteristics, mission profile, and assumptions about the motion of the iceberg that will be made for the rest of the work. It also details the SLAM approach as it pertains to iceberg profiling, and motivates the use of GraphSLAM for fusing multiple swaths of data with many loop closures. 
+Chapter \ref{ch.Introduction}  introduced and motivated the task of robotic iceberg profiling. It also described the nominal mission profile for the profiling work presented in this thesis (Section \ref{sec.MissionProfileDef}). Chapter \ref{ch.RelatedWork} described in broad terms other methods that have been used to solve the problem of iceberg profiling and other mapping tasks. This chapter describes the specific resources, constraints, and assumptions involved in this effort to create an accurate iceberg profile. This includes the vehicle configuration, sensor characteristics, and assumptions about the motion of the iceberg that will be made for the rest of the work. It also details the SLAM approach as it pertains to iceberg profiling, and motivates the use of GraphSLAM for fusing multiple swaths of data with many loop closures. 
 
 %\section{Problem statement}
 
@@ -24,7 +24,7 @@ Chapter \ref{ch.Introduction}  introduced and motivated the task of robotic iceb
 \label{sec.VehicleSetup}
 
 \subsection{Vehicle configuration}
-The vehicle used for this thesis is similar to the Dorado-class AUV shown in Figure \ref{fig:AUVdorado}. This is a 21 inch diameter torpedo-shaped vessel that achieves pitch and heading control through vectored thrust. It cruises at 1.5 m/s and is rated to 4000m depth The vehicle is ballasted to be passively stable in roll, and slightly positively buoyant, so that if it stops moving forward, it will tend to float to the surface. The high-precision onboard inertial measurement unit can determine the vehicle's attitude \emph{in the inertial frame} to high precision. Additionally, depth can be measured accurately using a pressure sensor. 
+The vehicle used for this thesis is similar to the Dorado-class AUV shown in Figure \ref{fig:AUVdorado}. This is a 21 inch diameter torpedo-shaped vessel that achieves pitch and heading control through vectored thrust. It cruises at 1.5 m/s and is rated to 4000m depth The vehicle is ballasted to be passively stable in roll, and slightly positively buoyant, so that if it stops moving forward, it will tend to float to the surface. The high-precision onboard inertial measurement unit can determine the vehicle's attitude \emph{in the inertial frame} to a fraction of a degree in pitch, roll, and yaw. Additionally, depth can be measured accurately using a pressure sensor. 
 
 \begin{figure}[htb]
    \centering
@@ -45,7 +45,7 @@ The vehicle used to collect the data described in Chapter \ref{ch.Results} uses 
 
 \subsection{Multibeam mapping sonar}
 
-A downward-facing high-precision multibeam sonar array is another standard mapping tool in bathymetric mapping. Similar to the DVL, the AUV is assumed to have a high-precision multibeam sonar aligned with the scan plane perpendicular to the vehicle's nominal velocity, rotated ninety degrees so that it nominally faces the iceberg. For each sonar sounding from the multibeam, a number of discrete ranges are returned in a fan-shaped pattern. This is depicted by the red lines in Figure \ref{fig:DVLandMulti}. This is the primary sonar used for map creation, and is oriented in this way in order to sweep out the widest swath of data possible. 
+A downward-facing high-precision multibeam sonar array is another standard mapping tool in bathymetric mapping. Similar to the DVL, the AUV has a high-precision multibeam sonar aligned with the scan plane perpendicular to the vehicle's nominal velocity, rotated ninety degrees so that it nominally faces the iceberg. For each sonar sounding from the multibeam, a number of discrete ranges are returned in a fan-shaped pattern. This is depicted by the red lines in Figure \ref{fig:DVLandMulti}. This is the primary sonar used for map creation, and is oriented in this way in order to sweep out the widest swath of data possible. 
 
 Since the each beam's orientation in the vehicle frame is known, each measurement can be represented as a vector expressed in the vehicle's frame of reference.
 
@@ -69,26 +69,26 @@ A new vehicle currently under construction at Monterey Bay Aquarium Research Ins
    \label{fig:ObstandMulti}
 \end{figure}
 
-\section{Nominal mission profile}
-
-The planned profiling process begins aboard a research vessel by locating a suitable iceberg and approaching to minimum safe distance. The AUV is then deployed in a direction to intercept the iceberg. Upon interception, the vehicle circumnavigates the iceberg in a counter-clockwise direction. It does this reactively, flying at a constant nominal speed, and using its obstacle avoidance sonar or DVL to maintain a constant standoff distance of 25 to 50 meters. In order to image the entire iceberg, the vehicle must fly at multiple depths. In the simulated data, this is achieved with a small constant downward velocity, resulting in a helical trajectory.
-
-\begin{figure}[htb]
-   \centering
-   \includegraphics[scale=.4]{../graphics/spiral.png} % requires the graphicx package
-   \caption{Nominal spiral mapping trajectory }
-   \label{fig:NominalProfile}
-\end{figure}
+%\section{Nominal mission profile}
+%
+%The planned profiling process begins aboard a research vessel by locating a suitable iceberg and approaching to minimum safe distance. The AUV is then deployed in a direction to intercept the iceberg. Upon interception, the vehicle circumnavigates the iceberg in a counter-clockwise direction. It does this reactively, flying at a constant nominal speed, and using its obstacle avoidance sonar or DVL to maintain a constant standoff distance of 25 to 50 meters. In order to image the entire iceberg, the vehicle must fly at multiple depths. In the simulated data, this is achieved with a small constant downward velocity, resulting in a helical trajectory.
+%
+%\begin{figure}[htb]
+%   \centering
+%   \includegraphics[scale=.4]{../graphics/spiral.png} % requires the graphicx package
+%   \caption{Nominal spiral mapping trajectory }
+%   \label{fig:NominalProfile}
+%\end{figure}
 
 \section{Iceberg motion assumptions}
 
 Icebergs are modeled as rigid bodies having three degrees of freedom: horizontal motion in the $xy$-plane and rotation in heading, $\psi$. In reality, icebergs are dynamic objects, subject to constant change due to melt, wave action, wind erosion, internal stresses, etc. These forces can lead to sudden, violent changes like calving, where a large portion of the iceberg separates and falls off, or ``turtling," where the iceberg rapidly flips over and settles into a new stable floating orientation. These phenomena present dangerous conditions to equipment and personnel, and are a primary driver for using robots for up-close iceberg study.  However, these classes of motion are not included in the iceberg motion model for the mapping problem, as they would likely cause any mapping mission to be aborted in the best case, and the loss of the vehicle in the worst.
 
-An iceberg's motion can vary by size, shape, and region in which it is found, but typical figures include .03-.08 m/s in translation  and 5-10 deg/hr in heading rate. In extreme cases, translation rates of .27 m/s and rotation rates of 40 dg/hr have been recorded. \cite{Gladstone2002,Wadhams1983}. 
+An iceberg's motion can vary by size, shape, and region in which it is found, but typical figures include 0.03-0.08 m/s in translation  and 5-10 deg/hr in heading rate. In extreme cases, translation rates of 0.27 m/s and rotation rates of 40 dg/hr have been recorded. \cite{Gladstone2002,Wadhams1983}. 
 
 These translational rates can be up to 20\% of the AUV's speed, which could cause extremely large apparent drift if not accounted for. However, the DVL provides iceberg-relative translational velocity information, and the problem formulation developed in Chapter \ref{ch.IcebergGeometry} eliminates these terms from the optimization.
 
-The rotation rates of icebergs are three orders of magnitude slower than the maximum vehicle rotation rate, even at the fast end of the spectrum. Nonetheless, if it is not accounted for, it can result in a warped, inconsistent map of all but the smallest of icebergs. A last, implicit assumption about icebergs is that their motion changes slowly. Their large mass and inertia yield dynamics with very large time constants. 
+The rotation rates of icebergs are three orders of magnitude slower than the maximum vehicle rotation rate, even at the fast end of the spectrum. Nonetheless, if it is not accounted for, it can result in a warped, inconsistent map. A last, implicit assumption about icebergs is that their motion changes slowly. Their large mass and inertia yield dynamics with very large time constants. 
 
 For these reasons, lacking a means to measure directly the heading of the iceberg or the relative heading between iceberg and vehicle, the rotation rate can be modeled as a slowly-varying rate bias on the vehicle heading. In other words, the iceberg's rotation rate can be modeled as constant over short periods, and much smaller than the vehicle's achievable rotation rate at all time scales.
 
@@ -105,7 +105,7 @@ For these reasons, lacking a means to measure directly the heading of the iceber
 
 %The work uses offline optimization to estimate the iceberg's translation and rotation during the course of the mapping run. It models these motion parameters using B-splines \cite{} to enforce smooth, physical motion. The optimization problem is broken up into linear and nonlinear portions and solved in an iterative least squares framework, as shown in Figure \ref{fig:NestedLoopRelatedWork}. The method was demonstrated on field data from an Antarctic iceberg collected by ship-based sonar, as well as bathymetric data recorded by an AUV. While it provided accurate, self-consistent map sections based on constant depth swaths of data, the algorithm suffered from scalability issues. Multiple swaths of data were required to build up a map of the entire iceberg, and errors in the motion model between the swaths could cause map artifacts or ``seams" that could make later use for robotic navigation difficult. Additionally, the method was computationally intensive, and required subsampling of data for the optimization to converge in a reasonable amount of time. Furthermore, the method relied on having an estimate of the vehicle's inertial position, which was supplied to it via ship-based USBL link. The need to tend the vehicle to provide these navigation fixes places an operational burden on the ship, when a more autonomous solution could free it to do other science. This dissertation uses Kimball's method as a foundation, and makes a number of improvements to address these issues. 
 
-At a high level, the approach for iceberg profiling presented here is very similar to that developed in \cite{Kimball2011b}, though the implementation of each individual component differs. It is broken up into a loop closure step and an optimization step. In the loop closure step, information within the terrain is used to detect odometry drift. To do this, sonar returns corresponding to the same portion of the iceberg are identified and rotational and translational offsets are determined. An example of corresponding sonar data is shown in the left image of Figure \ref{fig:icebergSLAM}, with the corresponding data highlighted in red and blue. This information is then fed to the optimization step to calculate the maximum likelihood estimate, i.e. the vehicle trajectory that best describes the odometry and sonar measurements, yielding a corrected reconstruction (right side of Figure \ref{fig:icebergSLAM}. The chief difference between the two methods is that they estimate the motion of different bodies: the previous method estimated the iceberg's motion in the inertial reference frame, assuming the vehicle's inertial trajectory could be determined independently, while the method presented here solves for the \emph{vehicle's} motion through the iceberg reference frame. This has some important consequences with respect to computational speed and scalability. 
+At a high level, the approach for iceberg profiling presented here is very similar to that developed in \cite{Kimball2011b}, though the implementation of each individual component differs. It is broken up into a loop closure step and an optimization step. In the loop closure step, information within the terrain is used to detect odometry drift. To do this, sonar returns corresponding to the same portion of the iceberg are identified and rotational and translational offsets are determined. An example of corresponding sonar data is shown in the left image of Figure \ref{fig:icebergSLAM}, with the corresponding data highlighted in red and blue. This information is then fed to the optimization step to calculate the maximum likelihood estimate, i.e. the vehicle trajectory that best describes the odometry and sonar measurements, yielding a corrected reconstruction (right side of Figure \ref{fig:icebergSLAM}). The chief difference between the two methods is that they estimate the motion of different bodies: the previous method estimated the iceberg's motion in the inertial reference frame, assuming the vehicle's inertial trajectory could be determined independently, while the method presented here solves for the \emph{vehicle's} motion through the iceberg reference frame. This has some important consequences with respect to computational speed and scalability. 
 
 
  \begin{figure}[htb]
@@ -131,13 +131,13 @@ For this reason, the approach for correspondence detection presented here seeks 
 
 \subsubsection{Trajectory estimate optimization}
 
-The loop closure step gives a number of constraints on the vehicle's trajectory. The next step is to then determine how the initial estimate of trajectory should be altered in such a way that these constraints are satisfied, minimizinig measurement inconsistencies. 
+The loop closure step gives a number of constraints on the vehicle's trajectory. The next step is then to determine how the initial estimate of trajectory should be altered in such a way that these constraints are satisfied, minimizinig measurement inconsistencies. 
 
 The method developed in this thesis estimates the vehicle's motion through the iceberg frame of reference directly, treating any apparent odometry errors due to the iceberg's motion as one would a motion sensor bias. This formulation makes the problem essentially identical to the generic SLAM example presented in Section \ref{sec:genericSLAM}, which opens up a wide array of highly-optimized generic SLAM solvers for use in iceberg profiling. This will be described in more detail in Chapter \ref{ch.IcebergGeometry}.
 
 %The approach presented in \cite{Kimball2011b} considers the case of a single circumnavigation with one loop closure.  The method estimates the iceberg's motion through inertial space rather than the vehicle's motion through the iceberg reference frame. In order to incorporate the doppler data from the DVL, a large number of intermediate variables was introduced to the motion estimation optimization. These variables corresponded to discrete points fixed within the iceberg's frame of reference, whose velocities would be compared with the DVL measurements. The inclusion of these points drove up the optimization cost and made the solution difficult to scale to larger problem sizes. Additionally, in order to allow for nonuniform motion estimates with only a single loop closure, a novel optimization framework was developed that decomposed the problem into a linear least squares optimization within a nonlinear search over heading parameters.
 
-Scaling the problem to multiple swaths of data with many loop closure events presents challenges, but makes parts of the problem easier as well. The larger data set and multiple loop closures were difficult to incorporate into the custom optimization framework developed in \cite{Kimball2011b}, as it was designed for only one circumnavigation. However, the addition of multiple loop closures made it possible to observe nonuniform rotation of the iceberg without the need to introduce inertial position information or custom optimizer architectures. These facts drove the desire to reformulate the problem so that it could be easily solved with scalable pre-existing solvers, as described in Chapters \ref{ch.IcebergGeometry} and \ref{ch.GraphSLAM}, and later in this chapter in Section \ref{sec.GraphSLAMmotivation}
+Scaling the problem to multiple swaths of data with many loop closure events presents challenges, but makes parts of the problem easier as well. The framework developed in \cite{Kimball2011b} was designed for only one circumnavigation. However, the addition of multiple loop closures make it possible to observe nonuniform rotation of the iceberg without the need to introduce inertial position information or custom optimizer architectures. These facts drove the desire to reformulate the problem so that it could be easily solved with scalable pre-existing solvers, as described in Chapters \ref{ch.IcebergGeometry} and \ref{ch.GraphSLAM}, and later in this chapter in Section \ref{sec.GraphSLAMmotivation}
 
 \subsection{GraphSLAM for multi-swath fusion}
 \label{sec.GraphSLAMmotivation}

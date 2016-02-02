@@ -46,7 +46,9 @@ This chapter describes how the vehicle trajectory is estimated between loop clos
 %Although the inner loop is a linear operation, the number of parameters to be estimated grows linearly with the map size, and can result in slow performance for large icebergs. The changes presented enable the elimination of the inner loop estimation entirely, resulting in an optimization were only the heading of the iceberg as a function of time need be estimated. This can be seen graphically in Figure \ref{fig:NestedLoop2} The specifics of the manipulations used to eliminate this part of the optimization will be developed fully in the following sections. 
 
 \section{Previous method}
-The method developed in \cite{Kimball2011b} assumed that the vehicle's inertial trajectory could be measured or estimated independent of the , and attempted to estimate the iceberg's motion during the course of the mapping run. This estimate could then be subtracted from the inertial trajectory, yielding the iceberg-relative trajectory. The starting point for the estimation problem is the ``loop equation," as illustrated in Figure \ref{fig:LoopEquation}. The optimizer seeks to minimize alignment error while ensuring that the terms of this equation remain consistent with one another. 
+The method developed in \cite{Kimball2011b} assumed that the vehicle's inertial trajectory could be measured or estimated independent of the profiling optimization, and attempted to estimate the iceberg's motion during the course of the mapping run. This estimate could then be subtracted from the inertial trajectory, yielding the iceberg-relative trajectory. 
+
+The starting point for the estimation problem is Equation \ref{eqn:BasicLoop}, the ``loop equation," illustrated in Figure \ref{fig:LoopEquation}. The optimizer seeks to minimize alignment error while ensuring that the terms of this equation remain consistent with one another. 
 
 \begin{align}
 \vec{r}^{~\nicefrac{B_{cm}}{O}} + \vec{r}^{~\nicefrac{S_i}{B_{cm}}} &= ~\vec{r}^{~\nicefrac{V_{cm}}{O}} + \vec{r}^{~\nicefrac{S_i}{V_{cm}}}
@@ -60,7 +62,7 @@ The method developed in \cite{Kimball2011b} assumed that the vehicle's inertial 
     \label{fig:LoopEquation}
 \end{figure}
 
-The loop equation gets its name from the fact that the two paths to get from $O$ to $S_i$ are equivalent, and define a ``loop."
+\noindent The loop equation gets its name from the fact that the two paths to get from $O$ to $S_i$ are equivalent, and define a ``loop."
 
 In \cite{Kimball2011b}, this equation is differentiated in the inertial frame
 
@@ -68,7 +70,7 @@ In \cite{Kimball2011b}, this equation is differentiated in the inertial frame
    \frac{~^Id}{~dt}(\vec{r}^{~~\nicefrac{V_{cm}}{O}} + \vec{r}^{~~\nicefrac{S_i}{V_{cm}}} = ~ \vec{r}^{~~\nicefrac{B_{cm}}{O}} + \vec{r}^{~~\nicefrac{S_i}{B_{cm}}})\\
    \end{equation}
    
-   which after simplification yields 
+\noindent which after simplification yields 
    
        \begin{equation}
     ~^{I}\vec{v}^{V_{cm}} ~+~ \frac{~^Vd}{~dt}(\vec{r}^{~~\nicefrac{S_i}{V_{cm}}} ) ~+~ ^{I}\vec{\omega}^{V_{cm}}\times\vec{r}^{~~\nicefrac{S_i}{V_{cm}}}  = 
@@ -118,7 +120,7 @@ Note that the development here differs slightly from \cite{Kimball2011b} in that
 
 \section{Improvements to the method}
 
-Two modifications are introduced to the method presented in \cite{Kimball2011b}.  The first simplifies the problem by representing the iceberg-fixed points as the difference between other, known or already estimated variables. This uses all the same information but reduces the number of estimation parameters, yielding large speed increases. The second modification recasts the problem entirely in the iceberg frame of reference. In doing so, it measures the vehicle trajectory through the iceberg reference frame. It yields similar speed increases, and also eliminates the need to have an estimate of the vehicle's inertial position, which can be advantageous from an operations standpoint.
+Two modifications are introduced to the method presented in \cite{Kimball2011b}.  The first simplifies the problem by representing the iceberg-fixed points as the difference between other known or already estimated variables. This uses all the same information but reduces the number of estimation parameters, yielding large speed increases. The second modification recasts the problem entirely in the iceberg frame of reference. In doing so, it measures the vehicle trajectory through the iceberg reference frame. It yields similar speed increases, and also eliminates the need to have an estimate of the vehicle's inertial position, which can be advantageous from an operations standpoint.
 
 \begin{figure}[htbp]
    \centering
@@ -163,7 +165,7 @@ The terms of Equation \ref{eqn:getIt} can again be arranged such that all terms 
 
 The important result is the estimation vector $x_{ls}$ now contains \emph{only} the points $P_x$. The ``map points" that caused the vector in Equation \ref{eqn:LeastSquares} to have high dimensionality are absent. This improves greatly the speed of the inner loop optimization, as the number of parameters to estimate is on the order of 10 instead of hundreds or thousands.
 
-This substitution can be used as a replacement to the previous method, with the values of $A$ and $b$ in Equation \ref{eqn:LeastSquares} changed only slightly. Since least squares computational complexity is proportional to the square of the number of parameters estimated, this reduction yields significant savings. However, at this point, the method still requires knowledge of the inertial position and velocity of the vehicle, which can be difficult to determine accurately while underwater. The next section performs the same calculations as above, but defined entirely with respect to the moving iceberg frame, and with all derivatives taken in that frame, to eliminate this need. 
+This substitution can be used as a replacement to the previous method, with the values of $A$ and $b$ in Equation \ref{eqn:LeastSquares} changed only slightly. Since least squares computational complexity is proportional to the square of the number of parameters estimated, this reduction yields significant savings. However, at this point, the method still requires knowledge of the inertial position and velocity of the vehicle, which can be difficult to determine accurately without external aids. The next section performs the same calculations as above, but defined entirely with respect to the moving iceberg frame, and with all derivatives taken in that frame, to eliminate this need. 
 
 %TO DO: I THINK I NEED TO BACK UP THE STATEMENT THAT THESE POINTS CAN BE ELIMINATED WITHOUT SACRIFICING ACCURACY, SINCE THEY'RE ONLY OBSERVED ONCE (EXCEPT FOR LOOP CLOSURE POINTS), AND THE COSINE-DEPENDENT RANGE-VELOCITY AMBIGUITY.
 
@@ -175,7 +177,7 @@ To remove inertial terms from the optimization, a similar substitution is made t
 \begin{figure}[htbp]
    \centering
    \includegraphics[width=.8\textwidth]{../graphics/IcebergGeometryRelative.png} % requires the graphicx package
-   \caption{The inertial positions of the iceberg and vehicle, shown in Figure \ref{fig:LoopEquation}, can be replaced with their difference, $ \vec{r}^{~\nicefrac{V_{cm}}{B_{cm}}}$. This is the vehicle's iceberg-relative position, which is exactly the parameter needed to estimate accurately in order to create a map. }
+   \caption{The inertial positions of the iceberg and vehicle, shown in Figure \ref{fig:LoopEquation}, can be replaced with their difference, $ \vec{r}^{~\nicefrac{V_{cm}}{B_{cm}}}$. This is the vehicle's iceberg-relative position, which is the parameter needed to estimate accurately in order to create a map. }
     \label{fig:LoopEquationBergFrame}
 \end{figure}
 
@@ -238,7 +240,7 @@ Equation \ref{eqn:boom} allows the body components of the vehicle's velocity in 
    \label{eqn:boomLinAlg}
 \end{equation}
 
-the quantity $^B\vec{v}^{~V_{cm}}_B$ can be integrated to obtain the vehicle's iceberg-relative position. This is how the large linear least-squares inner loop optimization shown in Figure \ref{fig:NestedLoop} can be replaced by a deterministic trajectory propagation, as shown in Figure \ref{fig:NestedLoop2}. This also makes the problem's structure essentially identical to mapping tasks commonly solved via SLAM in the terrestrial robotics community, a link that will be developed fully in Chapter \ref{ch.GraphSLAM}.
+\noindent the quantity $^B\vec{v}^{~V_{cm}}_B$ can be integrated to obtain the vehicle's iceberg-relative position. This is how the large linear least-squares inner loop optimization shown in Figure \ref{fig:NestedLoop} can be replaced by a deterministic trajectory propagation, as shown in Figure \ref{fig:NestedLoop2}. This also makes the problem's structure essentially identical to mapping tasks commonly solved via SLAM in the terrestrial robotics community, a link that will be developed fully in Chapter \ref{ch.GraphSLAM}.
 
 \section{Heading ambiguity}
 
@@ -334,7 +336,7 @@ In order to perform scan matching for odometry, the sonar would need to be orien
 
 By incrementally aligning these high-overlap scans, a direct measurement can be made of the vehicle's iceberg-relative heading rate. There is no longer a need to make assumptions about the iceberg's motion, other than that it is planar. Additionally, given the vehicle's compass, the iceberg's rotation could be extracted from the measurements.
 
-To generate these measurements, scans are aligned using ICP with 3-DOF point-to-plane distance penalty. The heading offset for each scan match is used to update the vehicle's heading estimate, rather than compass and bias estimate. The difference between the sonar-based heading estimate and the compass heading gives a reasonable approximation of the iceberg's true heading rate: Figure \ref{fig:filtIgnx}
+To generate these measurements, scans are aligned using ICP with 3-DOF point-to-plane distance penalty. The heading offset for each scan match is used to update the vehicle's heading estimate, rather than compass and bias estimate. The difference between the sonar-based heading estimate and the compass heading gives a reasonable approximation of the iceberg's true heading rate. Figure \ref{fig:filtIgnx}
 
 
 \begin{figure}[h]

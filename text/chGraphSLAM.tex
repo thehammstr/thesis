@@ -7,7 +7,7 @@ Chapter \ref{ch.IcebergGeometry} recast the problem of iceberg profiling in a fo
 
 A number of techniques can be applied to solve this new formulation of the profiling problem, and a number of powerful software tools are available to solve the techniques' associated optimizations. The ease of representing the problem as a pose graph, the ability to solve large optimizations efficiently, and the fact that the calculations did not need to be performed online drove the selection of GraphSLAM as a solution method. 
 
-This chapter describes how the iceberg profiling problem is posed in the framework of GraphSLAM. To provide context, it will give a brief overview of some key components of the method. However, it will not go into the low-level details of how the GraphSLAM algorithm implements its optimization. For more information, refer to the sources cited in Section \ref{sec.SLAM}.
+This chapter describes how the iceberg profiling problem is posed in the framework of GraphSLAM. To provide context, a brief overview of some key components of the method will be presented. However, the low-level details of how the GraphSLAM algorithm implements its optimization will not be discussed. More detail is presented in the sources cited in Section \ref{sec.SLAM}.
 
 \section{GraphSLAM overview}
 
@@ -311,6 +311,13 @@ There are drawbacks, however. A large one is the underlying assumption that the 
 
 Another difficulty is determining how synthetic measurements should be weighted in the optimization. Assigning uncertainty to the synthetic measurement becomes challenging, as the pose offsets are obtained from many aggregated measurements. The error statistics can no longer be generated simply from known sensor error characteristics. Some mapping implementations solve this issue by assuming that point cloud alignment is perfect, and treating the calculated offsets as constraints, rather than penalty terms. The approach presented in this dissertation uses heuristics to determine the weight to be given to these synthetic measurements based on convergence speed, general sensor characteristics, and qualitative map consistency. A more rigorous analysis on how to determine weights for loop closure events based on motion and measurement uncertainty during submap creation is left for future work.
 
+\section{Solution via Ceres}
+
+To solve the GraphSLAM problem, the Ceres Solver Library was used. Ceres is a C++ open-source nonlinear least squares optimization library initially developed and used by Google \cite{ceres-solver}. It has been used in a wide range of image processing and robotic mapping tasks by university and research groups around the world. Its flexibility and speed make it well-suited for these tasks, as, in general, no two experimental setups are exactly the same, and the problem size can be quite large.  
+
+The library allows the user to define cost function objects that tie graph nodes to one another, and incrementally add them to the problem in exactly the same way the GraphSLAM problem is constructed. 
+
+The contributions discussed in Chapter \ref{ch.IcebergGeometry} made the application of this optimized solver a straightforward exercise.
 
 \section{Summary}
 
