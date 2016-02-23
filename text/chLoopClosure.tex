@@ -51,7 +51,7 @@ In order to detect overlap in the face of large motion-induced odometry errors, 
    \label{fig:BathyMapping3}
 \end{figure}
 
-The second complication arises from the ICP alignment algorithm's implicit assumption of submap rigidity. The submap creation assumes that the inertial guidance of the vehicle is accurate over the short time it takes to build a submap, as described in Chapter \ref{ch.ProblemStatement}. Any navigation errors during that time will introduce warping to the submap, which can cause the registration method to fail or worse: create a positive match on different terrain. This warping effect makes the comparison of ever-larger submaps problematic, as the alignment accuracy will degrade as the submap shape diverges from its true geometry.
+The second complication arises from the ICP alignment algorithm's implicit assumption of submap rigidity. The submap creation assumes that the inertial guidance of the vehicle is accurate over the short time it takes to build a submap, as described in Chapter \ref{ch.ProblemStatement}. Any navigation errors during that time will introduce warping to the submap, which can cause the registration method to fail or worse: create a positive match on different terrain. This warping effect makes the comparison of ever-larger submaps problematic, as the alignment accuracy will degrade as the submap shape diverges from its true geometry, as shown in Figure \ref{fig:motionErrorWarping}.
  
  \begin{figure}[htb]
    \centering
@@ -73,7 +73,7 @@ In light of this warping related to submap size, there is an incentive to search
 
 %One possible solution to achieve large coverage area with minimal map warping might be to search for the best registration over multiple smaller submaps, and devise a metric to select the best submap alignment pair. However, as odometry error increases, the search space can become large. Point cloud registrations are relatively expensive, and verifying their alignment can be difficult. 
 
-These concerns provide the motivation for the methods developed in the rest of this chapter. The first one, a graphical user interface, leverages humans' excellent pattern recognition ability to provide high level guidance and error checking for the alignment algorithm. It provides a streamlined method for encoding loop closure information, and guards against local minima and false matches. 
+These concerns provide the motivation for the methods developed in the rest of this chapter. The first one, a graphical user interface, leverages humans' pattern recognition ability to provide high-level guidance and error checking for the alignment algorithm. It provides a streamlined method for encoding loop closure information, and guards against local minima and false matches. 
 
 The second method works toward removing the need for human intervention entirely. Borrowing from well-developed concepts in the computer vision and image processing communities, and more recent work in point cloud feature extraction, it seeks to find local, stable, identifiable features in the terrain that can be recognized upon a second observation. These distinctive ``landmarks" can be used to initialize more accurate point cloud registration methods, avoiding convergence into local minima. 
 
@@ -155,7 +155,7 @@ The second step restores the pixels that began with valid data to their original
    \label{fig:rangeImage}
 \end{figure}
 
-The last step in creating a high-contrast image for feature detection is to apply Contrast-Limited Adaptive Histogram Equalization (CLAHE). Algorithms like SIFT and SURF use gradient information in images to extract the features. The CLAHE process attempts to enhance details without skewing the overall contrast level of the image. \cite{Reza2004}
+The last step in creating a high-contrast image for feature detection is to apply Contrast-Limited Adaptive Histogram Equalization (CLAHE). Algorithms like SIFT and SURF use gradient information in images to extract the features. The CLAHE process attempts to enhance details without skewing the overall contrast level of the image \cite{Reza2004}. Figure \ref{fig:rangeImageHC} shows the result of this step.
 
 \begin{figure}[htb]
    \centering

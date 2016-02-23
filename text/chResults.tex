@@ -20,19 +20,19 @@ A simulation environment was created in MATLAB to enable mapping results to be c
    \label{fig:IcebergSim}
 \end{figure}
 
-A mesh was created based on 3D point cloud data of a real iceberg obtained from the CNRC Iceberg Shapes and Sightings database. \cite{Verbit2006} This particular iceberg was roughly 150 meters long at the waterline, with a keel depth of about 70 meters.
+A mesh was created based on 3D point cloud data of a real iceberg obtained from the CNRC Iceberg Shapes and Sightings database \cite{Verbit2006}. This particular iceberg was roughly 150 meters long at the waterline, with a keel depth of about 70 meters.
 
 This mesh was set adrift with known translation and rotation. The simulated AUV then flew a helical path of increasing depth around the iceberg, in wall-following mode. Its feedback controller attempted to maintain a constant standoff distance as measured by the two forward-inclined DVL beams.
 
 Multibeam sonar range returns were then generated via ray-tracing on the mesh. These measurements could be corrupted with random noise to simulate imperfect real-world sensing. 
 
-Simulations were run at 30 m and 50 m standoff distance. The latter was used to check robustness of the method to DVL dropouts. When operated at greater standoff distance, the two forward DVL beams often lose contact with the iceberg surface. In these instances, the simulated DVL reports ``MAX RANGE" to the controller and is unable to estimate the full iceberg-relative velocity. To handle these incidents, the wall-following feedback controller saturates its output to gracefully re-acquire the wall. 
+Simulations were run at 30 m and 50 m standoff distance. The latter was used to check robustness of the method to DVL dropouts. When operated at greater standoff distance, the two forward DVL beams often lost contact with the iceberg surface. In these instances, the simulated DVL reported ``MAX RANGE" to the controller and was unable to estimate the full iceberg-relative velocity. To handle these incidents, the wall-following feedback controller saturated its output to gracefully re-acquire the wall. 
 
-In the mapping phase, the dropouts in measured velocity were interpolated between times when the vehicle had good velocity readings. The process noise during these outages was increased to reflect this. The AUV nominally flies at a constant velocity as expressed in the body frame, so these outages did not have a great effect on the end reconstruction.
+In the mapping phase, the dropouts in measured velocity were interpolated between times when the vehicle had good velocity readings. The process noise during these outages was increased to reflect this. The AUV nominally travels at a constant velocity as expressed in the body frame, so these outages did not have a great effect on the end reconstruction.
 
 \subsection{Loop Closure}
 
-The resolution of the simulated iceberg model was insufficient for automatic loop closure detection. The simulated sonar returns were generated from a model that had already been smoothed from raw data, so there was not enough small-scale texture to detect pseudo-image features. Even with noise-free simulated measurements, the model's smoothness yielded worse point cloud alignment than the raw canyon data. As a result only the manual correspondence detection GUI was used for the simulated data. 
+The resolution of the simulated iceberg model was insufficient for automatic loop closure detection. The simulated sonar returns were generated from a model that had already been smoothed from raw data, so there was not enough small-scale texture to detect pseudo-image features. The model's smoothness precluded the use of the image feature-based approach to loop closure, as there was insufficient texture to calculate any stable features. As a result only the manual correspondence detection GUI was used for the simulated data. 
 
 The simulation data optimization contained roughly 15 loop closure events. These can be seen in Figure \ref{fig:RawNav}. The green lines represent the offset between two poses, calculated by aligning submaps through ICP. If there were no odometry drift, the ends of each green line would lie on the poses (magenta) used in the loop closure event. However, the iceberg's motion induces apparent drift, so there are errors in the alignment, shown in red.
 
@@ -92,7 +92,7 @@ At an increased standoff distance of 50 meters, the DVL only remained locked in 
  \begin{figure}[!htb]
    \centering
    \includegraphics[width=.8\textwidth]{../graphics/ceresResults/SimData/RealIceberg1/50m_standoff/reconstruction_50m_standoff.png} % requires the graphicx package
-   \caption{At 50m standoff distance, the vehicle was out of DVL velocity lock roughly 60\% of the time. In spite of this, the algorithm is able to recover and produce a self-consistent map.}
+   \caption{At 50m standoff distance, the vehicle was out of DVL velocity lock roughly 60\% of the time. In spite of this, the algorithm was able to recover and produce a self-consistent map.}
    \label{fig:FullSim50m}
 \end{figure}
 
@@ -103,7 +103,7 @@ At an increased standoff distance of 50 meters, the DVL only remained locked in 
 
 \subsection{Data Collection}
 
-Data was collected in October 2012 from a vertical-walled portion of Soquel Canyon, an underwater canyon in Monterey Bay. The location of this canyon is shown in Figure \ref{fig:SoquelLoc}, with corresponding bathymetry shown in Figure \ref{fig:SoquelBathy}. The portion of the canyon that was traversed is roughly 1.5 km in length. The vehicle flew three passes next to the wall with two return legs, shown in black, highlighted with the red box in FIgure \ref{fig:SoquelBathy}.
+Data was collected in October 2012 from a vertical-walled portion of Soquel Canyon, an underwater canyon in Monterey Bay. The location of this canyon is shown in Figure \ref{fig:SoquelLoc}, with corresponding bathymetry shown in Figure \ref{fig:SoquelBathy}. The portion of the canyon that was traversed is roughly 1.5 km in length. The vehicle flew three passes next to the wall with two return legs, shown in black, highlighted with the red box in Figure \ref{fig:SoquelBathy}.
 
  \begin{figure}[!htb]
    \centering
@@ -216,8 +216,8 @@ Finally, Figure \ref{fig:RealDataSolution5} gives an end-on view of the canyon, 
 
 Mapping results were shown for both simulated iceberg data and field data collected in an underwater canyon with motion added to simulate that of an iceberg. 
 
-For the simulated iceberg, the human-in-the-loop loop closure detection procedure was used. GraphSLAM was then performed, and the keel was reconstructed to 0.8 meters rms accuracy, which is on the order of the ranging error of the sensors typically used to create these maps at the corresponding standoff distances. The algorithms also produced an accurate estimate of the iceberg's heading rate during the course of the mapping run. This is a valuable validation, as the true shape of the canyon measured in the experimental data was not available for comparison.
+For the simulated iceberg, the human-in-the-loop loop closure detection procedure was used. GraphSLAM was then performed, and the keel was reconstructed to 0.8 meters rms accuracy, which is on the order of the ranging error of the sensors typically used to create these maps at the corresponding standoff distances. The algorithms also produced an accurate estimate of the iceberg's heading rate during the course of the mapping run.
 
-For the experimental data, automatic loop closure detection procedures was able to generate a trajectory estimate on the order of high-precision dead reckoning through static terrain, which was further refined with additional manually-detected loop closures.  No truth data was available for shape comparison, but the map was qualitatively self-consistent. 
+For the experimental data, automatic loop closure detection procedures were able to generate a trajectory estimate on the order of high-precision dead reckoning through static terrain, which was further refined with additional manually-detected loop closures.  While no truth data was available for shape comparison, the map was qualitatively self-consistent. Therefore the algorithm was demonstrated on field data to be robust to large motion errors consistent with those induced by iceberg motion.
 
 

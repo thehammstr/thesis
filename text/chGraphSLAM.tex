@@ -177,7 +177,7 @@ Once the nodes are all tied together with springs of appropriate length and stif
 
 \section{Applying GraphSLAM to iceberg profiling}
 
-Below, the components in the conditional probability relations (restated here for convenience) will be defined, along with all modeling assumptions and choices of relative weights for the specific application of iceberg profiling. 
+Below, the components in the conditional probability relations (restated here for convenience) will be defined, along with all modeling assumptions and choices of relative weights for the specific application of iceberg profiling. The inputs and outputs of the GraphSLAM-based iceberg profiling problem are shown in Figure \ref{fig:GraphSLAMIO}.
 
 \begin{align}
 p\left(x_{t+1}~|~x_t,u_t\right) & \sim \mathcal{N}\left(g(x_t,u_t), R_t\right) \\
@@ -239,7 +239,7 @@ Dropouts in the DVL velocity measurement are interpolated between valid readings
 
 A state representation without the drift term $\beta$ could have been used, increasing the process noise covariance on the heading to account for unmodeled drift of the iceberg. This would result in the same state representation typically used in mobile (wheeled) robotic SLAM problems, as in \cite{Thrun2005}. However, the zero-mean uncorrelated process noise assumption would have biased the navigation estimate, consistently underestimating any DC-component of the angular rate of the iceberg. For this reason, explicit modeling of the rotational drift rate was selected.
 
-\subsubsection{Equivalence to compass error}
+\subsubsection{Equivalence to heading rate error}
 
 The iceberg drift parameter label $\beta$ is often used to indicate sensor bias. This nomenclature was chosen to highlight the equivalence of unmodeled iceberg motion and time-varying rate gyro bias. Navigating in a non-inertial reference frame using perfect inertial sensors is equivalent to navigating in an inertial reference frame with flawed inertial sensors. 
 

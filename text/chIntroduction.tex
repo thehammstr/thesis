@@ -3,7 +3,7 @@
 \chapter{Introduction}
 \label{ch.Introduction}
 
-Iceberg profiling is the creation of 3-D shape reconstructions of the submerged portion, or keel, of free-drifting icebergs. An example of an iceberg profile is shown in Figure \ref{fig:idealMap}. These accurate 3-D shape profiles, reconstructions, or simply ``maps" are useful in a number of scientific and industrial applications.  In their most basic representation, these reconstructions consist of point clouds of range data collected by multibeam sonar. The point clouds can then be converted to other formats depending on the application.
+Iceberg profiling is the creation of 3-D shape reconstructions of the submerged portion, or keel, of free-drifting icebergs, as seen in Figure \ref{fig:IcebergSunset}.  These accurate 3-D shape profiles, reconstructions, or simply ``maps" are useful in a number of scientific and industrial applications.  In their most basic representation, these reconstructions consist of point clouds of range data collected by multibeam sonar. The point clouds can then be converted to other formats depending on the application. An example of this is shown in Figure \ref{fig:idealMap}, with the blue point cloud reconstruction superimposed on the iceberg model used to generate the data.
 
 \begin{figure}[!htb]
    \centering
@@ -66,7 +66,7 @@ In the days and weeks after their creation, iceberg reconstructions can be used 
 
 Finally, on time scales of months to years, performing shape reconstruction on the same iceberg allows the calculation of an iceberg's melt rates and melt patterns.
 
-Iceberg profiles also have industrial applications. Energy companies operating in polar regions routinely hire contractors to do ship-based reconstructions of icebergs that pose a risk to their infrastructure. They use these reconstructions to help predict how the icebergs drift with the wind and ocean currents, and in high-fidelity collision simulations to asses the likelihood of damage in the event of impact with a drilling rig or pipeline \cite{ralph2008iceberg} \cite{fuglem1996iceberg}. Of particular importance in the latter case is knowing the depth and shape of the iceberg keel, as a keel dragging across the seafloor can cause catastrophic damage to pipelines. This is known as ``iceberg scour," and motivates the need for profiling the full depth of the iceberg.
+Iceberg profiles also have industrial applications. Energy companies operating in polar regions routinely hire contractors to do ship-based reconstructions of icebergs that pose a risk to their infrastructure. They use these reconstructions to help predict how the icebergs drift with the wind and ocean currents, and in high-fidelity collision simulations to asses the likelihood of damage in the event of impact with a drilling rig or pipeline \cite{ralph2008iceberg} \cite{fuglem1996iceberg}. Of particular importance in the latter case is knowing the depth and shape of the iceberg keel, as a keel dragging across the seafloor can cause catastrophic damage to pipelines. This is known as ``iceberg scour."
 
 %\subsection{Advantages and Disadvantages of AUVs}
 %
@@ -79,12 +79,12 @@ Iceberg profiles also have industrial applications. Energy companies operating i
 
 \subsection{Exploration and study of extreme environments}
 
-Icebergs are harsh environments without navigation infrastructure. In this way, they are similar to the challenging environments encountered during space exploration, like asteroids, comets, or distant planetouds. However, they have the practical advantage of being closer and more accessible. By conducting such real-world robotic exploration and mapping missions, lessons will be learned and techniques developed that will mitigate risks before launching hardware into space. 
+Icebergs are harsh environments without navigation infrastructure. In this way, they are similar to the challenging environments encountered during space exploration, like asteroids, comets, or distant planetouds. However, they have the practical advantage of being closer and more accessible. By conducting real-world robotic exploration and mapping missions, lessons can be learned and techniques developed that could mitigate risks before launching hardware into space. 
 
 \begin{figure}[htb]
    \centering
    \includegraphics[width=.8\textwidth]{../graphics/Europa-moon.jpg} % requires the graphicx package
-   \caption{Jupiter's icy moon Europa, a point of great interest for robotic exploration.}
+   \caption{Jupiter's icy moon Europa, a point of interest for robotic exploration.}
    \label{fig:Europa}
 \end{figure}
 
@@ -110,7 +110,7 @@ If a detailed shape reconstruction of the body is available, terrain-relative na
    \label{fig:IcebergAerial}
 \end{figure}
 
-Aircraft are used extensively in tracking and managing icebergs. Coast guards and navies of several nations regularly patrol Arctic and Antarctic waters to detect and track icebergs that might pose a threat to infrastructure or shipping. While this provides an effective means of tracking multiple icebergs' positions over time, it says relatively little about each iceberg's structure. The aircraft are sometimes equipped with LIDAR range scanners \cite{Bunkin2012}, but most often the only measurements available are photographs. From this, rough classification of iceberg type based on sail shape (such as ``drydock," ``pinnacle," or ``blocky" ) is possible. Additionally, keel depth can be estimated heuristically based on maximum waterline length, and decay rate can be inferred from repeated sightings, as shown in \cite{Barker2004}. However, all of these are only first-order approximations of shape; aerial imagery cannot provide detailed iceberg shape profiles of the iceberg's keel. 
+Aircraft are used extensively in tracking and managing icebergs. Coast guards and navies of several nations regularly patrol Arctic and Antarctic waters to detect and track icebergs that might pose a threat to infrastructure or shipping. While this provides an effective means of tracking multiple icebergs' positions over time, it says relatively little about each iceberg's structure. The aircraft are sometimes equipped with LIDAR range scanners \cite{Bunkin2012}, but most often the only measurements available are photographs, as in Figure \ref{fig:IcebergAerial}. From this, rough classification of iceberg type based on sail shape (such as ``drydock," ``pinnacle," or ``blocky" ) is possible. Additionally, keel depth can be estimated heuristically based on maximum waterline length, and decay rate can be inferred from repeated sightings, as shown in \cite{Barker2004}. However, all of these are only first-order approximations of shape; aerial imagery cannot provide detailed iceberg shape profiles of the iceberg's keel. 
 
 \subsection{Ship-based Iceberg Profiling}
 
@@ -127,28 +127,21 @@ Above-water measurements include radar, lidar, and image-based photogrammetry. L
 
 To map the keel, multibeam or sidescan sonar is typically used. For smaller icebergs, the measurements can be made using sonars mounted to the ship. However, for very large icebergs, surface-based observation can be insufficient to measure deeper portions of the keel. Tethered ROVs or tow bodies outfitted with sonar can be used to access the lower parts, and even the bottom of the keel, but drive up the cost and complexity of the operation, and can put expensive assets at risk. 
 
-The chief advantages of of ship-based survey are the ability to make simultaneous observations of the iceberg both above and below the surface, and the availability of GPS. The former allows the iceberg motion to be measured directly, leveraging the wider variety of sensing methods available above water, such as optical cameras and lidar, which simplifies the task of resolving the data into the moving reference frame. The availability of GPS signal above water also provides a reference for the observer's position in the world frame, which can aid in the estimate of the iceberg's trajectory over time. Disadvantages include risks involved in operating close to icebergs, and the inability to profile deep portions of the iceberg. 
+The chief advantages of ship-based survey are the ability to make simultaneous observations of the iceberg both above and below the surface, and the availability of GPS. The former allows the iceberg motion to be measured directly, leveraging the wider variety of sensing methods available above water, such as optical cameras and lidar, which simplifies the task of resolving the data into the moving reference frame. The availability of GPS signal above water also provides a reference for the observer's position in the world frame, which can aid in the estimate of the iceberg's trajectory over time. Disadvantages include risks involved in operating close to icebergs, and the inability to profile deep portions of the iceberg. 
 
 \section{AUV-based iceberg profiling}
 
-AUVs present several advantages over the above methods of profiling, but also face some unique challenges. AUVs are untethered, granting access to the full depth of the iceberg without risking the loss of an ROV should its tether get caught or severed by brash ice. Additionally, untethered AUVs can operate at higher speed than ROVs, yielding greater data coverage and shorter mission  time. 
-
-An AUV can be programmed to fly around an iceberg at a desired standoff distance. Using a sideways-facing multibeam sonar, it sweeps out a wide swath of range data that can be used to recreate the shape of the iceberg, as illustrated in Figure \ref{fig:introSetup}. 
+AUVs present several advantages over the above methods of profiling, but also face some unique challenges. AUVs are untethered, granting access to the full depth of the iceberg without risking the loss of an ROV should its tether get caught or severed by brash ice, the accumulation of smaller pieces of ice that often accompany icebergs. Additionally, untethered AUVs can operate at higher speed than ROVs, yielding greater data coverage and shorter mission  time. 
 
 The challenges with AUV-based profiling are primarily navigational. The robot needs to be able to maneuver autonomously in a safe and robust manner around terrain that is moving, and resolve its sonar measurements into the moving frame of reference. Addressing this challenge is one of the primary motivations of this thesis.
 
-\begin{figure}[!htb]
-   \centering
-   \includegraphics[width=\textwidth]{../graphics/sonarIllustrations/sweepMap_edited.png} % requires the graphicx package
-   \caption{Illustration of an AUV profiling an iceberg keel. The vehicle circumnavigates the iceberg, sweeping out a point cloud of multibeam sonar measurements. }
-   \label{fig:introSetup}
-\end{figure}
+
 
 \subsection{Nominal mission profile}
 \label{sec.MissionProfileDef}
-The work presented in this dissertation assumes a nominal mission profile where the vehicle follows a roughly helical path around an iceberg, slowly descending to observe deeper portions as it travels. This is illustrated in Figure \ref{fig.NominalProfile1}. This description is meant to provide context for the development to follow, but is not meant to indicate that this choice of vehicle and trajectory is \emph{unique}.  
+The work presented in this dissertation assumes a nominal mission profile where the vehicle follows a roughly helical path around an iceberg, slowly descending to observe deeper portions as it travels. This path allows the vehicle to ensonify wide swaths of the iceberg using its sideways-mounted multibeam sonar. The helical path and mapping sonar configuration are illustrated in Figures \ref{fig:NominalProfile1} and \ref{fig:introSetup}, respectively. This description is meant to provide context for the development to follow, but is not meant to indicate that this choice of vehicle and trajectory is \emph{unique}.  
 
-The profiling process begins aboard a research vessel by locating a suitable iceberg and approaching to minimum safe distance. The AUV is then deployed in a direction to intercept the iceberg. Upon interception, the vehicle circumnavigates the iceberg in a counter-clockwise direction. It does this reactively, flying at a constant nominal speed, and using its obstacle avoidance sonar or DVL to maintain a constant standoff distance of 25 to 50 meters. In order to image the entire iceberg, the vehicle must fly at multiple depths, which is achieved with a small constant downward velocity, resulting in a helical trajectory.
+The assumed profiling process begins aboard a research vessel by locating a suitable iceberg and approaching to minimum safe distance. The AUV is then deployed in a direction to intercept the iceberg. Upon interception, the vehicle circumnavigates the iceberg in a counter-clockwise direction. It does this reactively, flying at a constant nominal speed, and using additional sonars to maintain a constant standoff distance of 25 to 50 meters.
 
 \begin{figure}[htb]
    \centering
@@ -157,13 +150,20 @@ The profiling process begins aboard a research vessel by locating a suitable ice
    \label{fig:NominalProfile1}
 \end{figure}
 
+\begin{figure}[!htb]
+   \centering
+   \includegraphics[width=\textwidth]{../graphics/sonarIllustrations/sweepMap_edited.png} % requires the graphicx package
+   \caption{Illustration of an AUV profiling an iceberg keel. The vehicle circumnavigates the iceberg, sweeping out a point cloud of multibeam sonar measurements. }
+   \label{fig:introSetup}
+\end{figure}
+
 More details on the vehicle configuration, sensors, etc. can be found in Chapter \ref{ch.ProblemStatement}.
 
 \subsection{Challenges with AUV profiling}
 
 Profiling icebergs poses a set of unique challenges relative to other underwater mapping tasks. Specifically, icebergs can move a substantial amount during the time it takes to image their entire surface. Icebergs are free to translate in two directions, and rotate in heading. They are pushed at random by the wind  and currents, making it difficult to predict how they will move. (Additionally, they are prone to flip or ``turtle," pitching 180 degrees over very short time scales, though this dissertation does not address such dynamic corner cases of profiling.) 
 
-If unaccounted for, this motion of the object being profiled will introduce warping and inconsistencies into the reconstruction. Figure \ref{fig:Challenge} shows the same data as Figure \ref{fig:idealMap}, but where the iceberg was in motion during the course of data collection. Since the iceberg was not stationary, simply reprojecting the range data based on the inertial (world-frame) trajectory (magenta) yields an inconsistent point cloud. However, if the vehicle's trajectory through the \emph{iceberg} frame of reference, rather than the world frame, can be determined, then the data can be reprojected into a self-consistent point cloud. This will be the guiding intuition behind the solution method presented in this thesis.
+If unaccounted for, this motion will introduce warping and inconsistencies into the reconstruction. Figure \ref{fig:Challenge} shows the same data as Figure \ref{fig:idealMap}, but where the iceberg was in motion during the course of data collection. Since the iceberg was not stationary, simply reprojecting the range data based on the inertial (world-frame) trajectory (magenta) yields an inconsistent point cloud. However, if the vehicle's trajectory through the \emph{iceberg} frame of reference, rather than the world frame, can be determined, then the data can be reprojected into a self-consistent point cloud. This will be the guiding intuition behind the solution method presented in this thesis.
 
 Unmodeled accelerations and rotations of the iceberg are indiscernible from navigation errors onboard the vehicle. The equivalence between errors due to motion and errors due to faulty inertial sensing is shown in detail in Chapter \ref{ch.IcebergGeometry}. Additionally, the non-inertial reference frame means that even infrastructure-based localization methods like GPS (if it were available underwater) and Ultra-short Baseline Interferometry (USBL) will appear to drift in the iceberg frame, since they report position in the inertial frame. In order for these localization methods to provide drift-free iceberg-relative positioning, infrastructure would need to be installed on the iceberg itself, which is prohibitive in most cases due to risk and reliability concerns.
 
