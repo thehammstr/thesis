@@ -24,7 +24,7 @@ A mesh was created based on 3D point cloud data of a real iceberg obtained from 
 
 This mesh was set adrift with known translation and rotation. The simulated AUV then flew a helical path of increasing depth around the iceberg, in wall-following mode. Its feedback controller attempted to maintain a constant standoff distance as measured by the two forward-inclined DVL beams.
 
-Multibeam sonar range returns were then generated via ray-tracing on the mesh. These measurements could be corrupted with random noise to simulate imperfect real-world sensing. 
+Multibeam sonar range returns were then generated via ray-tracing on the mesh. These measurements were corrupted with Gaussian random noise to simulate imperfect real-world sensing. 
 
 Simulations were run at 30 m and 50 m standoff distance. The latter was used to check robustness of the method to DVL dropouts. When operated at greater standoff distance, the two forward DVL beams often lost contact with the iceberg surface. In these instances, the simulated DVL reported ``MAX RANGE" to the controller and was unable to estimate the full iceberg-relative velocity. To handle these incidents, the wall-following feedback controller saturated its output to gracefully re-acquire the wall. 
 
@@ -47,7 +47,7 @@ The simulation data optimization contained roughly 15 loop closure events. These
 
 \subsubsection{Thirty-meter standoff distance}
 
-After one iteration of the Ceres solver, the incorporation of the DVL velocity data eliminates essentially all of the effects of translational drift.  However, errors associated with the iceberg's rotation manifest in an apparent twisting of the data. This can be seen in Figure \ref{fig:WithDVL1}.
+After one iteration of the Ceres solver, the incorporation of the DVL velocity data eliminated essentially all of the effects of translational drift.  However, errors associated with the iceberg's rotation manifested in an apparent twisting of the data. This can be seen in Figure \ref{fig:WithDVL1}.
 
 \begin{figure}[!htb]
    \centering
@@ -56,7 +56,7 @@ After one iteration of the Ceres solver, the incorporation of the DVL velocity d
    \label{fig:WithDVL1}
 \end{figure}
 
-Further iterations reduce this error, yielding the final reconstructed cloud and trajectory estimate shown in Figure \ref{fig:FullSimSol}.
+Further iterations reduced this error, yielding the final reconstructed cloud and trajectory estimate shown in Figure \ref{fig:FullSimSol}.
 
  \begin{figure}[!htb]
    \centering
@@ -166,7 +166,7 @@ Despite only having two loop closures, GraphSLAM was able to correct most of the
 
 This automatic loop closure detection was able to account for nearly all of the motion-induced error in the navigation data, yielding a trajectory estimate of roughly the same accuracy as those obtained by dead reckoning with a high-precision inertial navigation system and DVL. 
 
-Using this as a starting point, distance-based heuristics like those used in MB-system \cite{Caress2006} could have been used to detect more loop closures. Instead, the GUI described in Chapter \ref{ch.LoopClosure} and \ref{ap.GUI} was used. An additional 23 loop closure events were detected, yielding 25 events in total. With the data already nearly aligned perfectly from the automated procedure, this was a simple exercise. These additional links can be seen in Figure \ref{fig:RealDataSolution1}, shown as bright green lines between points on the magenta trajectory.
+Using this as a starting point, distance-based heuristics like those used in MB-system \cite{Caress2006} could have been used to detect more loop closures. Instead, the GUI described in Chapter \ref{ch.LoopClosure} and Appendix \ref{ap.GUI} was used. An additional 23 loop closure events were detected, yielding 25 events in total. With the data already nearly aligned perfectly from the automated procedure, this was a simple exercise. These additional links can be seen in Figure \ref{fig:RealDataSolution1}, shown as bright green lines between points on the magenta trajectory.
 
  \begin{figure}[!htb]
    \centering
@@ -209,14 +209,13 @@ Finally, Figure \ref{fig:RealDataSolution5} gives an end-on view of the canyon, 
    \caption{Looking up the reconstructed canyon.}
    \label{fig:RealDataSolution5}
 \end{figure}
-\subsection{Soquel Canyon Results}
 
 
 \section{Summary}
 
 Mapping results were shown for both simulated iceberg data and field data collected in an underwater canyon with motion added to simulate that of an iceberg. 
 
-For the simulated iceberg, the human-in-the-loop loop closure detection procedure was used. GraphSLAM was then performed, and the keel was reconstructed to 0.8 meters rms accuracy, which is on the order of the ranging error of the sensors typically used to create these maps at the corresponding standoff distances. The algorithms also produced an accurate estimate of the iceberg's heading rate during the course of the mapping run.
+For the simulated iceberg, the human-assisted loop closure detection procedure was used. GraphSLAM was then performed, and the keel was reconstructed to 0.8 meters rms accuracy, which is on the order of the ranging error of the sensors typically used to create these maps at the corresponding standoff distances. The algorithms also produced an accurate estimate of the iceberg's heading rate during the course of the mapping run.
 
 For the experimental data, automatic loop closure detection procedures were able to generate a trajectory estimate on the order of high-precision dead reckoning through static terrain, which was further refined with additional manually-detected loop closures.  While no truth data was available for shape comparison, the map was qualitatively self-consistent. Therefore the algorithm was demonstrated on field data to be robust to large motion errors consistent with those induced by iceberg motion.
 

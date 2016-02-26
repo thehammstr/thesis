@@ -111,7 +111,7 @@ Note that the development here differs slightly from \cite{Kimball2011b} in that
 \begin{figure}[htbp]
    \centering
    \includegraphics[scale=.4]{../graphics/KimballIterativeOpt.png} % requires the graphicx package
-   \caption{Iterative optimization structure employed in \cite{Kimball2011b}. The nonlinear heading parameters $\psi$ are chosen in the outer loop and fed to the inner loop as constants. $\hat{\bar{x}}_{ls}$ is a vector of O(10) motion parameters and O(1000) iceberg-fixed points to be estimated at each optimization step  \emph{Graphic courtesy of Peter Kimball}}
+   \caption{Iterative optimization structure employed in \cite{Kimball2011b}. The nonlinear heading parameters $\psi$ are chosen in the outer loop and fed to the inner loop as constants. $\hat{\bar{x}}_{ls}$ is a vector of O(10) motion parameters and O(1000) iceberg-fixed points to be estimated at each optimization step.  \emph{Graphic courtesy of Peter Kimball}.}
    \label{fig:NestedLoop}
 \end{figure}
 
@@ -255,7 +255,7 @@ The mapping multibeam sonar cannot observe heading changes because it is oriente
 \begin{figure}[h]
    \centering
    \includegraphics[width=.8\textwidth]{../graphics/ScanMatch3.png} % requires the graphicx package
-   \caption{Simulated AUV scans taken at two times, roughly 20 meters apart. The multibeam mapping sonar sweeps out a wide area when oriented perpendicular to the direction of travel. This orientation does not allow scan matching for odometry, since the beam pattern does not overlap from scan to scan, as shown in Figure \ref{fig:NoMatch}}
+   \caption{Simulated AUV scans taken at two times, roughly 20 meters apart. The multibeam mapping sonar sweeps out a wide area when oriented perpendicular to the direction of travel. This orientation does not allow scan matching for odometry, since the beam pattern does not overlap from scan to scan.}
    \label{fig:beamOrientation}
 \end{figure}
 
@@ -282,7 +282,7 @@ The loop equation that can be used to generate an error signal is then given by
    \label{fig:headingObservability}
 \end{figure}
 
-Any odometry error that accumulates between $t_1$ and $t_2$ will show up as a difference between the expected range the patch and the actual range. This is shown by the ghosted AUV at $t_2$. Navigation error due to the iceberg's rotation has caused its position estimate to pull away from the iceberg relative to the true location (solid AUV). As a result, an error, shown at bottom, develops between the DVL reading at the first time, and the multibeam at the second time. This difference can provide information on the accumulated heading error.
+Any odometry error that accumulates between $t_1$ and $t_2$ will show up as a difference between the expected range to the patch and the actual range. This is shown by the ghosted AUV at $t_2$. Navigation error due to the iceberg's rotation has caused its position estimate to pull away from the iceberg relative to the true location (solid AUV). As a result, an error, shown at bottom, develops between the DVL reading at the first time, and the multibeam at the second time. This difference can provide information on the accumulated heading error.
 
 There are two practical challenges to employing this approach. The first is essentially a signal-to-noise ratio problem from trying to measure extremely small quantities with noisy sensors. The second again has to do with ambiguity in the data correspondence problem. 
 

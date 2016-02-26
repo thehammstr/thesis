@@ -7,34 +7,42 @@
 
 This dissertation presented a process for profiling a free-drifting iceberg using a single AUV. 
 
-In Chapter \ref{ch.LoopClosure}, a method for detecting loop closure events by extracting features from sonar-derived imagery was presented. While this enabled data correspondence in the presence of iceberg motion-induced navigation errors, the method was susceptible to false positive matches, and as a result had to be filtered aggressively to reject false matches. 
+In Chapter \ref{ch.LoopClosure}, a method for detecting loop closure events by extracting features from sonar-derived imagery was presented. This enabled data correspondence in the presence of iceberg motion-induced navigation errors by looking for correspondences between measurements directly, rather than relying on distance-based heuristics. Detecting these events is an important step toward full online automation of the iceberg profiling process.
 
 In Chapter \ref{ch.IcebergGeometry}, the governing equations for the profiling optimization were derived, and it was shown that the selection of a state representation defined within the moving frame of reference could yield a reduction of the number of variables needed to estimate, and corresponding speed increases. 
 
 In Chapter \ref{ch.GraphSLAM}, the profiling problem was put into the GraphSLAM framework for solution as a nonlinear least squares problem. Results from GraphSLAM were shown in Chapter \ref{ch.Results} for a simulated free-drifting iceberg, as well as for field data collected from an underwater canyon whose steep walls served as an analog for the sides of an iceberg. The algorithm was able to account for the motion of the simulated iceberg, recovering the shape to within the precision of the underlying sonar data. Additionally, the method was able to generate a self-consistent map of the terrain, even when the navigation data was corrupted to simulate the effects of iceberg drift. 
 
-The method will be used to perform iceberg profiling in field trials off the coast of Newfoundland in June 2016. This work will enable researchers to create 3D reconstructions of iceberg keels quickly and accurately, without the need to instrument the iceberg. This capability will yield significant operational benefits: the safety, ease of use, efficiency of the method enable the creation of maps from raw data in minutes, allowing rapid data contextualization and return-to-site missions. Furthermore, the work in automated loop closure detection lays the groundwork for fully automated mapping and exploration of icebergs, further increasing the safety and decreasing the operational burden of these missions. 
+The method will be used to perform iceberg profiling in field trials off the coast of Newfoundland in June 2016. This work will enable researchers to create 3D reconstructions of iceberg keels quickly and accurately, without the need to instrument the iceberg itself. This capability will yield significant operational benefits. The safety, ease of use, and efficiency of the method enable the creation of maps from raw data in minutes, allowing rapid data contextualization and return-to-site missions. Furthermore, the work in automated loop closure detection lays the groundwork for fully automated mapping and exploration of icebergs, further increasing the safety and decreasing the operational burden of these missions. 
 
 
 
 \section{Future Work}
 
-The work in this thesis provide researchers with a valuable tool set for the study of free drifting icebergs. However, there  are a number of potential avenues for future research that could further improve the accuracy and automation of iceberg profiling. Some of these have been mentioned already, but they will be expanded upon in this section. In addition, there remains work to be done in extending the methods to the study of extreme environments for the purpose of space exploration. 
+The work in this thesis provides researchers with a valuable tool set for the study of free drifting icebergs. However, there  are a number of potential avenues for future research that could further improve the accuracy and automation of iceberg profiling. In addition, there remains work to be done in extending the methods to the study of extreme environments for the purpose of space exploration. 
+These topics will be expanded upon in this section. 
 
 %These can be broken down broadly into different state/map representations, different methods for detecting loop closures and performing shape optimization, and different mission profiles, including alternate trajectories, sensors, and number or type of vehicle used. Each line of inquiry has the potential to improve upon the method presented in this dissertation, and could aid the application of lessons learned in underwater robotics to other classes of mission.
+
+\subsection{Automated Loop Closure Detection for Online Iceberg Profiling}
+Chapter \ref{ch.Results} presented offline iceberg mapping results using a SLAM implementation where the correspondences were provided by a combination of automated algorithm and human user. Humans are exceedingly good at recognizing patterns in noisy data, able to focus on important parts of images, point clouds etc. while rejecting clutter. However, in order to perform profiling online, all human intervention must be removed from the processing pipeline. 
+
+To further automate the iceberg mapping process, a robust means for automatically detecting loop closure events is required. An intriguing possibility for doing this borrows from technology used in star trackers on satellites. These devices can determine attitude quickly and accurately by comparing images of stars -- ``weak" features whose only distinguishing characteristics are their brightness and position relative to one another -- to a database of the known stars. These techniques might be applicable to features extracted from sonar data, which similarly can only be distinguished based on curvature and relative location. 
 
 \subsection{Application-specific GraphSLAM implementations}
 \label{sec.DesignConsiderations}
 \subsubsection{Explicit map representation}
 
-Chapter \ref{ch.GraphSLAM} laid out a method that used an implicit map representation for GraphSLAM, justified by the difficulty in obtaining highly recognizable discrete features for loop closure detection. However, if such features were available, an \emph{explicit} map representation could provide some advantages. 
+Chapter \ref{ch.GraphSLAM} laid out a method that used an implicit map representation for GraphSLAM, justified by the difficulty in obtaining highly recognizable discrete features for loop closure detection. However, if novel techniques like the one described in the preceding section are able to develop appropriate features, an \emph{explicit} map representation could provide some advantages. 
 
 Using an explicit map makes the error characterization of the measurement model straightforward. The measurement model used in the explicit map case represents the actual physics more closely than registering concatenated point clouds. Specifically, the measurement function $h\left(x_t,m_j\right)$ models the sonar beam directly, and the covariance of each individual measurement can be determined from known sensor characteristics. That information can be added directly to the information matrix used by the GraphSLAM solver. This is the matrix $Q_t$ in Equation \ref{eq.measModel}. Although the feature-based techniques described in Chapter \ref{ch.LoopClosure} are not yet sufficiently robust for the error characterization advantages to outweigh the correspondence difficulties, future work in detecting and characterizing such features may provide more accurate results, with less susceptibility to submap warping, and could aid in online automated loop closure detection. 
 
 \subsubsection{DVL as measurement instead of input}
 \label{sec.VelocityState}
 
-The state representation presented above made the implicit assumption that the DVL remained in ``bottom lock" on the iceberg the majority of the time. At higher standoff distances, this may not be the case. In such instances, it may be advantageous to model the velocity as well as the position of the vehicle, and treat the DVL as a measurement (which it is, in reality) as opposed to an input.
+The state representation presented above made the implicit assumption that the DVL remained in ``bottom track" on the iceberg the majority of the time. At higher standoff distances, this may not be the case. In such instances, it may be advantageous to model the velocity as well as the position of the vehicle, and treat the DVL as a measurement (which it is, in reality) as opposed to an input.
+
+Furthermore, low-cost vehicles may lack DVL entirely, in which case it would be essential to estimate velocity as part of the state. In addition, any time-varying sensor biases can be incorporated in similar fashion to the iceberg's rotation bias term. This is often done on all axes of low-cost MEMs rate gyros, where bias varies with ambient temperature. 
 
 \begin{equation}
 \label{eq.altState}
@@ -44,10 +52,10 @@ The state representation presented above made the implicit assumption that the D
 \end{equation}
 
 \begin{align}
-\vec{v}_{t+1} &= \vec{v}_t + \left( \vec{a}_t + \vec{\omega}_t \times \vec{v}_t \right)dT\\
+\vec{v}_{t+1} &= \vec{v}_t + \left( \vec{a}_t + \vec{\omega}_t \times \vec{v}_t \right)dT
 \end{align}
 
-where $\vec{v}_t$ is the velocity of the vehicle in the iceberg frame, expressed in body coordinates, and $\vec{a}_t$ is the measured acceleration.
+\noindent where $\vec{v}_t$ is the velocity of the vehicle in the iceberg frame, expressed in body coordinates, and $\vec{a}_t$ is the measured acceleration.
  
 \begin{align}
 \vec{v}_{t} &=  \left[\begin{array}{c}
@@ -57,6 +65,8 @@ where $\vec{v}_t$ is the velocity of the vehicle in the iceberg frame, expressed
 
 This state representation would enforce continuity in the velocity, and enable any and all DVL information to be incorporated, even if there are not enough beams in contact with the iceberg to measure full 3D velocity.
 
+More error states can be appended to the state to estimate such additional errors, but not without risk. Higher dimension state spaces increase the size of the optimization, but more importantly, can give optimizers more places to ``hide" errors. Care must be taken to avoid having the optimizer exploit such state augmentations and produce nonphysical results, unless the plant model is known to a high degree of accuracy.
+
 \subsubsection{Sensor pitch and roll bias}
 
 Sometimes, a vehicle is assembled with a constant rotational misalignment or translational error between sensors. This can introduce systematic errors to the optimization.
@@ -65,14 +75,8 @@ If it is believed that such constant errors are present and large enough to corr
 
 A link is drawn between every pose node and the node representing constant vehicle offsets. For very large problem size, this increase in connectivity of the graph can slow the optimization. In such cases it may be advantageous to calibrate the data using a subset of the measurements, and fix the calibrated parameters for the overall optimization. 
 
-\subsubsection{Other sources of error}
 
-Low-cost vehicles may lack DVL entirely, in which case it would be essential to estimate velocity as part of the state. In addition, any time-varying sensor biases can be incorporated in similar fashion to the iceberg's rotation bias term. This is often done on all axes of low-cost MEMs rate gyros, where bias varies with ambient temperature. 
 
-More error states can be appended to the state to estimate such additional errors, but not without risk. Higher dimension state spaces increase the size of the optimization, but more importantly, can give optimizers more places to ``hide" errors. Care must be taken to avoid having the optimizer exploit such state augmentations and produce nonphysical results, unless the plant model is known to a high degree of accuracy.
-
-\subsection{Automated Loop Closure Detection}
-Chapter \ref{ch.Results} presented iceberg mapping results using a SLAM implementation where the correspondences were provided by a user. Humans are exceedingly good at recognizing patterns in noisy data. We are able to focus on important parts of images, point clouds etc. while rejecting clutter. To further automate the iceberg mapping process, a robust means for automatically detecting loop closure events is required. An intriguing possibility for doing this would be to borrow from technology used in star trackers on satellites. These devices can determine attitude quickly and accurately by comparing images of stars -- ``weak" features whose only distinguishing characteristics are their brightness and position relative to one another -- to a database of the known stars. These techniques might be applicable to features extracted from sonar data, which similarly can only be distinguished based on curvature and relative location. 
 
 \subsection{Alternate matching and mapping algorithms}
 
@@ -86,4 +90,4 @@ Teaming several robots together, each operating in different regimes, but sharin
 
 \section{Conclusion}
 
-The work presented in this dissertation provides a substantial advance in the state of the art for high-precision AUV-based iceberg profiling, but there remain a number of research directions for continuing to improve the process. The ultimate goal would be to deploy one or more vehicles and forget about them until they returned with a complete 3D reconstruction of an iceberg, having already ensured that they achieved full coverage while operating safely within their limits. These research opportunities follow a number of complementary directions, including hardware changes, algorithmic improvements, and operational profiles that could lead to combine to yield revolutionary results while each incrementally improving the state of the art on its own. 
+The work presented in this dissertation provides a substantial advance in the state of the art for high-precision AUV-based iceberg profiling, but there remain a number of research directions for continuing to improve the process. The ultimate goal would be to deploy one or more vehicles and forget about them until they returned with a complete 3D reconstruction of an iceberg, having already ensured that they achieved full coverage while operating safely within their limits. These research opportunities follow a number of complementary directions, including hardware changes, algorithmic improvements, and different operational profiles. These changes could combine to yield revolutionary results while each incrementally improving the state of the art on its own. 
