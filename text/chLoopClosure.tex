@@ -22,15 +22,15 @@ The second method comprises early work toward full automation of the loop closur
    \label{fig:icebergSLAMLC}
 \end{figure}
 
-\section{The Challenge of Loop Closure Detection}
+\section{The challenge of loop closure detection}
 
 Inertial navigation errors, whether introduced by moving terrain or poor sensing, complicate the task of loop closure detection in several ways. This section gives a brief review of the underwater mapping technique described in Chapter \ref{ch.RelatedWork} to emphasize the role of loop closure in navigation and mapping. It then describes the particular challenges that arise from these errors.
 
-\subsection{Data Correspondence for Iceberg Profiling}
+\subsection{Data correspondence for iceberg profiling}
 
 \subsubsection{Iceberg-specific simplifications}
 
-In some ways, the data correspondence problem is simplified when mapping icebergs. This is because the iceberg can be thought of as a cyclical environment: assuming the vehicle maintains a constant depth and distance from the iceberg (both of which can be done with onboard sensors), if the AUV travels for long enough, it is \emph{guaranteed} to revisit the same portion of the iceberg multiple times. The positional uncertainty is effectively reduced to a 1-dimensional periodic problem. This is not true in general for traditional bathymetric mapping tasks, where a vehicle with sufficiently large drift could completely miss all previously observed terrain. 
+In some ways, the data correspondence problem is simplified when mapping icebergs. This is because the iceberg can be thought of as a cyclical environment: assuming the vehicle maintains a constant depth and distance from the iceberg (both of which can be done with onboard sensors), if the AUV travels for long enough, it is for all practical purposes guaranteed to revisit the same portion of the iceberg multiple times. The positional uncertainty is effectively reduced to a 1-dimensional periodic problem. This is not true in general for traditional bathymetric mapping tasks, where a vehicle with sufficiently large drift could completely miss all previously observed terrain. 
 
 This fact simplifies the data correspondence problem significantly. Given enough data, the problem statement becomes ``which of these data correspond to each other," as opposed to the harder question of ``do any of these data correspond to each other." Additionally, after the first circumnavigation has been completed, side-to-side overlaps provide many additional loop closures that increase the eventual map's accuracy, and for online implementations, can help keep the current position estimate converged within the current best estimate of the map.
 
@@ -78,7 +78,7 @@ These concerns provide the motivation for the methods developed in the rest of t
 The second method works toward removing the need for human intervention entirely. Borrowing from well-developed concepts in the computer vision and image processing communities, and more recent work in point cloud feature extraction, it seeks to find local, stable, identifiable features in the terrain that can be recognized upon a second observation. These distinctive ``landmarks" can be used to initialize more accurate point cloud registration methods, avoiding convergence into local minima. 
 
 
-\section{Loop Closure GUI}
+\section{Loop closure GUI}
 \label{sec:GUI}
 
 \subsection{GUI Operation}
@@ -122,7 +122,7 @@ Many standard algorithms (e.g. SIFT and SURF) for extracting robust image featur
    \label{fig:imAsSurf}
 \end{figure}
 
-In order to produce an image from range data, a few steps must be taken. First, a reference plane and corresponding projection direction must be chosen. A grid is constructed on the reference plane, and the distance between a sounding and its projection onto that plane is encoded as the ``intensity" of the resulting image. For instance, when creating a normal DEM map of the seafloor, the reference plane is horizontal $(x,y)$, and the projection direction is vertical $(z)$. However, operating around an iceberg, with vertical or even undercut sides, creates an ambiguity as to which direction the projection should occur. 
+In order to produce an image from range data, a few steps must be taken. First, a reference plane and corresponding projection direction must be chosen. A grid is constructed on the reference plane, and the distance between a sounding and its projection onto that plane is encoded as the ``intensity" of the resulting image. For instance, when creating a normal DEM map of the seafloor, the reference plane is horizontal $(x,y)$, and the projection direction is vertical $(z)$ (for instance, the NED coordinates used in the UTM system). However, operating around an iceberg, with vertical or even undercut sides, creates an ambiguity as to which direction the projection should occur. 
 
 The method presented here calculates the average normal for the entire submap and uses that as the projection direction. The reference plane is set perpendicular to this, such that all soundings lie on the positive-$z$ side of the plane.
 
@@ -168,7 +168,7 @@ Robust image features can be extracted from the resulting image and used to look
 
 \begin{figure}[htb]
    \centering
-   \includegraphics[width=.8\textwidth]{../graphics/SIFTrangeImage.png} % requires the graphicx package
+   \includegraphics[width=.7\textwidth]{../graphics/SIFTrangeImage.png} % requires the graphicx package
    \caption{A random sampling of SIFT features extracted from the range image.}
    \label{fig:SIFTrangeImage}
 \end{figure}
@@ -190,17 +190,16 @@ Figure \ref{fig:lighting} shows the images resulting from projecting the same ra
 
 \begin{figure}[htb]
    \centering
-   \includegraphics[width=.8\textwidth]{../graphics/rangeImageLighting.png} % requires the graphicx package
+   \includegraphics[width=.7\textwidth]{../graphics/rangeImageLighting.png} % requires the graphicx package
    \caption{The range image remains relatively consistent over $\pm 15$deg of azimuth and elevation change in projection direction. Qualitatively, it looks like changes in lighting over the terrain, for which image features like SIFT and SURF claim some robustness \cite{Lowe2004} }
    \label{fig:lighting}
 \end{figure}
 
 \subsection{Automated correspondence detection usage}
 
-The feature-based automated loop closure detection method described above is currently used to initialize the ICP alignment method that drives the optimization process. Since introducing false correspondence information to the mapping process can introduce large errors or cause it to fail to converge, conservative thresholds are used to ensure extremely high confidence in the detected matches. For example, the results presented in Chapter \ref{ch.Results} require six additional inliers after performing RANSAC during matching, totaling ten geometrically consistent matches between images. While this makes the chances of detecing a false positive match very low, it also rejects a number of valid matches. However, even with only one or two matches, the optimizer can get close enough to the true solution that detecting more correspondences, either by hand or using distance-based metrics, becomes trivial.
+The feature-based automated loop closure detection method described above is currently used to initialize the ICP alignment method that drives the optimization process. Since introducing false correspondence information to the mapping process can introduce large errors or cause it to fail to converge, conservative thresholds are used to ensure extremely high confidence in the detected matches. For example, the results presented in Chapter \ref{ch.Results} require six additional inliers after performing RANSAC during matching, totaling ten geometrically consistent matches between images. While this makes the chances of detecting a false positive match very low, it also rejects a number of valid matches. However, even with only one or two matches, the optimizer can get close enough to the true solution that detecting more correspondences, either by hand or using distance-based metrics, becomes trivial.
 
-The automated method also holds potential to enable full online automation of the map creation process, but will require further effort to improve robustness to the point where it can be used by vehicles in the field. 
-
+The automated method also holds potential to enable full online automation of the map creation process, but will require further effort to improve robustness to the point where it can be used by vehicles in the field. The methods put forth in this Chapter are meant to serve as a proof of concept, demonstrating that information within the natural texture of an iceberg or canyon can be used to detect loop closure events in the presence of large navigational uncertainty. Further work to detect and provide robustness to degenerate cases would be invaluable for a rugged, deployable solution, but the method presented here lays the groundwork for such a solution. Some possible approaches that would augment  the capabilities presented here are discussed in Chapter~\ref{ch.FutureWork}.
 
 
 %\section{3D Point Cloud Features}

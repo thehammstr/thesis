@@ -99,7 +99,8 @@ The maximum likelihood estimates for all free parameters $x_t$ and $m_j$ in the 
 An analogy for how the GraphSLAM solver works uses the concept of spring potential energy. 
 
 \begin{align}
-P_{\text{spring}} &= \frac{1}{2}k\left(l-l_n\right)^2
+%\textrm{Spring Potential Energy} &= \frac{1}{2}k\left(l-l_n\right)^2
+\textrm{PE}_{\text{spring}} &= \frac{1}{2}k\left(l-l_n\right)^2
 \label{eq.spring}
 \end{align}
 
@@ -202,13 +203,17 @@ Based on the above discussion of assumptions about AUV and vehicle motions the f
                      \end{array}\right]_B
 \end{equation}
 
-This is a common 2D-planar robotic mapping state representation, augmented with a drift rate term, $\beta$ to account for the iceberg's rotational motion. Here, the subscript $B$ indicates that all parameters are written in the iceberg reference frame. That is to say, $x$, $y$, and $\psi$ denote the horizontal position and heading of the vehicle expressed \emph{in the iceberg's frame of reference}, and $\beta$ is the heading drift rate of the iceberg. 
+This is a common 2D-planar robotic mapping state representation, augmented with a drift rate term, $\beta$ to account for the iceberg's rotational motion. Here, the subscript $B$ indicates that all parameters are written in the iceberg reference frame. That is to say, $x$, $y$, and $\psi$ denote the horizontal position and heading of the vehicle in the frame of reference of the iceberg, expressed \emph{in the iceberg's frame of reference}, and $\beta$ is the heading drift rate of the iceberg. For convenience, and without loss of generality, the iceberg's frame of reference is chosen such that at initial time $t\,=\,0$, the vehicle is located at $(x,y)\,=\,(0,0)_B$ and the iceberg's axes are aligned with the vehicle body axes ($x$-forward, $y$-starboard, $z$-down).  
 
 As stated in Chapter \ref{ch.ProblemStatement}, it is assumed that the vehicle depth can be measured directly by onboard pressure sensors. Because the iceberg floats, it is not necessary to account for tidal offsets. High frequency surface wave effects are mitigated by combining integrated DVL-measured vertical velocity. This reduces the problem to two dimensions in translation, denoted $x$ and $y$. 
 
 %This is a reasonable simplification for iceberg profiling. In mapping static terrain, low frequency tidal offset effects must often be estimated, but since an iceberg floats with the tides, this is not a concern. Large amplitude waves can also introduce depth errors, but at much higher frequencies than the tides. These effects can be mitigated by combining integrated DVL-measured vertical velocity for high frequencies and depth sensor for low frequencies in a complementary filter framework.
 
-Section \ref{sec.MainContrib} showed that the sideways-facing DVL could be used to measure directly the body components of the vehicle's velocity in the iceberg frame of reference. However, the vehicle's heading in the frame of reference of the iceberg, $\psi$, can not be measured directly with the available onboard sensing, and is therefore estimated in the SLAM framework. The iceberg's angular drift rate is assumed to fall within the range of motions presented in  \cite{Gladstone2002,Wadhams1983}, and to change slowly due to the large inertia of the iceberg, but may have nonzero mean value over the course of the profiling run. This drift is labeled $\beta$. 
+Section \ref{sec.MainContrib} showed that the sideways-facing DVL could be used to measure directly the body components of the vehicle's velocity in the iceberg frame of reference. However, the vehicle's heading in the frame of reference of the iceberg, $\psi$, can not be measured directly with the available onboard sensing, and is therefore estimated in the SLAM framework. The iceberg's angular drift rate is assumed to fall within the range of motions presented in  \cite{Gladstone2002,Wadhams1983}, and to change slowly due to the large inertia of the iceberg, but may have nonzero mean value over the course of the profiling run. This drift is labeled $\beta$, and defined as follows.
+
+\begin{equation}
+\beta \, \triangleq \, ~^I\omega^B\cdot\hat{z}_I
+\end{equation} 
 
 \subsubsection{GraphSLAM motion model $\left[~g\left(x_t,u_t\right)~\right]$ }
 
@@ -233,7 +238,7 @@ The translational motion update is driven by the DVL. That is, the velocity of t
 
 The vehicle's rotational motion update is driven by the vehicle's inertial heading estimate from gyro and compass, $\psi^I$ and the estimated iceberg motion parameter, $\beta_t$.  The iceberg's angular rate is assumed to vary slowly, due to its large inertia. To capture this, $\beta_t$ is modeled as a random walk, driven only by noise.
 
-Each motion update also has a process noise term $\nu_i$. These are zero-mean Gaussian random variables whose covariance is tuned to reflect the uncertainty of the process. For translation, this is primarily DVL velocity measurement accuracy, for rotation, this is compass accuracy, and for $\beta$ this is loosely related to the inertia of the iceberg. 
+Each motion update also has a process noise term $\nu_i$. These are zero-mean Gaussian random variables whose covariance is tuned to reflect the uncertainty of the process. For translation, this is primarily DVL velocity measurement accuracy, for rotation, this is compass accuracy, and for $\beta$ this is related to the inertia of the iceberg. 
 
 Dropouts in the DVL velocity measurement are interpolated between valid readings. Since the vehicle nominally flies a constant velocity and does not experience large accelerations, the errors introduced by interpolating over short dropouts were small. However, to account for the missing data, the corresponding $\nu$ term is increased slightly to reflect the reduced confidence in these quantities.
 

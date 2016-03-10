@@ -5,12 +5,12 @@
 
 In this chapter, an overview of a class of algorithms known as Simultaneous Localization and Mapping, or SLAM, is presented. SLAM will serve as the framework for creating an accurate iceberg profile. SLAM has been applied  in a wide range of robotic mapping tasks, from aerial reconnaissance to exploring abandoned mines deep under ground. The details vary between applications, but these methods all use information contained within a previously unexplored environment to create a map of that environment, and at the same time determine the robot's location within that map. Particular attention will be paid to SLAM applications in underwater environments, and their associated challenges, most importantly, the difficulty in performing data association between individual sonar measurements. 
 
-\section{Simultaneous Localization and Mapping}
+\section{Simultaneous Localization and Mapping (SLAM)}
 \label{sec.SLAM}
 
 SLAM allows a robot to reconstruct an unknown environment and localize itself within that environment simultaneously.  The common thread between all of these algorithms is that they attempt to maximize measurement consistency, balancing errors in motion measurements (odometry) with map geometry errors based on repeated observations of features within the environment (measurements). The details of implementation differ depending on the environment, sensor type, and operational constraints. However, all implementations must address the topics of data correspondence, state representation, and solution method. The following sections expand on these topics, and Chapters \ref{ch.LoopClosure}, \ref{ch.IcebergGeometry}, and \ref{ch.GraphSLAM} show how each of these topics was addressed for SLAM-based iceberg profiling.
 
-\subsection{SLAM Overview}
+\subsection{SLAM overview}
 
 \label{sec:genericSLAM}
 A classic SLAM problem involves a wheeled vehicle creating a map of an unknown environment as it navigates through it, as shown in Figure \ref{fig:GenericSLAM} The vehicle is outfitted with sensors that provide information about both its own motion through the environment, as well as the structure of the environment itself. For this simple example, the vehicle is assumed to have wheel encoders, a compass, and a laser range scanner to observe distance to its surroundings in all directions.
@@ -23,7 +23,7 @@ A classic SLAM problem involves a wheeled vehicle creating a map of an unknown e
 \end{figure}
 
 
-In this example, the vehicle has knowledge of its ego-motion via onboard odometry sensors: wheel encoders tell how far the robot has rolled over a given time, and a compass gives the vehicle's heading. The vehicle can combine this information to estimate its path through the environment via dead-reckoning, but over time, these integrated measurements will drift away from the true position.
+In this example, the vehicle has knowledge of its own motion via onboard odometry sensors: wheel encoders tell how far the robot has rolled over a given time, and a compass gives the vehicle's heading. The vehicle can combine this information to estimate its path through the environment via dead-reckoning, but over time, these integrated measurements will drift away from the true position.
 
 If left unaddressed, the odometry drift would cause the projected range measurements of the environment to become inconsistent: multiple observations of the same feature or area would appear in different locations. To combat this, repeated observations of the same area are used to estimate and correct the accumulated drift, a process known as loop closure. This crucial step relies on the ability to identify that two or more measurements correspond to the same feature in the environment. In this example case, laser scans are aligned to produce an estimate of the translational and rotational drift that has accumulated between observations. 
 
@@ -39,7 +39,7 @@ A second difference between SLAM methods involves how the method represents the 
 This dissertation uses the GraphSLAM algorithm \cite{Thrun2006} to provide an offline estimate of iceberg shape. This will be developed fully in Chapter \ref{ch.GraphSLAM}. 
 
 
-\section{Data Correspondence and Alignment}
+\section{Data correspondence and alignment}
 
 SLAM methods generally rely on identifying loop closure events, where an area is revisited after a long interlude. Multiple observations of recognizable features are then compared, and any discrepancy in their estimated location can be used to correct navigational error in the robot's trajectory. The first part of this process, often referred to as the \emph{correspondence} problem, involves determining that two or more measurements correspond to observations of the same feature or area in the environment. Data \emph{alignment} then aims to resolve any discrepancies between the multiple observations. These are separate but coupled tasks: if the method used for alignment is very robust to outliers, the correspondence problem need not be overly discriminative. However, if the alignment method is sensitive to initial conditions or false correspondences, the correspondence must do a better job of rejecting bad matches. 
 
@@ -92,7 +92,7 @@ These techniques have been employed successfully in the field, including undergr
 %
 
 
-\subsection{Robust 2D image Features}
+\subsection{Robust 2D image features}
 \label{sec.2Dfeatures}
 
 A wealth of literature exists on the detection and description of robust features from 2-D images. These include Harris Corners \cite{Harris1988}, SIFT and SURF features \cite{Lowe2004} \cite{Bay2006}, ORB features \cite{Rublee2011} Histogram of Gradients (HoG) \cite{Dalal2005}. The different types of features generally employ a number of useful heuristics to detect well-localized keypoints in an image and build a descriptor based on the information contained near that keypoint that can be used to compare it with keypoints extracted from other images. 
@@ -106,7 +106,7 @@ There are several advantages to the use of these abstract descriptors. First, th
 
 At the time of writing, the Scale-Invariant Feature Transform (SIFT) developed by Lowe \cite{Lowe2004} is a popular benchmark for feature performance in terms of stability, invariance, and descriptive power, but its computational complexity and the fact that it is patented continues to spur competing technologies.
 
-\subsection{3D Point Cloud Features}
+\subsection{3D point cloud features}
 
 Recent advances in 3D range sensor technology have driven down the cost of these sensors and made them much more prevalent. The most notable example of this is the Microsoft Kinect device. As a result, researchers have begun to adapt many of the concepts employed in 2D image feature descriptors to 3D data. Rather than aligning entire point clouds as in scan matching, local geometry is used to describe stable keypoints within 3D data, for use in object classification and matching. 
 
@@ -118,7 +118,7 @@ Much of the recent work done with this class of 3D feature has been in manmade e
 
 
 
-\section{SLAM in Underwater Environments}
+\section{SLAM in underwater environments}
 
 
 SLAM has been used in a number of underwater applications, using cameras and several types of sonar. The requirements and constraints of each application determined how the data association was performed, how the problem would be represented, and what method would be used to solve it.
@@ -137,13 +137,13 @@ The ``standard" method for bathymetric mapping in natural, unstructured terrain 
 \end{figure}
 
 
-\section{SLAM-based Iceberg Profiling}
+\section{SLAM-based iceberg profiling}
 
 Some work applying SLAM techniques to iceberg profiling has been done. As previously noted in \cite{Kimball2011b}, Kimball presented a method for creating high-resolution maps of free-drifting icebergs using AUVs based on SLAM. The method considered a single, constant-depth swath of sonar data collected by circumnavigating a free-drifting iceberg. Corresponding data were selected by hand and ICP was used to align them. The calculated offset was used to drive the trajectory optimization.
 
 Like the generic SLAM example presented above, Kimball's method used range scans to estimate accumulated drift. However, rather than estimating the drift of the \emph{vehicle} in the iceberg's reference frame, the iceberg's drift in the inertial frame was estimated and it is assumed that the vehicle's position could be determined by independent means.  
 
-This formulation of the problem, in which the environment's motion is mapped explicitly led Kimball to develop a custom solution framework. The framework allowed him to prove the feasibility of SLAM-based solutions for iceberg profiling. Figure \ref{fig:KimballPreSolution} shows a swath of multibeam sonar data reprojected based on the vehicle's inertial position estimate. Due to drift, the ends of the data (colored red and green) which correspond to the same section of iceberg, do not line up. Figure \ref{fig:KimballSolution} shows the same data projected after the iceberg's drift has been estimated, displaying agreement between the overlapping sections of range data. However, the method as presented did not accommodate multiple swaths of data for full-depth profiling. The reformulation of the problem presented in Chapter \ref{ch.IcebergGeometry} casts the problem entirely in iceberg-relative terms, allowing the profiling optimization to be solved more easily using generic SLAM methods that scale well to large environments. This formulation, including similarities and differences to the generic case, will be developed in Chapter \ref{ch.ProblemStatement}.
+This formulation of the problem, in which the environment's motion is mapped explicitly led Kimball to develop a custom solution framework. The framework allowed him to prove the feasibility of SLAM-based solutions for iceberg profiling. Figure \ref{fig:KimballPreSolution} shows a swath of multibeam sonar data reprojected based on the vehicle's inertial position estimate. Due to drift, the ends of the data (colored red and green) which correspond to the same section of iceberg, do not line up. Figure~\ref{fig:KimballSolution} shows the same data projected after the iceberg's drift has been estimated, displaying agreement between the overlapping sections of range data. However, the method as presented did not accommodate multiple swaths of data for full-depth profiling. The reformulation of the problem presented in Chapter \ref{ch.IcebergGeometry} casts the problem entirely in iceberg-relative terms, allowing the profiling optimization to be solved more easily using generic SLAM methods that scale well to large environments. This formulation, including similarities and differences to the generic case, will be developed in Chapter \ref{ch.ProblemStatement}.
 
  \begin{figure}[!htb]
    \centering

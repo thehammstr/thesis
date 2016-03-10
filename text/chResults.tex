@@ -7,9 +7,9 @@ The following sections show GraphSLAM results from simulation and field data. Fo
 
 In order to validate the method on field data, the near-vertical wall of an underwater canyon in Monterey Bay was used. Navigation data was corrupted before applying the method to demonstrate the algorithm's ability to account for motion-induced warping.
 
-\section{Iceberg Profiling Simulation}
+\section{Iceberg profiling simulation}
 
-\subsection{Data Generation}
+\subsection{Data generation}
 
 A simulation environment was created in MATLAB to enable mapping results to be compared with known ``truth" for validation of the method. A screen capture from this environment is shown in Figure \ref{fig:IcebergSim}.
  
@@ -30,7 +30,7 @@ Simulations were run at 30 m and 50 m standoff distance. The latter was used to 
 
 In the mapping phase, the dropouts in measured velocity were interpolated between times when the vehicle had good velocity readings. The process noise during these outages was increased to reflect this. The AUV nominally travels at a constant velocity as expressed in the body frame, so these outages did not have a great effect on the end reconstruction.
 
-\subsection{Loop Closure}
+\subsection{Loop closure}
 
 The resolution of the simulated iceberg model was insufficient for automatic loop closure detection. The simulated sonar returns were generated from a model that had already been smoothed from raw data, so there was not enough small-scale texture to detect pseudo-image features. The model's smoothness precluded the use of the image feature-based approach to loop closure, as there was insufficient texture to calculate any stable features. As a result only the manual correspondence detection GUI was used for the simulated data. 
 
@@ -85,7 +85,7 @@ The iceberg was simulated to have a constant translational drift rate, and a slo
    \label{fig:PsiEst}
 \end{figure}
 
-\subsubsection{Increased Standoff distance}
+\subsubsection{Increased standoff distance}
 
 At an increased standoff distance of 50 meters, the DVL only remained locked in on the iceberg around 40\% of the time, yielding less precise odometry. Despite this, the mapping algorithm was able to correct for the iceberg's motion.
 
@@ -99,9 +99,9 @@ At an increased standoff distance of 50 meters, the DVL only remained locked in 
 
 %----------------------------------------------------------------------------
 \clearpage
-\section{Soquel Canyon Wall Data}
+\section{Soquel Canyon wall data}
 
-\subsection{Data Collection}
+\subsection{Data collection}
 
 Data was collected in October 2012 from a vertical-walled portion of Soquel Canyon, an underwater canyon in Monterey Bay. The location of this canyon is shown in Figure \ref{fig:SoquelLoc}, with corresponding bathymetry shown in Figure \ref{fig:SoquelBathy}. The portion of the canyon that was traversed is roughly 1.5 km in length. The vehicle flew three passes next to the wall with two return legs, shown in black, highlighted with the red box in Figure \ref{fig:SoquelBathy}.
 
@@ -121,7 +121,7 @@ Data was collected in October 2012 from a vertical-walled portion of Soquel Cany
 
 In order to approximate the effects of iceberg drift on the static canyon data, the navigation data was corrupted with a heading rate error. 
 
-\subsection{Results from Automatic Loop Closure}
+\subsection{Results from automatic loop closure}
 
 The automatic loop closure detection scheme detailed in Chapter \ref{ch.LoopClosure} was applied to the Soquel Canyon wall dataset. In order to prevent false matches from being detected, a high threshold was used on the automated loop closure detection algorithm. This required six additional SIFT features to agree with the four used for creating the homography used in RANSAC, for a total of 10 RANSAC inliers. As a result, only two loop closure events were identified with high enough confidence to add them to the optimization.  One of these pairs of matching range images is shown in Figure \ref{fig:autoLC}, and the locations of the links can be seen in red in the upper left corner of Figure \ref{fig:RealDataWithDrift}.
 
@@ -162,7 +162,7 @@ Despite only having two loop closures, GraphSLAM was able to correct most of the
    \label{fig:AutoSol2}
 \end{figure}
 
-\subsection{Refinement via Manually-assisted Loop Closure}
+\subsection{Refinement via manually-assisted loop closure}
 
 This automatic loop closure detection was able to account for nearly all of the motion-induced error in the navigation data, yielding a trajectory estimate of roughly the same accuracy as those obtained by dead reckoning with a high-precision inertial navigation system and DVL. 
 
@@ -210,6 +210,11 @@ Finally, Figure \ref{fig:RealDataSolution5} gives an end-on view of the canyon, 
    \label{fig:RealDataSolution5}
 \end{figure}
 
+\section{Performance considerations and limitations}
+
+The approach presented in this thesis performed well in the two situations for which it was tested. In both cases, the motion of the environment was well-approximated by a small, slowly-varying bias, so the state representation was able to represent it faithfully. Also, the DVL provided a direct source of information on the velocity of the vehicle relative to the iceberg/canyon. Additionally, the canyon data, and to lesser extent the iceberg simulation model both had sufficient texture for the ICP point cloud alignment method to determine relative pose offsets. Under similar conditions, the algorithm can be expected to perform comparably well.
+
+If the motion of the environment cannot be represented well by the state model, then motion errors will likely accumulate and cause warping in the solution. An example of this effect is the fast tumbling motion that might be encountered in a satellite with a stuck thruster. Chapter~\ref{ch.FutureWork} will present some discussion on modeling considerations to account for other sources of error. Other parasitic cases would be highly self-similar bodies or flat, featureless bodies, where the ability to identify loop closure events accurately would be degraded. 
 
 \section{Summary}
 

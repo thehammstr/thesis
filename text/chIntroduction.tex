@@ -92,7 +92,7 @@ The research presented here was funded by the NASA Astrobiology Science \& Techn
 
 The capabilities enabled by this research could one day aid in the study of the origins of life. In particular, a number of preorganic molecular species thought to be necessary for life have been observed in high concentrations in comets and asteroids \cite{Fomenkova1999}. In fact, some theories hypothesize that these biological building blocks were first delivered to Earth via these objects impacting the planet several billion years ago \cite{Chyba1992}. These are some of the reasons why asteroids and comets are scientific points of interest. Several recent missions have studied them, like NASA's Deep Impact and Stardust missions\cite{Ahearn2005,Willcockson1999} and ESA's Rosetta \cite{Bibring2007}.
 
-One challenge in the study of these environments is the lack of navigational infrastructure. There is no equivalent of GPS to supply a robotic vehicle with its position relative to the body or planet, and installing such infrastructure on the surface would likely be prohibitively difficult. Star trackers and inertial guidance systems can be used, but these provide position of the vehicle in inertial space, not relative to the body.
+One challenge in the study of these environments is the lack of navigational infrastructure. There is no equivalent of GPS to supply a robotic vehicle with its position relative to the body or planet, and installing such infrastructure on the surface would likely be prohibitively difficult. Star trackers and inertial guidance systems can be used, but these provide position of the vehicle in inertial space, not relative to the body. The work presented in this thesis develops a framework for estimating position in a moving frame of reference directly, without the need for installed infrastructure.
 
 If a detailed shape reconstruction of the body is available, terrain-relative navigation techniques can be used to localize relative to it \cite{Anonsen2006,Anonsen2007}. Additionally, a shape reconstruction is a valuable scientific tool unto itself, allowing other data to be location-referenced and enabling longitudinal studies in the evolution of a body's shape. However, generating a 3-D reconstruction of a body that is moving relative to the inertial reference frame presents several challenges.
 
@@ -101,7 +101,7 @@ If a detailed shape reconstruction of the body is available, terrain-relative na
 %A number of methods exist for generating shape estimates of free-drifting icebergs. Aerial observations of icebergs are used to monitor risk to shipping lanes and fixed infrastructure, but can only provide rough size and shape information about the iceberg sail, and virtually no information about the iceberg's keel. Ship-based measurements including tethered ROVs provide high-resolution reconstructions of both the sail and keel, but are labor intensive and expensive. 
 
 
-\subsection{Aerial Iceberg Profiling}
+\subsection{Aerial iceberg profiling}
 
 \begin{figure}[!htb]
    \centering
@@ -112,7 +112,7 @@ If a detailed shape reconstruction of the body is available, terrain-relative na
 
 Aircraft are used extensively in tracking and managing icebergs. Coast guards and navies of several nations regularly patrol Arctic and Antarctic waters to detect and track icebergs that might pose a threat to infrastructure or shipping. While this provides an effective means of tracking multiple icebergs' positions over time, it says relatively little about each iceberg's structure. The aircraft are sometimes equipped with LIDAR range scanners \cite{Bunkin2012}, but most often the only measurements available are photographs, as in Figure \ref{fig:IcebergAerial}. From this, rough classification of iceberg type based on sail shape (such as ``drydock," ``pinnacle," or ``blocky" ) is possible. Additionally, keel depth can be estimated heuristically based on maximum waterline length, and decay rate can be inferred from repeated sightings, as shown in \cite{Barker2004}. However, all of these are only first-order approximations of shape; aerial imagery cannot provide detailed iceberg shape profiles of the iceberg's keel. 
 
-\subsection{Ship-based Iceberg Profiling}
+\subsection{Ship-based iceberg profiling}
 
 \begin{figure}[!htb]
    \centering
@@ -141,7 +141,7 @@ The challenges with AUV-based profiling are primarily navigational. The robot ne
 \label{sec.MissionProfileDef}
 The work presented in this dissertation assumes a nominal mission profile where the vehicle follows a roughly helical path around an iceberg, slowly descending to observe deeper portions as it travels. This path allows the vehicle to ensonify wide swaths of the iceberg using its sideways-mounted multibeam sonar. The helical path and mapping sonar configuration are illustrated in Figures \ref{fig:NominalProfile1} and \ref{fig:introSetup}, respectively. This description is meant to provide context for the development to follow, but is not meant to indicate that this choice of vehicle and trajectory is \emph{unique}.  
 
-The assumed profiling process begins aboard a research vessel by locating a suitable iceberg and approaching to minimum safe distance. The AUV is then deployed in a direction to intercept the iceberg. Upon interception, the vehicle circumnavigates the iceberg in a counter-clockwise direction. It does this reactively, flying at a constant nominal speed, and using additional sonars to maintain a constant standoff distance of 25 to 50 meters.
+The assumed profiling process begins aboard a research vessel by locating a suitable iceberg and approaching to minimum safe distance. The AUV is then deployed in a direction to intercept the iceberg. Upon interception, the vehicle circumnavigates the iceberg in a counter-clockwise direction. It does this reactively, flying at a constant nominal speed, and using additional sonars to maintain a constant standoff distance of 25 to 50 meters. More details on the vehicle configuration, sensors, etc. can be found in Chapter~\ref{ch.ProblemStatement}.
 
 \begin{figure}[htb]
    \centering
@@ -156,8 +156,6 @@ The assumed profiling process begins aboard a research vessel by locating a suit
    \caption{Illustration of an AUV profiling an iceberg keel. The vehicle circumnavigates the iceberg, sweeping out a point cloud of multibeam sonar measurements. }
    \label{fig:introSetup}
 \end{figure}
-
-More details on the vehicle configuration, sensors, etc. can be found in Chapter \ref{ch.ProblemStatement}.
 
 \subsection{Challenges with AUV profiling}
 

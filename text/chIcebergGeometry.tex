@@ -5,6 +5,8 @@
 
 This chapter describes how the vehicle trajectory is estimated between loop closure events (Figure \ref{fig:MultiPath}). It starts with an overview of the method developed by Kimball in \cite{Kimball2011b}, which estimated the iceberg's trajectory through the world explicitly. It then shows how solving the same set of equations in the iceberg frame of reference simplifies the estimation, yielding speed increases of several orders of magnitude without sacrificing accuracy.
 
+Terms will be defined as the equations are developed, with an overview of the notation and definitions of commonly-used terms also given in Appendix~\ref{ch.Notation}.
+
 %\section{Geometric Problem Definition}
 
 %This section develops the equations by which DVL data is incorporated into the optimization to enforce motion consistency in the mapping optimization. First, an overview of the previous method is presented. This illustrates the general approach to how DVL information is incorporated, and shows how the changes presented in this thesis provide gains in terms of speed and reduced complexity. For notation conventions, the reader should refer to the Appendix.
@@ -62,24 +64,24 @@ The starting point for the estimation problem is Equation \ref{eqn:BasicLoop}, t
     \label{fig:LoopEquation}
 \end{figure}
 
-\noindent The loop equation gets its name from the fact that the two paths to get from $O$ to $S_i$ are equivalent, and define a ``loop."
+\noindent The loop equation gets its name from the fact that the two paths to get from $O$ to $S_i$ are equivalent, and define a ``loop." Here, $O$ is an arbitrary point fixed in inertial space (chosen to be the origin, for convenience) and $S_i$ is the iceberg-fixed point ensonified by the sonar beam. Similarly, $B_{cm}$ and $V_{cm}$ are the iceberg and vehicle centers of mass, respectively. The center of mass is a common choice for location of the origin of a body-fixed coordinate system, so it is used here, though any iceberg, and vehicle-fixed points could have been used.
 
-In \cite{Kimball2011b}, this equation is differentiated in the inertial frame
+In \cite{Kimball2011b}, this equation is differentiated in the inertial frame, $I$
 
 \begin{equation} % requires amsmath; align for no eq. number
-   \frac{~^Id}{~dt}(\vec{r}^{~~\nicefrac{V_{cm}}{O}} + \vec{r}^{~~\nicefrac{S_i}{V_{cm}}} = ~ \vec{r}^{~~\nicefrac{B_{cm}}{O}} + \vec{r}^{~~\nicefrac{S_i}{B_{cm}}})\\
+   \frac{~^Id}{~dt}(\vec{r}^{~\nicefrac{V_{cm}}{O}} + \vec{r}^{~\nicefrac{S_i}{V_{cm}}} = ~ \vec{r}^{~\nicefrac{B_{cm}}{O}} + \vec{r}^{~\nicefrac{S_i}{B_{cm}}})\\
    \end{equation}
    
 \noindent which after simplification yields 
    
        \begin{equation}
-    ~^{I}\vec{v}^{V_{cm}} ~+~ \frac{~^Vd}{~dt}(\vec{r}^{~~\nicefrac{S_i}{V_{cm}}} ) ~+~ ^{I}\vec{\omega}^{V_{cm}}\times\vec{r}^{~~\nicefrac{S_i}{V_{cm}}}  = 
-    ~^{I}\vec{v}^{B_{cm}} ~+~^{I}\vec{\omega}^{B}\times\vec{r}^{~~\nicefrac{S_i}{B_{cm}}}. \\
+    ~^{I}\vec{v}^{V_{cm}} ~+~ \frac{~^Vd}{~dt}(\vec{r}^{~\nicefrac{S_i}{V_{cm}}} ) ~+~ ^{I}\vec{\omega}^{V_{cm}}\times\vec{r}^{~\nicefrac{S_i}{V_{cm}}}  = 
+    ~^{I}\vec{v}^{B_{cm}} ~+~^{I}\vec{\omega}^{B}\times\vec{r}^{~\nicefrac{S_i}{B_{cm}}}. \\
 \end{equation}
 
-By the definition of $S_i$ as the iceberg-fixed point ensonified by the DVL,  $\vec{r}^{~~\nicefrac{S_i}{V_{cm}}}$ can be written 
+By the definition of $S_i$ as the iceberg-fixed point ensonified by the DVL,  $\vec{r}^{~\nicefrac{S_i}{V_{cm}}}$ can be written 
 \begin{equation}
-\vec{r}^{~~\nicefrac{S_i}{V_{cm}}}= r_{i,t}\hat{d}_{i}  
+\vec{r}^{~\nicefrac{S_i}{V_{cm}}}= r_{i,t}\hat{d}_{i}  
 \label{eqn:SiDef}
 \end{equation}
 
@@ -90,9 +92,9 @@ Taking the dot product of this equation with $\hat{d}_{i} $ yields,
     \begin{align}
     \hat{d}_{i} \cdot~^{I}\vec{v}^{V_{cm}} ~+~ \frac{~dr_{i,t}}{~dt}  ~+~ \underbrace{\hat{d}_{i} \cdot^{I}\vec{\omega}^{V}\times{~r_{i,t}\hat{d}_{i}}}_{0}  &=
      \label{eqn:expensive}
-    \hat{d}_{i} \cdot~^{I}\vec{v}^{B_{cm}} ~ + ~\hat{d}_{i} \cdot\left(^{I}\vec{\omega}^{B}\times\vec{r}^{~~\nicefrac{S_i}{B_{cm}}}\right)  \\
+    \hat{d}_{i} \cdot~^{I}\vec{v}^{B_{cm}} ~ + ~\hat{d}_{i} \cdot\left(^{I}\vec{\omega}^{B}\times\vec{r}^{~\nicefrac{S_i}{B_{cm}}}\right)  \\
     \underbrace{\hat{d}_{i} \cdot~^{I}\vec{v}^{V_{cm}}}_{\text{Assumed known}} ~+~ \underbrace{\frac{~dr_{i,t}}{~dt} }_{\text{From DVL}}  &=
-    \underbrace{\hat{d}_{i} \cdot~^{I}\vec{v}^{B_{cm}}}_{\text{Estimated}} ~ + ~\hat{d}_{i} \cdot\left(\underbrace{^{I}\vec{\omega}^{B}}_{\text{From outer loop}}\times\underbrace{\vec{r}^{~~\nicefrac{S_i}{B_{cm}}}}_{\text{Estimated}}\right)  
+    \underbrace{\hat{d}_{i} \cdot~^{I}\vec{v}^{B_{cm}}}_{\text{Estimated}} ~ + ~\hat{d}_{i} \cdot\left(\underbrace{^{I}\vec{\omega}^{B}}_{\text{From outer loop}}\times\underbrace{\vec{r}^{~\nicefrac{S_i}{B_{cm}}}}_{\text{Estimated}}\right)  
          \label{eqn:expensive2}
 \end{align}
 
@@ -129,34 +131,34 @@ Two modifications are introduced to the method presented in \cite{Kimball2011b}.
    \label{fig:NestedLoop2}
 \end{figure}
 
-\subsection{Reducing the Number of Estimation Parameters}
+\subsection{Reducing the number of estimation parameters}
 
-%One problem with the method given in Equations \ref{eqn:expensive} and \ref{eqn:LeastSquares} is that the number of parameters $\vec{r}^{~~\nicefrac{S_i}{B_{cm}}}$ grows with the size of the iceberg, and can make the inner loop optimization very large. 
+%One problem with the method given in Equations \ref{eqn:expensive} and \ref{eqn:LeastSquares} is that the number of parameters $\vec{r}^{~\nicefrac{S_i}{B_{cm}}}$ grows with the size of the iceberg, and can make the inner loop optimization very large. 
 
-The number of estimation parameters required in the inner loop can be reduced by several orders of magnitude without loss of accuracy. This is done by recognizing that the unknown quantity $\vec{r}^{~~\nicefrac{S_i}{B_{cm}}}$ can be represented as the difference between other quantities that are either assumed to be known, or that are already estimated. The iceberg-fixed sounding location is the vector difference of the sonar beam head's inertial position estimate and the iceberg center of mass position estimate: 
+The number of estimation parameters required in the inner loop can be reduced by several orders of magnitude without loss of accuracy. This is done by recognizing that the unknown quantity $\vec{r}^{~\nicefrac{S_i}{B_{cm}}}$ can be represented as the difference between other quantities that are either assumed to be known, or that are already estimated. The iceberg-fixed sounding location is the vector difference of the sonar beam head's inertial position estimate and the iceberg center of mass position estimate: 
 
 \begin{equation}
     \label{eqn:SiSubstitution}
-    \vec{r}^{~~\nicefrac{S_i}{B_{cm}}}  = ~\vec{r}^{~~\nicefrac{V_{cm}}{O}} + \vec{r}^{~~\nicefrac{S_i}{V_{cm}}} - \vec{r}^{~~\nicefrac{B_{cm}}{O}}
+    \vec{r}^{~\nicefrac{S_i}{B_{cm}}}  = ~\vec{r}^{~\nicefrac{V_{cm}}{O}} + \vec{r}^{~\nicefrac{S_i}{V_{cm}}} - \vec{r}^{~\nicefrac{B_{cm}}{O}}
 \end{equation}
 
 Substituting \ref{eqn:SiSubstitution} into \ref{eqn:expensive} yields the new equation
 
      \begin{equation}
  \hat{d}_i\cdot\underbrace{^{I}\vec{v}^{V_{cm}}}_\text{known} ~-
-  \hat{d}_i\cdot(\underbrace{^{I}\vec{\omega}^{B}}_{\text{outer loop}}\times~\underbrace{\vec{r}^{~~\nicefrac{V_{cm}}{O}}}_\text{known}) ~+
+  \hat{d}_i\cdot(\underbrace{^{I}\vec{\omega}^{B}}_{\text{outer loop}}\times~\underbrace{\vec{r}^{~\nicefrac{V_{cm}}{O}}}_\text{known}) ~+
  \underbrace{ \frac{~dr_{i,t}}{~dt}}_{\text{from DVL}}  
   =~\hat{d}_i\cdot(~^{I}\vec{v}^{B_{cm}} ~-
- ~^{I}\vec{\omega}^{B}\times\vec{r}^{~~\nicefrac{B_{cm}}{O}}).
+ ~^{I}\vec{\omega}^{B}\times\vec{r}^{~\nicefrac{B_{cm}}{O}}).
  \label{eqn:getIt}
 \end{equation}
 
 The terms of Equation \ref{eqn:getIt} can again be arranged such that all terms that are either assumed known, measured, or estimated in the outer loop are on the left hand side, and all the terms estimated in the inner loop are on the right hand side. Noting the basis in which each vector is written, and writing out all necessary rotation matrices,
 
 \begin{equation}
- \underbrace{\hat{d}_i^{\intercal}~~^{V}R^I ~(^{I}\vec{v}^{V_{cm}} ~-~[^{I}\vec{\omega}^{B}]_\times\vec{r}^{~~\nicefrac{V_{cm}}{O}}) ~+
+ \underbrace{\hat{d}_i^{\intercal}~^{V}R^I ~(^{I}\vec{v}^{V_{cm}} ~-~[^{I}\vec{\omega}^{B}]_\times\vec{r}^{~\nicefrac{V_{cm}}{O}}) ~+
  \frac{~dr_{i,t}}{~dt} }_{``\text{Measurement}" ~i ~\text{at time}~ j}
-  =~\underbrace{\hat{d}_i^{\intercal}~~{^{V}R^I} ~((\dot{B}_x(t_j)~-
+  =~\underbrace{\hat{d}_i^{\intercal}~{^{V}R^I} ~((\dot{B}_x(t_j)~-
  [^{I}\vec{\omega}^{B}]_\times B_x(t_j))}_\text{one row of the measurement matrix}\vec{P}_x.
  \label{eqn:finaldvl}
 \end{equation}
@@ -169,7 +171,7 @@ This substitution can be used as a replacement to the previous method, with the 
 
 %TO DO: I THINK I NEED TO BACK UP THE STATEMENT THAT THESE POINTS CAN BE ELIMINATED WITHOUT SACRIFICING ACCURACY, SINCE THEY'RE ONLY OBSERVED ONCE (EXCEPT FOR LOOP CLOSURE POINTS), AND THE COSINE-DEPENDENT RANGE-VELOCITY AMBIGUITY.
 
-\subsection{Solution in the Iceberg Reference Frame}
+\subsection{Solution in the iceberg reference frame}
 \label{sec.MainContrib}
 
 To remove inertial terms from the optimization, a similar substitution is made to the one shown in Equation \ref{eqn:SiSubstitution}. Equation \ref{eqn:BasicLoop} can be rewritten as
